@@ -5,173 +5,304 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>棧板管理系統</title>
 <style>
-  :root{--g:#2f8f4e;--g2:#256e3d;--bg:#f3f5f4;--line:#e3e7e5;--ink:#1d2521;--mut:#6b766f;--red:#c0392b}
+  :root{
+    --bg:#f4f1ea; --surface:#ffffff; --sunken:#faf8f3;
+    --ink:#241f18; --ink2:#564e44; --mut:#8a8073;
+    --line:rgba(60,46,28,.12); --line2:rgba(60,46,28,.22);
+    --brand:#2e7d4f; --brand-d:#245f3d; --brand-soft:#e9f3ec;
+    --wood:#b8762e;
+    --red:#c0392b; --red-soft:#fcebe9; --ok-soft:#e9f4ec;
+    --r-card:16px; --r-ctl:12px; --r-in:10px;
+    --sh:0 1px 2px rgba(40,30,15,.05),0 4px 14px rgba(40,30,15,.04);
+  }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;font-size:16px}
-  .wrap{max-width:560px;margin:0 auto;padding:14px 14px 40px}
-  header{display:flex;align-items:center;gap:10px;padding:6px 2px 14px}
-  header h1{font-size:19px;margin:0;font-weight:800}
-  .who{margin-left:auto;text-align:right;font-size:12px;color:var(--mut);line-height:1.4}
-  .who b{color:var(--ink)}
-  .tabs{display:flex;gap:8px;margin-bottom:14px}
-  .tabs button{flex:1;padding:11px 0;border:1px solid var(--line);background:#fff;border-radius:11px;
-    font-size:15px;font-weight:700;color:var(--mut)}
-  .tabs button.on{background:var(--g);color:#fff;border-color:var(--g)}
-  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
-  label.fld{display:block;font-size:13px;font-weight:700;color:var(--mut);margin:14px 0 6px}
-  label.fld:first-child{margin-top:0}
-  select,input[type=number],input[type=text],textarea{width:100%;padding:12px;border:1px solid var(--line);
-    border-radius:10px;font-size:16px;background:#fff;color:var(--ink)}
-  .seg{display:flex;gap:8px}
-  .seg button{flex:1;padding:12px 0;border:1px solid var(--line);background:#fff;border-radius:10px;
-    font-size:15px;font-weight:700;color:var(--mut)}
-  .seg button.on{background:var(--g);color:#fff;border-color:var(--g)}
-  .seg.act button.on{background:var(--g2);border-color:var(--g2)}
-  .qtyrow{display:flex;align-items:center;gap:10px}
-  .qtyrow button{width:48px;height:48px;border:1px solid var(--line);background:#fff;border-radius:10px;
-    font-size:24px;font-weight:700;color:var(--g)}
-  .qtyrow input{text-align:center;font-size:22px;font-weight:800}
-  canvas.sign{width:100%;height:170px;border:1px dashed #b9c2bc;border-radius:10px;background:#fbfcfb;touch-action:none}
-  .sub{font-size:12px;color:var(--mut);margin:6px 2px 0}
-  .row2{display:flex;gap:8px}
+    font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+    font-size:16px;line-height:1.5}
+  .page{max-width:1080px;margin:0 auto;padding:0 16px 56px}
+
+  /* ---- 頂部品牌列 ---- */
+  .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+    background:rgba(244,241,234,.86);backdrop-filter:saturate(140%) blur(10px);
+    -webkit-backdrop-filter:saturate(140%) blur(10px);
+    border-bottom:1px solid var(--line);padding:12px 4px;margin-bottom:20px}
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;
+    background:var(--brand);color:#fff;box-shadow:var(--sh)}
+  .brand .bt b{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+  .brand .bt i{font-style:normal;font-size:11.5px;color:var(--mut)}
+  .who{margin-left:auto;text-align:right;font-size:12px;color:var(--mut);line-height:1.45}
+  .who b{color:var(--ink);font-size:13px}
+
+  /* ---- 應用區 / 側欄導覽 ---- */
+  .app{display:block}
+  .tabs{display:flex;gap:6px;margin-bottom:16px}
+  .tabs button{display:flex;align-items:center;justify-content:center;gap:9px;flex:1;
+    border:1px solid var(--line);background:var(--surface);border-radius:11px;
+    padding:11px 14px;font-size:15px;font-weight:700;color:var(--ink2);cursor:pointer;
+    transition:.15s}
+  .tabs button svg{width:18px;height:18px;opacity:.7}
+  .tabs button:hover{background:var(--sunken)}
+  .tabs button.on{background:var(--brand-soft);color:var(--brand-d);border-color:var(--brand)}
+  .tabs button.on svg{opacity:1}
+  @media(min-width:820px){
+    .app{display:grid;grid-template-columns:222px minmax(0,1fr);gap:26px;align-items:start}
+    .tabs{flex-direction:column;position:sticky;top:88px;margin-bottom:0}
+    .tabs button{justify-content:flex-start;text-align:left}
+  }
+
+  /* ---- 卡片 ---- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+    padding:22px;margin-bottom:16px;box-shadow:var(--sh)}
+  .panels>.card:last-child{margin-bottom:0}
+  .ctitle{font-size:15px;font-weight:800;color:var(--ink);margin:0}
+  .csub{font-size:12.5px;color:var(--mut);margin:4px 0 18px}
+
+  /* ---- 表單 ---- */
+  label.fld{display:block;font-size:12.5px;font-weight:700;color:var(--ink2);
+    margin:18px 0 7px;letter-spacing:.01em}
+  select,input[type=number],input[type=text],input[type=month],textarea{
+    width:100%;padding:12px 13px;border:1px solid var(--line2);border-radius:var(--r-in);
+    font-size:16px;background:var(--sunken);color:var(--ink);transition:.15s}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--brand);
+    background:#fff;box-shadow:0 0 0 3px rgba(46,125,79,.15)}
+  select:disabled{opacity:.7}
+
+  /* ---- 分段切換 ---- */
+  .seg{display:flex;gap:6px;background:var(--sunken);border:1px solid var(--line);
+    border-radius:var(--r-ctl);padding:5px}
+  .seg button{flex:1;padding:11px 8px;border:0;background:transparent;border-radius:9px;
+    font-size:15px;font-weight:700;color:var(--ink2);cursor:pointer;transition:.15s}
+  .seg button:hover{color:var(--ink)}
+  .seg button.on{background:var(--surface);color:var(--brand-d);box-shadow:var(--sh)}
+  .seg.act button.on{background:var(--brand);color:#fff;box-shadow:none}
+
+  /* ---- 數量步進 ---- */
+  .qtyrow{display:flex;align-items:center;gap:12px}
+  .qtyrow button{width:50px;height:50px;border:1px solid var(--line2);background:var(--surface);
+    border-radius:12px;font-size:26px;font-weight:700;color:var(--brand);cursor:pointer;transition:.15s}
+  .qtyrow button:hover{background:var(--brand-soft)}
+  .qtyrow input{text-align:center;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+
+  /* ---- 簽名 / 拍照 ---- */
+  canvas.sign{width:100%;height:170px;border:1.5px dashed var(--line2);border-radius:12px;
+    background:var(--sunken);touch-action:none;display:block}
+  .sub{font-size:12px;color:var(--mut);margin:7px 2px 0}
+  .row2{display:flex;gap:10px}
   .row2>*{flex:1}
-  .btnP{display:block;width:100%;padding:15px;border:none;border-radius:12px;background:var(--g);color:#fff;
-    font-size:17px;font-weight:800;margin-top:18px}
-  .btnP:disabled{opacity:.5}
-  .btnG{background:#fff;border:1px solid var(--line);color:var(--mut);padding:9px 12px;border-radius:9px;font-size:13px;font-weight:700}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:right}
+
+  /* ---- 本次清單 ---- */
+  .litem{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--sunken);
+    border:1px solid var(--line);border-radius:11px;margin-bottom:8px}
+  .litem .lt{font-weight:800;font-size:13px;min-width:38px}
+  .litem .lt.out{color:var(--red)}
+  .litem .lt.in{color:var(--brand-d)}
+  .litem .lb{font-weight:700;font-size:14px;color:var(--ink)}
+  .litem .lq{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .litem .lx{margin-left:auto;border:0;background:transparent;color:var(--mut);
+    font-size:16px;cursor:pointer;padding:2px 8px;border-radius:8px;line-height:1}
+  .litem .lx:hover{color:var(--red);background:var(--red-soft)}
+
+  /* ---- 按鈕 ---- */
+  .btnP{display:block;width:100%;padding:15px;border:none;border-radius:13px;background:var(--brand);
+    color:#fff;font-size:16px;font-weight:800;margin-top:20px;cursor:pointer;box-shadow:var(--sh);transition:.15s}
+  .btnP:hover{background:var(--brand-d)}
+  .btnP:disabled{opacity:.55;cursor:default}
+  .btnG{display:inline-block;background:var(--surface);border:1px solid var(--line2);color:var(--ink2);
+    padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
+  .btnG:hover{background:var(--sunken)}
+
+  /* ---- 表格 ---- */
+  table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+  th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:right}
   th:first-child,td:first-child{text-align:left}
-  thead th{color:var(--mut);font-size:12px}
-  .big{font-size:13px;color:var(--mut)}
-  .tot{display:flex;gap:10px;margin-bottom:12px}
-  .tot .b{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
-  .tot .b .n{font-size:24px;font-weight:800}
-  .tot .b .l{font-size:12px;color:var(--mut)}
+  thead th{color:var(--mut);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:var(--sunken)}
+
+  /* ---- 統計方塊 ---- */
+  .big{font-size:13px;color:var(--ink2)}
+  .tot{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .tot .b{flex:1;min-width:120px;background:var(--sunken);border:1px solid var(--line);
+    border-radius:14px;padding:16px;text-align:center}
+  .tot .b .n{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .tot .b .l{font-size:12px;color:var(--mut);margin-top:3px;line-height:1.4}
   .pos{color:var(--red);font-weight:700}
-  .msg{padding:12px;border-radius:10px;font-size:14px;margin-top:12px;display:none}
-  .msg.ok{background:#e8f6ec;color:var(--g2);display:block}
-  .msg.err{background:#fdecea;color:var(--red);display:block}
-  #gate{text-align:center;padding:40px 16px;color:var(--mut)}
-  #uidbox{user-select:all;background:#fff;border:1px dashed #b9c2bc;border-radius:10px;padding:12px;
-    font-size:13px;word-break:break-all;margin:12px 0}
+
+  /* ---- 訊息 ---- */
+  .msg{padding:13px 14px;border-radius:11px;font-size:14px;margin-top:14px;display:none;font-weight:600}
+  .msg.ok{background:var(--ok-soft);color:var(--brand-d);border:1px solid rgba(46,125,79,.22);display:block}
+  .msg.err{background:var(--red-soft);color:var(--red);border:1px solid rgba(192,57,43,.22);display:block}
+
+  /* ---- 入口 / 經銷自助 ---- */
+  .gate{text-align:center;padding:60px 20px;color:var(--mut);max-width:540px;margin:0 auto}
+  code{background:var(--sunken);border:1px solid var(--line);border-radius:6px;padding:2px 6px;
+    font-size:13px;color:var(--brand-d);word-break:break-all}
+  #uidbox{user-select:all;background:var(--surface);border:1px dashed var(--line2);border-radius:10px;
+    padding:12px;font-size:13px;word-break:break-all;margin:12px 0}
+  .mine{max-width:660px;margin:0 auto}
+
+  /* ---- 入口登入 / 查詢卡 ---- */
+  .gatecard{max-width:390px;margin:36px auto 0;background:var(--surface);border:1px solid var(--line);
+    border-radius:18px;padding:30px 26px;box-shadow:var(--sh);text-align:center}
+  .glogo{display:grid;place-items:center;width:58px;height:58px;border-radius:16px;margin:0 auto 18px;
+    background:var(--brand-soft);border:1px solid var(--line)}
+  .gatecard .gt{font-size:19px;font-weight:800;color:var(--ink)}
+  .gatecard .gs{font-size:13px;color:var(--mut);margin:6px 0 20px;line-height:1.55}
+  .gatecard input{text-align:center;font-size:17px;letter-spacing:.02em}
+  .gatecard .btnP{margin-top:14px}
+  .gswitch{margin-top:20px;font-size:13px;color:var(--brand-d);font-weight:700;cursor:pointer;display:inline-block}
+  .gswitch:hover{text-decoration:underline}
+  .gatecard .msg{text-align:left}
+  .logout{color:var(--brand-d);font-weight:700;text-decoration:none}
+  .logout:hover{text-decoration:underline}
   .hide{display:none!important}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>🪵 棧板管理</h1>
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="6" width="18" height="4" rx="1"/>
+          <rect x="3" y="14" width="18" height="4" rx="1"/>
+          <path d="M6.5 10v4M12 10v4M17.5 10v4"/>
+        </svg>
+      </span>
+      <div class="bt"><b>棧板管理系統</b><i>有機肥料部 · 物流結算</i></div>
+    </div>
     <div class="who" id="who"></div>
   </header>
 
-  <div id="gate">載入中…</div>
+  <div id="gate" class="gate">載入中…</div>
 
-  <div id="app" class="hide">
-    <div class="tabs" id="tabs">
-      <button data-tab="rec" class="on">📥 記錄</button>
-      <button data-tab="qry">📊 查詢</button>
-      <button data-tab="set" class="hide">📄 月結算</button>
-    </div>
+  <div id="app" class="app hide">
+    <nav class="tabs" id="tabs">
+      <button data-tab="rec" class="on">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span>記錄</span>
+      </button>
+      <button data-tab="qry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M9 19v-7M14 19V9M19 19v-4"/></svg>
+        <span>查詢</span>
+      </button>
+      <button data-tab="set" class="hide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7zM14 3v4h4M9.5 13h5M9.5 17h5"/></svg>
+        <span>月結算</span>
+      </button>
+    </nav>
 
-    <!-- 記錄 -->
-    <section id="rec" class="card">
-      <label class="fld">場</label>
-      <select id="site"></select>
+    <div class="panels">
+      <!-- 記錄 -->
+      <section id="rec" class="card">
+        <h2 class="ctitle">登記棧板進出</h2>
+        <p class="csub">選擇場別與客戶，現場簽名並附上單據照片。</p>
 
-      <div id="custWrap">
-        <label class="fld">客戶</label>
-        <select id="cust"></select>
-      </div>
+        <label class="fld">場</label>
+        <select id="site"></select>
 
-      <label class="fld">棧板別</label>
-      <div class="seg" id="ptype">
-        <button data-v="大" class="on">大棧板 $<span id="p大">500</span></button>
-        <button data-v="小">小棧板 $<span id="p小">168</span></button>
-      </div>
+        <div id="custWrap">
+          <label class="fld">客戶</label>
+          <select id="cust"></select>
+        </div>
 
-      <label class="fld">動作</label>
-      <div class="seg act" id="pact"></div>
+        <label class="fld">棧板別</label>
+        <div class="seg" id="ptype">
+          <button data-v="大" class="on">大棧板 $<span id="p大">500</span></button>
+          <button data-v="小">小棧板 $<span id="p小">168</span></button>
+        </div>
 
-      <label class="fld">數量</label>
-      <div class="qtyrow">
-        <button type="button" id="minus">−</button>
-        <input type="number" id="qty" value="1" min="1" inputmode="numeric">
-        <button type="button" id="plus">＋</button>
-      </div>
+        <label class="fld">動作</label>
+        <div class="seg act" id="pact"></div>
 
-      <label class="fld">簽收 — 現場簽名</label>
-      <canvas class="sign" id="sign"></canvas>
-      <div class="row2" style="margin-top:6px">
-        <button type="button" class="btnG" id="clearSign">清除簽名</button>
-        <label class="btnG" style="text-align:center">
-          📷 拍/選單據<input type="file" id="photo" accept="image/*" capture="environment" class="hide">
-        </label>
-      </div>
-      <div class="sub" id="photoName"></div>
+        <label class="fld">數量</label>
+        <div class="qtyrow">
+          <button type="button" id="minus">−</button>
+          <input type="number" id="qty" value="1" min="1" inputmode="numeric">
+          <button type="button" id="plus">＋</button>
+        </div>
 
-      <label class="fld">備註（可空）</label>
-      <input type="text" id="note" placeholder="例：補單、半板…">
+        <button type="button" class="btnG" id="addItem" style="width:100%;margin-top:12px">＋ 加入清單（可再加大／小、送出／歸還）</button>
+        <div id="itemList" class="hide"></div>
 
-      <button class="btnP" id="submit">送出記錄</button>
-      <div class="msg" id="recMsg"></div>
-    </section>
+        <label class="fld">簽收 — 現場簽名</label>
+        <canvas class="sign" id="sign"></canvas>
+        <div class="row2" style="margin-top:8px">
+          <button type="button" class="btnG" id="clearSign">清除簽名</button>
+          <label class="btnG">
+            📷 拍/選單據<input type="file" id="photo" accept="image/*" capture="environment" class="hide">
+          </label>
+        </div>
+        <div class="sub" id="photoName"></div>
 
-    <!-- 查詢 -->
-    <section id="qry" class="card hide">
-      <div class="big" style="margin-bottom:10px">全部門目前持有（新購−報廢）</div>
-      <div class="tot" id="deptTot"></div>
-      <div class="big" style="margin-bottom:6px">各客戶手上未歸還</div>
-      <table>
-        <thead><tr><th>客戶</th><th>大棧板</th><th>小棧板</th></tr></thead>
-        <tbody id="balBody"></tbody>
-      </table>
-      <button type="button" class="btnG" id="refresh" style="margin-top:14px;width:100%">🔄 重新整理</button>
-    </section>
+        <label class="fld">備註（可空）</label>
+        <input type="text" id="note" placeholder="例：補單、半板…">
 
-    <!-- 月結算 -->
-    <section id="set" class="card hide">
-      <label class="fld">結算月份</label>
-      <div class="row2">
-        <input type="month" id="setMonth">
-        <button type="button" class="btnG" id="setQuery">查詢明細</button>
-      </div>
+        <button class="btnP" id="submit">送出記錄</button>
+        <div class="msg" id="recMsg"></div>
+      </section>
 
-      <div id="setSummary" class="tot" style="margin-top:14px"></div>
-
-      <div style="overflow-x:auto">
-        <table id="setTable" class="hide">
-          <thead><tr>
-            <th>客戶</th><th>送出<br>大/小</th><th>歸還<br>大/小</th>
-            <th>本月金額</th><th>類別</th><th>期末<br>未還</th>
-          </tr></thead>
-          <tbody id="setBody"></tbody>
+      <!-- 查詢 -->
+      <section id="qry" class="card hide">
+        <h2 class="ctitle">庫存與客戶結餘</h2>
+        <p class="csub">全部門目前持有（新購 − 報廢）。</p>
+        <div class="tot" id="deptTot"></div>
+        <div class="big" style="margin:4px 0 8px;font-weight:700">各客戶手上未歸還</div>
+        <table>
+          <thead><tr><th>客戶</th><th>大棧板</th><th>小棧板</th></tr></thead>
+          <tbody id="balBody"></tbody>
         </table>
-      </div>
+        <button type="button" class="btnG" id="refresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
+      </section>
 
-      <button class="btnP" id="genExcel" style="margin-top:16px">📄 產生 Excel 存到雲端硬碟</button>
-      <div class="msg" id="setMsg"></div>
+      <!-- 月結算 -->
+      <section id="set" class="card hide">
+        <h2 class="ctitle">月結算</h2>
+        <p class="csub">選擇月份後查詢明細，並可產出 Excel 報表存到雲端硬碟。</p>
 
-      <div class="big" style="margin:20px 0 6px">📂 歷史報表（存在你的 Google Drive）</div>
-      <div id="reportList" class="big">—</div>
-    </section>
+        <label class="fld">結算月份</label>
+        <div class="row2">
+          <input type="month" id="setMonth">
+          <button type="button" class="btnG" id="setQuery">查詢明細</button>
+        </div>
+
+        <div id="setSummary" class="tot" style="margin-top:16px"></div>
+
+        <div style="overflow-x:auto">
+          <table id="setTable" class="hide">
+            <thead><tr>
+              <th>客戶</th><th>送出<br>大/小</th><th>歸還<br>大/小</th>
+              <th>本月金額</th><th>類別</th><th>期末<br>未還</th>
+            </tr></thead>
+            <tbody id="setBody"></tbody>
+          </table>
+        </div>
+
+        <button class="btnP" id="genExcel">📄 產生 Excel 存到雲端硬碟</button>
+        <div class="msg" id="setMsg"></div>
+
+        <div class="big" style="margin:22px 0 8px;font-weight:700">📂 歷史報表（存在你的 Google Drive）</div>
+        <div id="reportList" class="big">—</div>
+      </section>
+    </div>
   </div>
 
   <!-- 經銷客戶自助（獨立畫面，不顯示分頁列） -->
-  <div id="mineView" class="hide">
+  <div id="mineView" class="mine hide">
     <div class="card" style="text-align:center">
       <div class="big" id="mineName">—</div>
-      <div class="tot" style="margin-top:12px">
+      <div class="tot" style="margin-top:14px">
         <div class="b"><div class="n pos" id="mineBig">0</div><div class="l">大棧板未還</div></div>
         <div class="b"><div class="n pos" id="mineSmall">0</div><div class="l">小棧板未還</div></div>
       </div>
-      <div class="big" id="mineAmt" style="margin-top:4px"></div>
+      <div class="big" id="mineAmt" style="margin-top:6px"></div>
     </div>
     <div class="card">
-      <div class="big" style="margin-bottom:8px">📋 進出明細（新到舊）</div>
+      <div class="big" style="margin-bottom:10px;font-weight:700">📋 進出明細（新到舊）</div>
       <div id="mineHist" class="big">載入中…</div>
-      <button type="button" class="btnG" id="mineRefresh" style="margin-top:12px;width:100%">🔄 重新整理</button>
+      <button type="button" class="btnG" id="mineRefresh" style="margin-top:14px;width:100%">🔄 重新整理</button>
     </div>
   </div>
 </div>
@@ -195,31 +326,96 @@ function post(body){
     body:JSON.stringify(body)}).then(function(r){return r.json();});
 }
 
-/* ---- 啟動：用網址 ?k=代碼 辨識身分 ---- */
+/* ---- 啟動：?k=代碼 或 記住的代碼 辨識身分；?mode=look 為客戶查詢 ---- */
 function getCode(){
   var m = location.search.match(/[?&]k=([^&]+)/);
   return m ? decodeURIComponent(m[1]) : "";
 }
+function getMode(){
+  var m = location.search.match(/[?&]mode=([^&]+)/);
+  return m ? decodeURIComponent(m[1]) : "";
+}
 (async function(){
   try{
-    var code = getCode();
-    if(!code){ showGate(); return; }
+    var urlCode = getCode();
+    if(getMode()==="look" && !urlCode){ showGate("look"); return; }
+    var code = urlCode || localStorage.getItem("pallet_code") || "";
+    if(!code){ showGate("staff"); return; }
     ME = await api({action:"me", uid:code});
     ME.uid = code;
-    if(!ME.known){ showGate(); return; }
+    if(!ME.known){ localStorage.removeItem("pallet_code"); showGate("staff"); return; }
+    localStorage.setItem("pallet_code", code);
     boot();
   }catch(err){
     $("#gate").innerHTML = "啟動失敗：" + err;
   }
 })();
 
-function showGate(){
-  var base = location.origin + location.pathname;
-  $("#gate").innerHTML =
-    '<p>無法辨識身分。</p>'+
-    '<p>請用管理員給你的<b>專屬連結</b>開啟（網址結尾要有 <code>?k=你的代碼</code>）。</p>'+
-    '<p style="font-size:13px;color:var(--mut)">管理員：到 Google Sheets「角色」分頁新增一列代碼，再把連結<br>'+
-    '<code>'+base+'?k=代碼</code><br>傳給對方即可。</p>';
+function logout(e){
+  if(e) e.preventDefault();
+  localStorage.removeItem("pallet_code");
+  location.href = location.origin + location.pathname;
+}
+
+function showGate(mode){
+  $("#app").classList.add("hide");
+  $("#mineView").classList.add("hide");
+  var g = $("#gate"); g.classList.remove("hide");
+  g.innerHTML =
+    '<div class="gatecard">'+
+      '<div class="glogo"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="4" rx="1"/><rect x="3" y="14" width="18" height="4" rx="1"/><path d="M6.5 10v4M12 10v4M17.5 10v4"/></svg></div>'+
+      '<div id="gStaff" class="'+(mode==="look"?"hide":"")+'">'+
+        '<div class="gt">員工登入</div>'+
+        '<div class="gs">輸入管理員給你的代碼<br>（現場 / 做帳 / 管理者）</div>'+
+        '<input id="gCode" type="text" placeholder="例如 mh-7k2、adm-xxxxxx" autocomplete="off" autocapitalize="off">'+
+        '<button class="btnP" id="gLogin">登入</button>'+
+        '<div class="gswitch" id="toLook">我要查詢客戶棧板 →</div>'+
+      '</div>'+
+      '<div id="gLook" class="'+(mode==="look"?"":"hide")+'">'+
+        '<div class="gt">查詢客戶棧板明細</div>'+
+        '<div class="gs">輸入客戶代號<br>查該客戶未還數量與進出明細</div>'+
+        '<input id="gCust" type="text" placeholder="例如 3B1169A100" autocomplete="off" autocapitalize="characters">'+
+        '<button class="btnP" id="gLookBtn">查詢</button>'+
+        '<div class="gswitch" id="toStaff">← 我是員工要登入</div>'+
+      '</div>'+
+      '<div class="msg" id="gMsg"></div>'+
+    '</div>';
+  $("#gLogin").onclick = doLogin;
+  $("#gCode").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
+  $("#gLookBtn").onclick = doLookup;
+  $("#gCust").addEventListener("keydown", function(e){ if(e.key==="Enter") doLookup(); });
+  $("#toLook").onclick = function(){ $("#gStaff").classList.add("hide"); $("#gLook").classList.remove("hide"); $("#gMsg").className="msg"; };
+  $("#toStaff").onclick = function(){ $("#gLook").classList.add("hide"); $("#gStaff").classList.remove("hide"); $("#gMsg").className="msg"; };
+}
+async function doLogin(){
+  var code = $("#gCode").value.trim(), m = $("#gMsg"); m.className="msg";
+  if(!code){ m.className="msg err"; m.textContent="請輸入代碼"; return; }
+  try{
+    ME = await api({action:"me", uid:code}); ME.uid = code;
+    if(!ME.known){ m.className="msg err"; m.textContent="查無此代碼，請洽管理員"; return; }
+    localStorage.setItem("pallet_code", code);
+    $("#gate").classList.add("hide"); $("#gate").innerHTML="";
+    boot();
+  }catch(err){ m.className="msg err"; m.textContent="登入失敗："+err; }
+}
+var lookCust = "";
+async function doLookup(){
+  var cust = $("#gCust").value.trim().toUpperCase(), m = $("#gMsg"); m.className="msg";
+  if(!cust){ m.className="msg err"; m.textContent="請輸入客戶代號"; return; }
+  try{
+    var r = await api({action:"lookup", cust:cust});
+    if(!r.ok){ m.className="msg err"; m.textContent=r.error; return; }
+    lookCust = cust;
+    $("#gate").classList.add("hide");
+    $("#mineView").classList.remove("hide");
+    $("#mineRefresh").onclick = reLookup;
+    fillMine(r);
+  }catch(err){ m.className="msg err"; m.textContent="查詢失敗："+err; }
+}
+async function reLookup(){
+  if(!lookCust) return;
+  var r = await api({action:"lookup", cust:lookCust});
+  if(r.ok) fillMine(r);
 }
 
 function boot(){
@@ -227,7 +423,8 @@ function boot(){
 
   // 經銷客戶：獨立自助畫面，只看自己這家
   if(ME.role==="經銷"){
-    $("#who").innerHTML='<b>'+ME.name+'</b><br>經銷客戶';
+    $("#who").innerHTML='<b>'+ME.name+'</b><br>經銷客戶 · <a href="#" class="logout" id="logout">登出</a>';
+    $("#logout").onclick=logout;
     $("#mineView").classList.remove("hide");
     $("#mineRefresh").onclick=loadMine;
     loadMine();
@@ -235,7 +432,8 @@ function boot(){
   }
 
   $("#app").classList.remove("hide");
-  $("#who").innerHTML = '<b>'+ME.name+'</b><br>'+ME.role+(ME.site?'・'+ME.site:'');
+  $("#who").innerHTML = '<b>'+ME.name+'</b><br>'+ME.role+(ME.site?'・'+ME.site:'')+' · <a href="#" class="logout" id="logout">登出</a>';
+  $("#logout").onclick=logout;
   $("#p大").textContent = ME.prices["大"];
   $("#p小").textContent = ME.prices["小"];
 
@@ -283,6 +481,7 @@ function switchTab(t){
 
 /* ---- UI 綁定 ---- */
 var sel = {ptype:"大", pact:"送出"};
+var items = [];   // 本次清單（一次送出多筆）
 function bindUI(){
   document.querySelectorAll("#tabs button").forEach(function(b){
     b.onclick=function(){switchTab(b.dataset.tab);};});
@@ -290,6 +489,7 @@ function bindUI(){
   segBind("#pact","pact",toggleCust);
   $("#minus").onclick=function(){stepQty(-1);};
   $("#plus").onclick=function(){stepQty(1);};
+  $("#addItem").onclick=addItem;
   $("#photo").onchange=onPhoto;
   $("#clearSign").onclick=clearSign;
   $("#submit").onclick=submit;
@@ -297,6 +497,37 @@ function bindUI(){
   $("#setQuery").onclick=loadSettlement;
   $("#genExcel").onclick=genReport;
   toggleCust();
+}
+
+/* ---- 本次清單 ---- */
+function anyCustAct(){
+  if(sel.pact==="送出"||sel.pact==="歸還") return true;
+  return items.some(function(it){return it.動作==="送出"||it.動作==="歸還";});
+}
+function addItem(){
+  var q=parseInt($("#qty").value,10)||0;
+  var m=$("#recMsg");
+  if(q<=0){ m.className="msg err"; m.textContent="數量需大於 0"; return; }
+  items.push({棧板別:sel.ptype, 動作:sel.pact, 數量:q});
+  $("#qty").value=1; m.className="msg";
+  renderItems(); toggleCust();
+}
+function renderItems(){
+  var box=$("#itemList");
+  if(!items.length){ box.innerHTML=""; box.classList.add("hide"); return; }
+  box.classList.remove("hide");
+  box.innerHTML='<div class="big" style="font-weight:700;margin:14px 0 8px">本次清單（'+items.length+' 筆，共用下方簽名與照片）</div>'+
+    items.map(function(it,i){
+      var out=(it.動作==="送出"||it.動作==="報廢");
+      return '<div class="litem">'+
+        '<span class="lt '+(out?"out":"in")+'">'+it.動作+'</span>'+
+        '<span class="lb">'+it.棧板別+'棧板</span>'+
+        '<span class="lq">×'+it.數量+'</span>'+
+        '<button type="button" class="lx" data-i="'+i+'">✕</button></div>';
+    }).join("");
+  box.querySelectorAll(".lx").forEach(function(b){
+    b.onclick=function(){ items.splice(parseInt(b.dataset.i,10),1); renderItems(); toggleCust(); };
+  });
 }
 function segBind(box,key,after){
   document.querySelectorAll(box+" button").forEach(function(b){
@@ -306,8 +537,8 @@ function segBind(box,key,after){
     };});
 }
 function toggleCust(){
-  var deptAct = (sel.pact==="報廢"||sel.pact==="新購");
-  $("#custWrap").classList.toggle("hide", deptAct);
+  // 只要目前選的或清單裡有 送出／歸還，就要顯示客戶
+  $("#custWrap").classList.toggle("hide", !anyCustAct());
 }
 function stepQty(d){
   var q=$("#qty"); q.value=Math.max(1,(parseInt(q.value,10)||1)+d);
@@ -357,23 +588,30 @@ function onPhoto(e){
 async function submit(){
   var btn=$("#submit"), msg=$("#recMsg");
   msg.className="msg";
-  var deptAct=(sel.pact==="報廢"||sel.pact==="新購");
+  // 沒有按「加入清單」時，就把目前畫面這一筆當成一筆送出
+  var list=items.slice();
+  if(!list.length){
+    list.push({棧板別:sel.ptype, 動作:sel.pact, 數量:parseInt($("#qty").value,10)||0});
+  }
+  for(var i=0;i<list.length;i++){
+    if(!(list[i].數量>0)){msg.className="msg err";msg.textContent="數量需大於 0";return;}
+  }
+  var needCust=list.some(function(it){return it.動作==="送出"||it.動作==="歸還";});
   var payload={
     action:"record", uid:ME.uid,
-    場:$("#site").value, 客戶編號:deptAct?"":$("#cust").value,
-    棧板別:sel.ptype, 動作:sel.pact,
-    數量:parseInt($("#qty").value,10)||0,
+    場:$("#site").value, 客戶編號:needCust?$("#cust").value:"",
+    items:list,
     簽名:signData(), 照片:photoData, 備註:$("#note").value.trim()
   };
-  if(payload.數量<=0){msg.className="msg err";msg.textContent="數量需大於 0";return;}
   btn.disabled=true; btn.textContent="送出中…";
   try{
     var r=await post(payload);
     if(r.ok){
       msg.className="msg ok";
-      msg.textContent="✅ 已記錄（單號 "+r.單號+"）";
+      msg.textContent="✅ 已記錄 "+(r.筆數||1)+" 筆（單號 "+r.單號+"）";
+      items=[]; renderItems();
       $("#qty").value=1; clearSign(); photoData=""; $("#photoName").textContent="";
-      $("#note").value="";
+      $("#note").value=""; toggleCust();
     }else{ msg.className="msg err"; msg.textContent="⚠ "+r.error; }
   }catch(err){ msg.className="msg err"; msg.textContent="送出失敗："+err; }
   btn.disabled=false; btn.textContent="送出記錄";
@@ -448,17 +686,21 @@ async function loadReports(){
   }).join("");
 }
 
-/* ---- 經銷客戶自助 ---- */
+/* ---- 經銷客戶自助 / 客戶代號查詢 共用 ---- */
 async function loadMine(){
   var h=$("#mineHist"); h.textContent="載入中…";
   var r=await api({action:"mine", uid:ME.uid});
   if(!r.ok){ $("#mineName").textContent=r.error; h.textContent="—"; return; }
-  $("#mineName").innerHTML='<b style="font-size:18px;color:#1d2521">'+r.客戶+'</b>　目前手上未歸還';
+  fillMine(r);
+}
+function fillMine(r){
+  $("#mineName").innerHTML='<b style="font-size:18px;color:#241f18">'+r.客戶+'</b>　目前手上未歸還';
   $("#mineBig").textContent=r.結餘.大;
   $("#mineSmall").textContent=r.結餘.小;
   $("#mineAmt").innerHTML=r.未還金額>0
     ? '未歸還估計金額 <b style="color:#c0392b">$'+r.未還金額+'</b>（月底未還將計價）'
     : '✅ 目前無未歸還';
+  var h=$("#mineHist");
   if(!r.歷史.length){ h.textContent="（尚無進出紀錄）"; return; }
   h.innerHTML=r.歷史.map(function(x){
     var color=x.動作==="送出"?"#c0392b":"#256e3d";
