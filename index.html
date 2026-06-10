@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>棧板管理系統</title>
-<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root{--g:#2f8f4e;--g2:#256e3d;--bg:#f3f5f4;--line:#e3e7e5;--ink:#1d2521;--mut:#6b766f;--red:#c0392b}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -178,10 +177,9 @@
 </div>
 
 <script>
-/* ====== 設定（部署後填這兩個） ====== */
-var LIFF_ID  = "在這裡貼_LIFF_ID";
+/* ====== 設定 ====== */
 var GAS_URL  = "https://script.google.com/macros/s/AKfycbyOOX6lyw9VkAl9jqekWNN4hymoHvy4L1WUTTY6qtEkczP3nCETdCubNijmRZst66PHdQ/exec";
-/* ==================================== */
+/* ================== */
 
 var ME = null;
 
@@ -197,27 +195,31 @@ function post(body){
     body:JSON.stringify(body)}).then(function(r){return r.json();});
 }
 
-/* ---- 啟動 ---- */
+/* ---- 啟動：用網址 ?k=代碼 辨識身分 ---- */
+function getCode(){
+  var m = location.search.match(/[?&]k=([^&]+)/);
+  return m ? decodeURIComponent(m[1]) : "";
+}
 (async function(){
   try{
-    await liff.init({liffId:LIFF_ID});
-    if(!liff.isLoggedIn()){ liff.login(); return; }
-    var p = await liff.getProfile();
-    ME = await api({action:"me", uid:p.userId});
-    ME.uid = p.userId; ME.displayName = p.displayName;
-    if(!ME.known){ showGate(p); return; }
+    var code = getCode();
+    if(!code){ showGate(); return; }
+    ME = await api({action:"me", uid:code});
+    ME.uid = code;
+    if(!ME.known){ showGate(); return; }
     boot();
   }catch(err){
     $("#gate").innerHTML = "啟動失敗：" + err;
   }
 })();
 
-function showGate(p){
+function showGate(){
+  var base = location.origin + location.pathname;
   $("#gate").innerHTML =
-    '<p>你好，<b>'+p.displayName+'</b></p>'+
-    '<p>這個帳號還沒有被授權使用棧板系統。<br>請把下面這串 ID 傳給管理員加入名單：</p>'+
-    '<div id="uidbox">'+p.userId+'</div>'+
-    '<p style="font-size:13px">（管理員：貼到 Google Sheets「角色」分頁）</p>';
+    '<p>無法辨識身分。</p>'+
+    '<p>請用管理員給你的<b>專屬連結</b>開啟（網址結尾要有 <code>?k=你的代碼</code>）。</p>'+
+    '<p style="font-size:13px;color:var(--mut)">管理員：到 Google Sheets「角色」分頁新增一列代碼，再把連結<br>'+
+    '<code>'+base+'?k=代碼</code><br>傳給對方即可。</p>';
 }
 
 function boot(){
