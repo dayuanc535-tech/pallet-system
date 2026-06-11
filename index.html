@@ -831,6 +831,11 @@
               </div>
               <label class="fld">備註</label>
               <input type="text" id="txnNote" placeholder="（可空白）" style="width:100%">
+              <label class="fld">簽收單（可選）</label>
+              <label class="btnG" style="display:block;text-align:center;padding:14px">
+                📷 拍照 / 選擇簽收單<input type="file" id="txnPhoto" accept="image/*" capture="environment" class="hide">
+              </label>
+              <div id="txnPhotoPv" class="hide" style="margin-top:8px"></div>
               <div id="txnWhenConfirm" style="margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:var(--brand-soft);color:var(--brand-d);font-weight:700;text-align:center"></div>
               <button type="button" class="btnG" id="txAddBtn" style="margin-top:4px;width:100%">確認補登</button>
             </div>
@@ -1202,6 +1207,7 @@ function txMgrInit(){
     txInited=true;
     if($("#txQuery")) $("#txQuery").onclick=loadTxList;
     if($("#txAddBtn")) $("#txAddBtn").onclick=addTxRow;
+    if($("#txnPhoto")) $("#txnPhoto").onchange=txnOnPhoto;
   }
 }
 function txCustOptions(cur){
@@ -1251,6 +1257,7 @@ function txCard(x){
     '<div class="erow"><span class="elab">場 / 動作</span>'+
       '<b style="color:'+color+'">'+esc(x.場||"—")+'　'+esc(x.動作)+' '+esc(x.棧板別)+'×'+x.數量+'</b></div>'+
     (x.備註?'<div class="erow"><span class="elab">備註</span><b>'+esc(x.備註)+'</b></div>':'')+
+    (x.附件?'<div class="erow"><span class="elab">簽收單</span><a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">📷 檢視</a></div>':'')+
     '<div style="display:flex;gap:8px;margin-top:8px">'+
       '<button type="button" class="btnG" style="flex:1" onclick="editTxRow('+x.row+')">✏️ 修改</button>'+
       '<button type="button" class="btnG" style="flex:1" onclick="delTxRow('+x.row+')">🗑️ 刪除</button>'+
@@ -1296,18 +1303,31 @@ async function delTxRow(row){
   if(r.ok){ if(m){ m.className="msg ok"; m.textContent="✅ 已刪除"; } loadTxList(); }
   else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
 }
+var txnPhotoData="";
+function txnOnPhoto(e){
+  var f=e.target.files[0]; if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){ txnPhotoData=rd.result;
+    $("#txnPhotoPv").classList.remove("hide");
+    $("#txnPhotoPv").innerHTML='<img src="'+rd.result+'" style="max-width:100%;border-radius:10px;border:1px solid var(--line)">';
+  };
+  rd.readAsDataURL(f);
+}
 async function addTxRow(){
   var m=$("#txMsg");
   var act=$("#txnAct").value;
   var dept=(act==="報廢"||act==="新購"||act==="無流通");
   var cust=$("#txnCust").value;
   if(!dept && !cust){ if(m){ m.className="msg err"; m.textContent="⚠ 請選擇客戶"; } return; }
+  var btn=$("#txAddBtn"); if(btn){ btn.disabled=true; btn.textContent="補登中…"; }
   var r=await post({action:"txAnyAdd", uid:ME.uid,
     時間:$("#txnWhen").value, 場:$("#txnSite").value, 動作:act,
-    客戶編號:cust, 棧板別:$("#txnType").value, 數量:$("#txnQty").value, 備註:$("#txnNote").value});
+    客戶編號:cust, 棧板別:$("#txnType").value, 數量:$("#txnQty").value, 備註:$("#txnNote").value, 照片:txnPhotoData});
+  if(btn){ btn.disabled=false; btn.textContent="確認補登"; }
   if(r.ok){
     if(m){ m.className="msg ok"; m.textContent="✅ 已補登一筆"; }
     $("#txnQty").value="1"; $("#txnNote").value=""; $("#txnWhen").value=fmtNowLocal();
+    txnPhotoData=""; $("#txnPhoto").value=""; $("#txnPhotoPv").classList.add("hide"); $("#txnPhotoPv").innerHTML="";
     txnWhenConfirm();
     loadTxList();
   }else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
