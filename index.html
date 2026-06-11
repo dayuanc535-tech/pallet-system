@@ -270,6 +270,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M9 19v-7M14 19V9M19 19v-4"/></svg>
         <span>查詢</span>
       </button>
+      <button data-tab="look" class="hide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>明細查詢</span>
+      </button>
       <button data-tab="set" class="hide">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7zM14 3v4h4M9.5 13h5M9.5 17h5"/></svg>
         <span>月結算</span>
@@ -445,6 +449,11 @@
         <h2 class="ctitle">回報棧板進出</h2>
         <p class="csub" id="repSub">點選客戶 → 填進／出數量 → 拍簽收單 → 送出。今日若無流通請按最下方按鈕。</p>
 
+        <div id="repSiteWrap" class="hide">
+          <label class="fld">場別</label>
+          <select id="repSite"></select>
+        </div>
+
         <label class="fld">選擇客戶</label>
         <div id="repCusts" class="custgrid"></div>
 
@@ -490,6 +499,15 @@
           <tbody id="balBody"></tbody>
         </table>
         <button type="button" class="btnG" id="refresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
+      </section>
+
+      <!-- 明細查詢（依客戶＋月份） -->
+      <section id="lookpick" class="card hide">
+        <h2 class="ctitle">查詢棧板明細</h2>
+        <p class="csub">選客戶查該月各場進出、折讓／應收，並可輸出對帳單 PDF。</p>
+        <label class="fld">客戶</label>
+        <select id="lkCustSel"></select>
+        <button type="button" class="btnP" id="lkGo" style="margin-top:14px">🔍 查詢明細</button>
       </section>
 
       <!-- 月結算 -->
@@ -687,6 +705,7 @@ async function doLookup(){
   try{
     var r = await api({action:"statement", cust:cust});
     if(!r.ok){ m.className="msg err"; m.textContent=r.error; return; }
+    lookReturn="gate";
     openLook(cust);
   }catch(err){ m.className="msg err"; m.textContent="查詢失敗："+err; }
 }
@@ -736,12 +755,18 @@ function boot(){
     $("[data-tab=set]").classList.remove("hide");
     var d=new Date(); $("#setMonth").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2);
   }
-  // 管理員：客戶主檔 + 儀表板（並以儀表板為首頁）
+  // 管理員：客戶主檔 + 儀表板（並以儀表板為首頁）＋ 回報 ＋ 明細查詢
   if(ME.role==="管理員"){
     $("[data-tab=cust]").classList.remove("hide");
     $("[data-tab=dash]").classList.remove("hide");
+    $("[data-tab=report]").classList.remove("hide");
+    $("[data-tab=look]").classList.remove("hide");
+    buildReport();
     $("#dCustSel").innerHTML = ME.customers.map(function(c){
       return '<option value="'+c.編號+'">'+esc(c.名稱)+'</option>';}).join("");
+    $("#lkCustSel").innerHTML = ME.customers.map(function(c){
+      return '<option value="'+c.編號+'">'+esc(c.名稱)+'</option>';}).join("");
+    $("#lkGo").onclick=function(){ var v=$("#lkCustSel").value; if(v){ lookReturn="app"; openLook(v); } };
     setDateRange("month");
   }
   // 做帳只看查詢/結算，沒有記錄
@@ -772,6 +797,7 @@ function switchTab(t){
   $("#rec").classList.toggle("hide", t!=="rec");
   $("#report").classList.toggle("hide", t!=="report");
   $("#qry").classList.toggle("hide", t!=="qry");
+  $("#lookpick").classList.toggle("hide", t!=="look");
   $("#set").classList.toggle("hide", t!=="set");
   $("#custmgr").classList.toggle("hide", t!=="cust");
   if(t==="dash") loadDashboard();
@@ -1315,6 +1341,10 @@ async function loadLoan(){
 /* ---- 現場回報（大字） ---- */
 var REP={cust:"",name:"",q:{out大:0,out小:0,in大:0,in小:0},photo:""};
 function buildReport(){
+  if(ME.role==="管理員"){
+    $("#repSite").innerHTML=(ME.sites||[]).map(function(s){return '<option>'+s+'</option>';}).join("");
+    $("#repSiteWrap").classList.remove("hide");
+  }
   $("#repCusts").innerHTML=ME.customers.map(function(c){
     return '<button type="button" data-id="'+c.編號+'">'+esc(c.名稱)+'</button>';}).join("");
   document.querySelectorAll("#repCusts button").forEach(function(b){
@@ -1361,9 +1391,10 @@ async function repSubmit(){
   if(REP.q.in大>0)  items.push({動作:"歸還",棧板別:"大",數量:REP.q.in大});
   if(REP.q.in小>0)  items.push({動作:"歸還",棧板別:"小",數量:REP.q.in小});
   if(!items.length){ m.className="msg err"; m.textContent="請至少填一個數量"; return; }
+  var site=(ME.role==="管理員" && $("#repSite"))?$("#repSite").value:undefined;
   var btn=$("#repSubmit"); btn.disabled=true; btn.textContent="送出中…";
   try{
-    var r=await post({action:"record",uid:ME.uid,客戶編號:REP.cust,items:items,照片:REP.photo});
+    var r=await post({action:"record",uid:ME.uid,客戶編號:REP.cust,items:items,照片:REP.photo,場:site});
     if(r.ok){ m.className="msg ok"; m.textContent="✅ 已回報 "+REP.name+"（"+r.筆數+" 筆）"; repReset(); loadRepToday(); }
     else { m.className="msg err"; m.textContent="⚠ "+r.error; }
   }catch(err){ m.className="msg err"; m.textContent="送出失敗："+err; }
@@ -1372,7 +1403,8 @@ async function repSubmit(){
 async function repNoFlow(){
   if(!confirm("確定回報「今日無棧板流通」？")) return;
   var m=$("#repMsg");
-  var r=await post({action:"noFlow",uid:ME.uid});
+  var site=(ME.role==="管理員" && $("#repSite"))?$("#repSite").value:undefined;
+  var r=await post({action:"noFlow",uid:ME.uid,場:site});
   if(r.ok){ m.className="msg ok"; m.textContent="✅ 已記錄今日無流通"; loadRepToday(); }
   else { m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
 }
@@ -1395,15 +1427,20 @@ async function loadRepToday(){
 
 /* ---- 客戶代號查詢（月份＋對帳 PDF） ---- */
 var LOOK="";
+var lookReturn="gate";   // "gate"＝從入口查詢；"app"＝管理員在系統內查詢
 function openLook(cust){
   LOOK=cust;
-  $("#gate").classList.add("hide"); $("#gate").innerHTML="";
   $("#mineView").classList.add("hide");
+  if(lookReturn==="app"){ var app=$("#app"); if(app) app.classList.add("hide"); }
+  else { $("#gate").classList.add("hide"); $("#gate").innerHTML=""; }
   $("#lookView").classList.remove("hide");
   if(!$("#lookMonth").value){ var d=new Date(); $("#lookMonth").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2); }
   $("#lookQuery").onclick=loadStatement;
   $("#lookPdf").onclick=exportPdf;
-  $("#lookExit").onclick=function(e){ e.preventDefault(); $("#lookView").classList.add("hide"); showGate("look"); };
+  $("#lookExit").onclick=function(e){ e.preventDefault(); $("#lookView").classList.add("hide");
+    if(lookReturn==="app"){ var a=$("#app"); if(a) a.classList.remove("hide"); switchTab("look"); }
+    else showGate("look");
+  };
   loadStatement();
 }
 async function loadStatement(){
