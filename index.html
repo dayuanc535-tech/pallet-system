@@ -676,7 +676,7 @@
       <!-- 月結算 -->
       <section id="set" class="card hide">
         <h2 class="ctitle">月結算</h2>
-        <p class="csub">月份與客戶都可複選。按「查詢明細」列出所選範圍，按該列「📄 PDF」產出該客戶該月報表，或產出整月 Excel 存到雲端硬碟。</p>
+        <p class="csub">月份與客戶都可複選。按「查詢明細」列出所選範圍，按該列「📄 PDF」產出該客戶該月報表，或產出整月 Excel。檔案產生後會跳出，可自行選擇分享到 LINE／郵件／檔案或下載。</p>
 
         <label class="fld">結算月份（可複選）</label>
         <div class="multidd" id="ddMonths">
@@ -719,11 +719,8 @@
 
         <div id="setDetail"></div>
 
-        <button class="btnP" id="genExcel">📄 產生 Excel 存到雲端硬碟</button>
+        <button class="btnP" id="genExcel">📄 產生 Excel</button>
         <div class="msg" id="setMsg"></div>
-
-        <div class="big" style="margin:22px 0 8px;font-weight:700">📂 歷史報表（存在你的 Google Drive）</div>
-        <div id="reportList" class="big">—</div>
       </section>
 
       <!-- 客戶及操作人員設定（管理員） -->
@@ -1099,7 +1096,7 @@ function switchTab(t){
   if(t==="dash") loadDashboard();
   if(t==="report") loadRepToday();
   if(t==="qry") loadBalances();
-  if(t==="set"){ loadSettlement(); loadReports(); }
+  if(t==="set"){ loadSettlement(); }
   if(t==="people"){ loadPeople(); loadCustomers(); }
 }
 
@@ -1513,14 +1510,40 @@ function viewImg(e, url){
   $("#imgBox").classList.remove("hide");
 }
 function closeImg(){ $("#imgBox").classList.add("hide"); $("#imgBoxImg").src=""; }
+/* ---- 把產生的檔案「跳出」給裝置：先試系統分享（可選 LINE／郵件／檔案…），不行就直接下載 ---- */
+function _b64ToBlob(b64, mime){
+  var bin=atob(b64), len=bin.length, arr=new Uint8Array(len);
+  for(var i=0;i<len;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr], {type:mime||"application/octet-stream"});
+}
+async function deliverFile(b64, filename, mime){
+  var blob=_b64ToBlob(b64, mime);
+  try{
+    var file=new File([blob], filename, {type:blob.type});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:filename});
+      return "shared";
+    }
+  }catch(e){ if(e && e.name==="AbortError") return "cancel"; }
+  // 退而求其次：直接下載到裝置
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 4000);
+  return "download";
+}
 async function setCustPdf(btn, cust, name, m){
   if(!m) m=curMonth(); if(!m) return;
   var msg=$("#setMsg"); msg.className="msg";
   btn.disabled=true; var orig=btn.textContent; btn.textContent="產生中…";
   try{
     var r=await post({action:"statementPdf", cust:cust, month:m});
-    if(r.ok){ msg.className="msg ok";
-      msg.innerHTML='✅ '+esc(name)+' '+m+' 月報表：<a class="lnk" href="'+r.url+'" target="_blank" rel="noopener">開啟 '+esc(r.檔名)+'</a>'; }
+    if(r.ok){
+      var how=await deliverFile(r.b64, r.檔名, r.mime);
+      msg.className="msg ok";
+      msg.textContent=(how==="cancel"?"已取消分享":"✅ "+esc(name)+" "+m+" 月報表已產生："+r.檔名+"（請選擇分享或開啟）");
+    }
     else { msg.className="msg err"; msg.textContent="⚠ "+r.error; }
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
   btn.disabled=false; btn.textContent=orig;
@@ -1529,32 +1552,21 @@ async function genReport(){
   var months=pickedVals("#setMonths").sort(), btn=$("#genExcel"), msg=$("#setMsg");
   if(!months.length){msg.className="msg err";msg.textContent="請先勾選至少一個月份";return;}
   msg.className="msg"; btn.disabled=true;
-  var links=[], fails=[];
+  var done=[], fails=[];
   try{
     for(var i=0;i<months.length;i++){
       btn.textContent="產生中… "+(i+1)+"/"+months.length+"（約 10 秒/份）";
       var r=await post({action:"genReport", uid:ME.uid, month:months[i]});
-      if(r&&r.ok) links.push('<a href="'+r.url+'" target="_blank" rel="noopener" style="color:#256e3d;font-weight:700">📄 '+r.檔名+'</a>');
+      if(r&&r.ok){ await deliverFile(r.b64, r.檔名, r.mime); done.push(r.檔名); }
       else fails.push(months[i]+"："+((r&&r.error)||"失敗"));
     }
-    if(links.length){
+    if(done.length){
       msg.className="msg ok";
-      msg.innerHTML="✅ 已存到雲端硬碟（"+links.length+" 份）：<br>"+links.join("<br>")+
+      msg.innerHTML="✅ 已產生 "+done.length+" 份（請選擇分享或開啟）：<br>"+esc(done.join("、"))+
         (fails.length?'<br><span style="color:#b41e1e">未產生：'+esc(fails.join("；"))+'</span>':"");
-      loadReports();
     }else{ msg.className="msg err"; msg.textContent="⚠ "+(fails.join("；")||"產生失敗"); }
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
-  btn.disabled=false; btn.textContent="📄 產生 Excel 存到雲端硬碟";
-}
-async function loadReports(){
-  var box=$("#reportList"); box.textContent="載入中…";
-  var r=await api({action:"reports"});
-  if(!r.ok||!r.files.length){ box.textContent="（尚無報表）"; return; }
-  box.innerHTML=r.files.map(function(f){
-    return '<div style="padding:9px 0;border-bottom:1px solid #e3e7e5">'+
-      '<a href="'+f.url+'" target="_blank" rel="noopener" style="color:#256e3d;font-weight:700">📄 '+f.檔名+'</a>'+
-      '<div style="color:#6b766f;font-size:12px">'+f.時間+'</div></div>';
-  }).join("");
+  btn.disabled=false; btn.textContent="📄 產生 Excel";
 }
 
 /* ---- 經銷客戶自助 / 客戶代號查詢 共用 ---- */
@@ -2072,7 +2084,8 @@ async function exportPdf(){
   btn.disabled=true; btn.textContent="產生中…（約 10 秒）";
   try{
     var r=await post({action:"statementPdf",cust:LOOK,month:$("#lookMonth").value});
-    if(r.ok){ m.className="msg ok"; m.innerHTML='✅ <a class="lnk" href="'+r.url+'" target="_blank" rel="noopener">開啟 '+esc(r.檔名)+'</a>'; }
+    if(r.ok){ var how=await deliverFile(r.b64, r.檔名, r.mime);
+      m.className="msg ok"; m.textContent=(how==="cancel"?"已取消分享":"✅ 已產生 "+r.檔名+"（請選擇分享或開啟）"); }
     else { m.className="msg err"; m.textContent="⚠ "+r.error; }
   }catch(err){ m.className="msg err"; m.textContent="產生失敗："+err; }
   btn.disabled=false; btn.textContent="📄 輸出對帳單 PDF";
