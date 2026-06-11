@@ -192,6 +192,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7zM14 3v4h4M9.5 13h5M9.5 17h5"/></svg>
         <span>月結算</span>
       </button>
+      <button data-tab="cust" class="hide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>客戶</span>
+      </button>
     </nav>
 
     <div class="panels">
@@ -251,7 +255,7 @@
         <div class="tot" id="deptTot"></div>
         <div class="big" style="margin:4px 0 8px;font-weight:700">各客戶手上未歸還</div>
         <table>
-          <thead><tr><th>客戶</th><th>大棧板</th><th>小棧板</th></tr></thead>
+          <thead><tr><th>編號</th><th>客戶</th><th>大棧板</th><th>小棧板</th></tr></thead>
           <tbody id="balBody"></tbody>
         </table>
         <button type="button" class="btnG" id="refresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
@@ -285,6 +289,28 @@
 
         <div class="big" style="margin:22px 0 8px;font-weight:700">📂 歷史報表（存在你的 Google Drive）</div>
         <div id="reportList" class="big">—</div>
+      </section>
+
+      <!-- 客戶主檔（管理員） -->
+      <section id="custmgr" class="card hide">
+        <h2 class="ctitle">客戶主檔</h2>
+        <p class="csub">全部客戶（含 0 結餘與停用），可新增與編輯。編號為主鍵不可改。</p>
+
+        <div class="big" style="margin:4px 0 8px;font-weight:700">➕ 新增客戶</div>
+        <div class="row2">
+          <input type="text" id="ncode" placeholder="客戶編號">
+          <input type="text" id="nname" placeholder="客戶名稱">
+        </div>
+        <button type="button" class="btnG" id="addCust" style="margin-top:10px;width:100%">新增</button>
+        <div class="msg" id="custMsg"></div>
+
+        <div style="overflow-x:auto;margin-top:18px">
+          <table>
+            <thead><tr><th>編號</th><th>名稱</th><th>未還<br>大/小</th><th>狀態</th><th></th></tr></thead>
+            <tbody id="custBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btnG" id="custRefresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
       </section>
     </div>
   </div>
@@ -458,6 +484,10 @@ function boot(){
     $("[data-tab=set]").classList.remove("hide");
     var d=new Date(); $("#setMonth").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2);
   }
+  // 管理員可看客戶主檔
+  if(ME.role==="管理員"){
+    $("[data-tab=cust]").classList.remove("hide");
+  }
   // 做帳只看查詢/結算，沒有記錄
   if(ME.role==="做帳"){
     $("#rec").classList.add("hide");
@@ -475,8 +505,10 @@ function switchTab(t){
   $("#rec").classList.toggle("hide", t!=="rec");
   $("#qry").classList.toggle("hide", t!=="qry");
   $("#set").classList.toggle("hide", t!=="set");
+  $("#custmgr").classList.toggle("hide", t!=="cust");
   if(t==="qry") loadBalances();
   if(t==="set"){ loadSettlement(); loadReports(); }
+  if(t==="cust") loadCustomers();
 }
 
 /* ---- UI 綁定 ---- */
@@ -496,6 +528,8 @@ function bindUI(){
   $("#refresh").onclick=loadBalances;
   $("#setQuery").onclick=loadSettlement;
   $("#genExcel").onclick=genReport;
+  $("#addCust").onclick=addCustomer;
+  $("#custRefresh").onclick=loadCustomers;
   toggleCust();
 }
 
@@ -619,16 +653,17 @@ async function submit(){
 
 /* ---- 查詢 ---- */
 async function loadBalances(){
-  $("#balBody").innerHTML='<tr><td colspan="3" style="color:#6b766f">載入中…</td></tr>';
+  $("#balBody").innerHTML='<tr><td colspan="4" style="color:#6b766f">載入中…</td></tr>';
   var r=await api({action:"balances"});
-  if(!r.ok){$("#balBody").innerHTML='<tr><td colspan="3">'+r.error+'</td></tr>';return;}
+  if(!r.ok){$("#balBody").innerHTML='<tr><td colspan="4">'+r.error+'</td></tr>';return;}
   $("#deptTot").innerHTML=
     box("大棧板在庫",r.inStock["大"],"持有"+r.dept["大"])+
     box("小棧板在庫",r.inStock["小"],"持有"+r.dept["小"]);
   if(!r.customers.length){
-    $("#balBody").innerHTML='<tr><td colspan="3" style="color:#6b766f">目前沒有未歸還</td></tr>';return;}
+    $("#balBody").innerHTML='<tr><td colspan="4" style="color:#6b766f">目前沒有未歸還</td></tr>';return;}
   $("#balBody").innerHTML=r.customers.map(function(c){
-    return '<tr><td>'+c.名稱+'</td>'+
+    return '<tr><td style="color:#6b766f;font-variant-numeric:tabular-nums">'+esc(c.編號)+'</td>'+
+      '<td>'+esc(c.名稱)+'</td>'+
       '<td class="'+(c.大>0?'pos':'')+'">'+c.大+'</td>'+
       '<td class="'+(c.小>0?'pos':'')+'">'+c.小+'</td></tr>';}).join("");
 }
@@ -712,6 +747,78 @@ function fillMine(r){
       '<span style="color:#6b766f;font-size:12px;margin-left:auto;text-align:right">'+
         x.時間+'<br>'+(x.場||'')+att+'</span></div>';
   }).join("");
+}
+
+/* ---- 客戶主檔（管理員） ---- */
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});
+}
+var custCache=[];
+async function loadCustomers(){
+  $("#custBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">載入中…</td></tr>';
+  var r=await api({action:"custList", uid:ME.uid});
+  if(!r.ok){$("#custBody").innerHTML='<tr><td colspan="5">'+esc(r.error)+'</td></tr>';return;}
+  custCache=r.customers||[];
+  renderCustomers();
+}
+function renderCustomers(){
+  if(!custCache.length){
+    $("#custBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">尚無客戶</td></tr>';return;}
+  $("#custBody").innerHTML=custCache.map(function(c){
+    var stopped=c.狀態==="停用";
+    var tag=stopped
+      ? '<span style="color:#c0392b;font-weight:700">停用</span>'
+      : '<span style="color:#256e3d">啟用</span>';
+    return '<tr'+(stopped?' style="opacity:.55"':'')+'>'+
+      '<td style="color:#6b766f;font-variant-numeric:tabular-nums">'+esc(c.編號)+'</td>'+
+      '<td>'+esc(c.名稱)+'</td>'+
+      '<td class="'+((c.大>0||c.小>0)?'pos':'')+'">'+c.大+'/'+c.小+'</td>'+
+      '<td>'+tag+'</td>'+
+      '<td><a href="#" style="color:#256e3d;font-weight:700" onclick="editCustomer(\''+esc(c.編號)+'\');return false">編輯</a></td>'+
+      '</tr>';
+  }).join("");
+}
+function editCustomer(id){
+  var c=custCache.filter(function(x){return String(x.編號)===String(id);})[0];
+  if(!c) return;
+  var rows=$("#custBody").querySelectorAll("tr");
+  for(var i=0;i<custCache.length;i++){
+    if(String(custCache[i].編號)===String(id)){
+      rows[i].innerHTML=
+        '<td style="color:#6b766f;font-variant-numeric:tabular-nums">'+esc(c.編號)+'</td>'+
+        '<td><input type="text" id="ename" value="'+esc(c.名稱)+'" style="width:100%"></td>'+
+        '<td class="'+((c.大>0||c.小>0)?'pos':'')+'">'+c.大+'/'+c.小+'</td>'+
+        '<td><select id="estat"><option value="">啟用</option>'+
+          '<option value="停用"'+(c.狀態==="停用"?" selected":"")+'>停用</option></select></td>'+
+        '<td style="white-space:nowrap">'+
+          '<a href="#" style="color:#256e3d;font-weight:700" onclick="saveCustomer(\''+esc(c.編號)+'\');return false">存</a> '+
+          '<a href="#" style="color:#6b766f" onclick="renderCustomers();return false">取消</a></td>';
+      break;
+    }
+  }
+}
+async function saveCustomer(id){
+  var name=($("#ename")&&$("#ename").value||"").trim();
+  var stat=$("#estat")?$("#estat").value:"";
+  if(!name){ box2("名稱不可空白", true); return; }
+  var r=await post({action:"custSave", uid:ME.uid, 客戶編號:id, 客戶名稱:name, 狀態:stat});
+  if(r.ok){ box2("✅ 已更新 "+id, false); loadCustomers(); }
+  else box2("⚠ "+(r.error||"失敗"), true);
+}
+async function addCustomer(){
+  var code=($("#ncode").value||"").trim();
+  var name=($("#nname").value||"").trim();
+  if(!code||!name){ box2("請填編號與名稱", true); return; }
+  var r=await post({action:"custSave", uid:ME.uid, 客戶編號:code, 客戶名稱:name, 狀態:""});
+  if(r.ok){
+    box2(r.mode==="insert"?"✅ 已新增 "+code:"已存在，已更新名稱 "+code, false);
+    $("#ncode").value=""; $("#nname").value="";
+    loadCustomers();
+  }else box2("⚠ "+(r.error||"失敗"), true);
+}
+function box2(t, err){
+  var m=$("#custMsg"); m.className="msg "+(err?"err":"ok"); m.textContent=t;
 }
 </script>
 </body>
