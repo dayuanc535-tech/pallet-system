@@ -156,6 +156,33 @@
   .gatecard .msg{text-align:left}
   .logout{color:var(--brand-d);font-weight:700;text-decoration:none}
   .logout:hover{text-decoration:underline}
+
+  /* ---- 儀表板 ---- */
+  .dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
+  .dcard{background:var(--sunken);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+  .dcard .dl{font-size:12px;color:var(--mut);font-weight:700;display:flex;align-items:center;gap:6px}
+  .dcard .dn{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:5px}
+  .dcard .dn small{font-size:13px;font-weight:700;color:var(--mut);margin-left:3px}
+  .dcard .dz{font-size:12.5px;color:var(--ink2);margin-top:9px;line-height:1.7;border-top:1px solid var(--line);padding-top:8px}
+  .dcard .dz b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .dcard.click{cursor:pointer;transition:.15s}
+  .dcard.click:hover{border-color:var(--brand);background:var(--brand-soft)}
+  .dcard.on{border-color:var(--brand);background:var(--brand-soft)}
+  .daterow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .daterow input[type=date]{width:auto;flex:1;min-width:130px}
+  .chip{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);border-radius:999px;
+    padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s}
+  .chip:hover{background:var(--sunken)}
+  .chip.on{background:var(--brand-soft);color:var(--brand-d);border-color:var(--brand)}
+  .drawer{margin-top:14px;border-top:1px dashed var(--line2);padding-top:12px}
+  .ed input,.ed select{padding:7px 8px;font-size:14px}
+  .lnk{color:var(--brand-d);font-weight:700;cursor:pointer;text-decoration:none}
+  .lnk:hover{text-decoration:underline}
+  .lnk.del{color:var(--red)}
+  .badge{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px}
+  .badge.out{background:var(--red-soft);color:var(--red)}
+  .badge.in{background:var(--ok-soft);color:var(--brand-d)}
+  .badge.dep{background:#f3ede1;color:var(--wood)}
   .hide{display:none!important}
 </style>
 </head>
@@ -180,6 +207,10 @@
 
   <div id="app" class="app hide">
     <nav class="tabs" id="tabs">
+      <button data-tab="dash" class="hide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span>儀表板</span>
+      </button>
       <button data-tab="rec" class="on">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         <span>記錄</span>
@@ -199,6 +230,91 @@
     </nav>
 
     <div class="panels">
+      <!-- 儀表板（管理員） -->
+      <div id="dash" class="hide">
+        <section class="card">
+          <h2 class="ctitle">棧板總覽</h2>
+          <p class="csub">部門持有（新購 − 報廢）對應各場；新增／報廢可依日期篩選、點開可編輯。</p>
+          <div class="dgrid" style="margin-bottom:14px">
+            <div class="dcard"><div class="dl">📦 大棧板總數</div>
+              <div class="dn" id="dTotBig">—</div>
+              <div class="dz">民雄 <b id="dZBig1">0</b>　義竹 <b id="dZBig2">0</b></div></div>
+            <div class="dcard"><div class="dl">📦 小棧板總數</div>
+              <div class="dn" id="dTotSml">—</div>
+              <div class="dz">民雄 <b id="dZSml1">0</b>　義竹 <b id="dZSml2">0</b></div></div>
+          </div>
+
+          <div class="daterow">
+            <input type="date" id="dFrom">
+            <span style="color:var(--mut)">→</span>
+            <input type="date" id="dTo">
+            <button type="button" class="chip" id="dApply">套用</button>
+            <button type="button" class="chip" data-range="month">本月</button>
+            <button type="button" class="chip" data-range="all">全部</button>
+          </div>
+
+          <div class="dgrid">
+            <div class="dcard click" id="dAddCard"><div class="dl">🟢 新增購置</div>
+              <div class="dn" id="dAddN">0 <small>筆</small></div>
+              <div class="dz">大 <b id="dAddBig">0</b>　小 <b id="dAddSml">0</b>　<span style="color:var(--mut)">點開明細</span></div></div>
+            <div class="dcard click" id="dScrapCard"><div class="dl">🔴 報廢</div>
+              <div class="dn" id="dScrapN">0 <small>筆</small></div>
+              <div class="dz">大 <b id="dScrapBig">0</b>　小 <b id="dScrapSml">0</b>　<span style="color:var(--mut)">點開明細</span></div></div>
+          </div>
+
+          <div id="dAddDrawer" class="drawer hide">
+            <div class="big" style="font-weight:700;margin-bottom:6px">🟢 新增購置明細</div>
+            <div style="overflow-x:auto"><table>
+              <thead><tr><th>時間</th><th>場</th><th>別</th><th>數量</th><th>備註</th><th></th></tr></thead>
+              <tbody id="dAddBody"></tbody></table></div>
+          </div>
+          <div id="dScrapDrawer" class="drawer hide">
+            <div class="big" style="font-weight:700;margin-bottom:6px">🔴 報廢明細（含原因）</div>
+            <div style="overflow-x:auto"><table>
+              <thead><tr><th>時間</th><th>場</th><th>別</th><th>數量</th><th>原因</th><th></th></tr></thead>
+              <tbody id="dScrapBody"></tbody></table></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="ctitle">在外流動棧板</h2>
+          <p class="csub">目前在客戶手上未歸還（送出 − 歸還），依出貨場別歸戶。</p>
+          <div class="dgrid">
+            <div class="dcard"><div class="dl">🚚 民雄場 在外</div>
+              <div class="dn" id="dOut1">—</div>
+              <div class="dz">大 <b id="dOut1Big">0</b>　小 <b id="dOut1Sml">0</b></div></div>
+            <div class="dcard"><div class="dl">🚚 義竹場 在外</div>
+              <div class="dn" id="dOut2">—</div>
+              <div class="dz">大 <b id="dOut2Big">0</b>　小 <b id="dOut2Sml">0</b></div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="ctitle">客戶借出查詢</h2>
+          <p class="csub">選擇客戶，查目前借出（未還）在哪一場、大小各多少。</p>
+          <select id="dCustSel"></select>
+          <div class="dgrid" id="dLoanGrid" style="margin-top:14px">
+            <div class="dcard"><div class="dl">民雄場 借出</div><div class="dz">大 <b id="dLoan1Big">0</b>　小 <b id="dLoan1Sml">0</b></div></div>
+            <div class="dcard"><div class="dl">義竹場 借出</div><div class="dz">大 <b id="dLoan2Big">0</b>　小 <b id="dLoan2Sml">0</b></div></div>
+            <div class="dcard"><div class="dl">合計 未還</div><div class="dz">大 <b id="dLoanTBig">0</b>　小 <b id="dLoanTSml">0</b></div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="ctitle">完整進出明細</h2>
+          <p class="csub">依上方日期範圍；新到舊。</p>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>時間</th><th>場</th><th>客戶</th><th>動作</th><th>別</th><th>數量</th><th>簽收</th></tr></thead>
+            <tbody id="dLedBody"></tbody></table></div>
+        </section>
+
+        <section class="card" style="text-align:center">
+          <h2 class="ctitle" style="margin-bottom:4px">月結算</h2>
+          <p class="csub">每客戶該月各場進出、計價、折讓／應收，並可產出 Excel。</p>
+          <button type="button" class="btnP" id="dGoSet" style="margin-top:0">📅 開啟月結計算</button>
+        </section>
+      </div>
+
       <!-- 記錄 -->
       <section id="rec" class="card">
         <h2 class="ctitle">登記棧板進出</h2>
@@ -484,9 +600,13 @@ function boot(){
     $("[data-tab=set]").classList.remove("hide");
     var d=new Date(); $("#setMonth").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2);
   }
-  // 管理員可看客戶主檔
+  // 管理員：客戶主檔 + 儀表板（並以儀表板為首頁）
   if(ME.role==="管理員"){
     $("[data-tab=cust]").classList.remove("hide");
+    $("[data-tab=dash]").classList.remove("hide");
+    $("#dCustSel").innerHTML = ME.customers.map(function(c){
+      return '<option value="'+c.編號+'">'+esc(c.名稱)+'</option>';}).join("");
+    setDateRange("month");
   }
   // 做帳只看查詢/結算，沒有記錄
   if(ME.role==="做帳"){
@@ -496,16 +616,20 @@ function boot(){
   }
   bindUI();
   initSign();
+  // 管理員預設停在儀表板
+  if(ME.role==="管理員") switchTab("dash");
 }
 
 /* ---- 分頁 ---- */
 function switchTab(t){
   document.querySelectorAll("#tabs button").forEach(function(b){
     b.classList.toggle("on", b.dataset.tab===t);});
+  $("#dash").classList.toggle("hide", t!=="dash");
   $("#rec").classList.toggle("hide", t!=="rec");
   $("#qry").classList.toggle("hide", t!=="qry");
   $("#set").classList.toggle("hide", t!=="set");
   $("#custmgr").classList.toggle("hide", t!=="cust");
+  if(t==="dash") loadDashboard();
   if(t==="qry") loadBalances();
   if(t==="set"){ loadSettlement(); loadReports(); }
   if(t==="cust") loadCustomers();
@@ -530,6 +654,16 @@ function bindUI(){
   $("#genExcel").onclick=genReport;
   $("#addCust").onclick=addCustomer;
   $("#custRefresh").onclick=loadCustomers;
+  // 儀表板
+  if($("#dApply")){
+    $("#dApply").onclick=loadDashboard;
+    document.querySelectorAll("#dash .chip[data-range]").forEach(function(b){
+      b.onclick=function(){ setDateRange(b.dataset.range); loadDashboard(); };});
+    $("#dAddCard").onclick=function(){ toggleDrawer("dAdd"); };
+    $("#dScrapCard").onclick=function(){ toggleDrawer("dScrap"); };
+    $("#dCustSel").onchange=loadLoan;
+    $("#dGoSet").onclick=function(){ switchTab("set"); };
+  }
   toggleCust();
 }
 
@@ -819,6 +953,111 @@ async function addCustomer(){
 }
 function box2(t, err){
   var m=$("#custMsg"); m.className="msg "+(err?"err":"ok"); m.textContent=t;
+}
+
+/* ---- 儀表板（管理員） ---- */
+var DASH=null;
+function pad2(n){ return ("0"+n).slice(-2); }
+function gid(id){ return document.getElementById(id); }
+function sumQ(list,key){ return list.reduce(function(s,x){return s+(x.棧板別===key?(Number(x.數量)||0):0);},0); }
+function setDateRange(kind){
+  if(kind==="all"){ $("#dFrom").value=""; $("#dTo").value=""; }
+  else{
+    var d=new Date(), y=d.getFullYear(), m=d.getMonth();
+    $("#dFrom").value=y+"-"+pad2(m+1)+"-01";
+    $("#dTo").value=y+"-"+pad2(m+1)+"-"+pad2(new Date(y,m+1,0).getDate());
+    kind="month";
+  }
+  document.querySelectorAll("#dash .chip[data-range]").forEach(function(b){
+    b.classList.toggle("on", b.dataset.range===kind);});
+}
+async function loadDashboard(){
+  var r=await api({action:"adminOverview", uid:ME.uid, from:$("#dFrom").value, to:$("#dTo").value});
+  if(!r.ok){ alert(r.error||"載入失敗"); return; }
+  DASH=r; renderDash(); loadLoan();
+}
+function renderDash(){
+  var r=DASH;
+  $("#dTotBig").innerHTML=r.total.大+' <small>個</small>';
+  $("#dTotSml").innerHTML=r.total.小+' <small>個</small>';
+  $("#dZBig1").textContent=r.dept.民雄.大; $("#dZBig2").textContent=r.dept.義竹.大;
+  $("#dZSml1").textContent=r.dept.民雄.小; $("#dZSml2").textContent=r.dept.義竹.小;
+  var a=r.新增||[], s=r.報廢||[];
+  $("#dAddN").innerHTML=a.length+' <small>筆</small>';
+  $("#dAddBig").textContent=sumQ(a,"大"); $("#dAddSml").textContent=sumQ(a,"小");
+  $("#dScrapN").innerHTML=s.length+' <small>筆</small>';
+  $("#dScrapBig").textContent=sumQ(s,"大"); $("#dScrapSml").textContent=sumQ(s,"小");
+  $("#dOut1").textContent=(r.out.民雄.大+r.out.民雄.小);
+  $("#dOut1Big").textContent=r.out.民雄.大; $("#dOut1Sml").textContent=r.out.民雄.小;
+  $("#dOut2").textContent=(r.out.義竹.大+r.out.義竹.小);
+  $("#dOut2Big").textContent=r.out.義竹.大; $("#dOut2Sml").textContent=r.out.義竹.小;
+  renderDetail("dAdd", a); renderDetail("dScrap", s);
+  renderLedger(r.ledger||[]);
+}
+function toggleDrawer(prefix){
+  var d=$("#"+prefix+"Drawer");
+  d.classList.toggle("hide");
+  $("#"+prefix+"Card").classList.toggle("on", !d.classList.contains("hide"));
+}
+function renderDetail(prefix, list){
+  var body=$("#"+prefix+"Body");
+  if(!list.length){ body.innerHTML='<tr><td colspan="6" style="color:var(--mut)">此範圍無紀錄</td></tr>'; return; }
+  body.innerHTML=list.map(function(x){ return detailRow(prefix,x); }).join("");
+}
+function detailRow(prefix,x){
+  return '<tr id="'+prefix+'-'+x.row+'">'+
+    '<td style="white-space:nowrap;font-size:12px;color:var(--mut)">'+esc(x.時間.slice(5,16))+'</td>'+
+    '<td>'+esc(x.場)+'</td><td>'+x.棧板別+'</td><td>'+x.數量+'</td>'+
+    '<td>'+esc(x.備註||'')+'</td>'+
+    '<td style="white-space:nowrap"><a class="lnk" onclick="editTx(\''+prefix+'\','+x.row+');return false">編輯</a> '+
+    '<a class="lnk del" onclick="delTx('+x.row+');return false">刪</a></td></tr>';
+}
+function findTx(row){
+  return (DASH.新增||[]).concat(DASH.報廢||[]).filter(function(x){return x.row===row;})[0];
+}
+function editTx(prefix,row){
+  var x=findTx(row); if(!x)return;
+  var tr=$("#"+prefix+"-"+row); if(!tr)return;
+  tr.classList.add("ed");
+  tr.innerHTML=
+    '<td style="font-size:12px;color:var(--mut)">'+esc(x.時間.slice(5,16))+'</td>'+
+    '<td><select id="ez-'+row+'"><option'+(x.場==="民雄"?" selected":"")+'>民雄</option><option'+(x.場==="義竹"?" selected":"")+'>義竹</option></select></td>'+
+    '<td><select id="et-'+row+'"><option'+(x.棧板別==="大"?" selected":"")+'>大</option><option'+(x.棧板別==="小"?" selected":"")+'>小</option></select></td>'+
+    '<td><input type="number" id="eq-'+row+'" value="'+x.數量+'" min="1" style="width:64px"></td>'+
+    '<td><input type="text" id="en-'+row+'" value="'+esc(x.備註||'')+'"></td>'+
+    '<td style="white-space:nowrap"><a class="lnk" onclick="saveTx('+row+');return false">存</a> '+
+    '<a class="lnk" style="color:var(--mut)" onclick="loadDashboard();return false">取消</a></td>';
+}
+async function saveTx(row){
+  var r=await post({action:"txUpdate", uid:ME.uid, row:row,
+    場:gid("ez-"+row).value, 棧板別:gid("et-"+row).value,
+    數量:gid("eq-"+row).value, 備註:gid("en-"+row).value});
+  if(r.ok) loadDashboard(); else alert(r.error||"儲存失敗");
+}
+async function delTx(row){
+  if(!confirm("確定刪除這筆？刪除後棧板總數會跟著變動。")) return;
+  var r=await post({action:"txDelete", uid:ME.uid, row:row});
+  if(r.ok) loadDashboard(); else alert(r.error||"刪除失敗");
+}
+function renderLedger(list){
+  if(!list.length){ $("#dLedBody").innerHTML='<tr><td colspan="7" style="color:var(--mut)">此範圍無紀錄</td></tr>'; return; }
+  $("#dLedBody").innerHTML=list.map(function(x){
+    var cls=x.動作==="送出"?"out":(x.動作==="歸還"?"in":"dep");
+    var sign=x.附件?'<a class="lnk" href="'+esc(x.附件.split(" ")[0])+'" target="_blank" rel="noopener">看</a>':'—';
+    return '<tr><td style="white-space:nowrap;font-size:12px;color:var(--mut)">'+esc(x.時間.slice(5,16))+'</td>'+
+      '<td>'+esc(x.場)+'</td><td>'+esc(x.客戶||'—')+'</td>'+
+      '<td><span class="badge '+cls+'">'+esc(x.動作)+'</span></td>'+
+      '<td>'+x.棧板別+'</td><td>'+x.數量+'</td><td>'+sign+'</td></tr>';
+  }).join("");
+}
+async function loadLoan(){
+  var cust=$("#dCustSel")?$("#dCustSel").value:""; if(!cust)return;
+  var r=await api({action:"custLoan", uid:ME.uid, cust:cust});
+  if(!r.ok)return;
+  var z=r.byZone;
+  $("#dLoan1Big").textContent=z.民雄.大; $("#dLoan1Sml").textContent=z.民雄.小;
+  $("#dLoan2Big").textContent=z.義竹.大; $("#dLoan2Sml").textContent=z.義竹.小;
+  $("#dLoanTBig").textContent=r.total.大; $("#dLoanTSml").textContent=r.total.小;
 }
 </script>
 </body>
