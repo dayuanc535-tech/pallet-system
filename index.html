@@ -185,6 +185,13 @@
   .badge.dep{background:#f3ede1;color:var(--wood)}
 
   /* ---- 現場回報（大字） ---- */
+  .invalert{border-color:rgba(192,57,43,.35);background:var(--red-soft)}
+  .invalert .iah{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .invalert .iah span{font-size:16px;font-weight:800;color:var(--red);flex:1;min-width:180px}
+  .invalert .iah button{margin:0}
+  .ialist{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+  .ialist .ipill{font-size:13px;font-weight:700;color:var(--red);background:var(--surface);
+    border:1px solid rgba(192,57,43,.3);border-radius:999px;padding:5px 11px}
   .chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px;
     max-height:200px;overflow:auto;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--sunken)}
   .chk{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--line2);
@@ -276,6 +283,11 @@
     <div class="panels">
       <!-- 儀表板（管理員） -->
       <div id="dash" class="hide">
+        <section id="invAlert" class="card invalert hide">
+          <div class="iah"><span id="invAlertTxt"></span>
+            <button type="button" class="btnG" id="invAlertGo">前往登記發票 ↓</button></div>
+          <div id="invAlertList" class="ialist"></div>
+        </section>
         <section class="card">
           <h2 class="ctitle">棧板總覽</h2>
           <p class="csub">部門持有（新購 − 報廢）對應各場；新增／報廢可依日期篩選、點開可編輯。</p>
@@ -797,6 +809,9 @@ function bindUI(){
     $("#dScrapCard").onclick=function(){ toggleDrawer("dScrap"); };
     $("#dCustSel").onchange=loadLoan;
     $("#dGoSet").onclick=function(){ switchTab("set"); };
+    if($("#invAlertGo")) $("#invAlertGo").onclick=function(){
+      var b=$("#bGen"); if(b){ b.scrollIntoView({behavior:"smooth",block:"center"}); }
+    };
     if($("#bGen")){
       buildBatchPickers();
       $("#bGen").onclick=batchGen;
@@ -1190,7 +1205,16 @@ function setDateRange(kind){
 async function loadDashboard(){
   var r=await api({action:"adminOverview", uid:ME.uid, from:$("#dFrom").value, to:$("#dTo").value});
   if(!r.ok){ alert(r.error||"載入失敗"); return; }
-  DASH=r; renderDash(); loadLoan();
+  DASH=r; renderDash(); loadLoan(); loadInvAlert();
+}
+async function loadInvAlert(){
+  var card=$("#invAlert"); if(!card) return;
+  var r=await api({action:"invoicePending", uid:ME.uid});
+  if(!r||!r.ok||!r.count){ card.classList.add("hide"); return; }
+  $("#invAlertTxt").textContent="⚠ "+r.month+" 有 "+r.count+" 筆應收款尚未開發票（合計 $"+r.total+"）";
+  $("#invAlertList").innerHTML=r.list.map(function(x){
+    return '<span class="ipill">'+esc(x.客戶)+' $'+x.金額+'</span>';}).join("");
+  card.classList.remove("hide");
 }
 function renderDash(){
   var r=DASH;
