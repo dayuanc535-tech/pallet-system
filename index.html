@@ -622,6 +622,8 @@
 
         <div id="repForm" class="hide">
           <div class="repname" id="repName">—</div>
+          <label class="fld">日期時間（預設現在，可改成實際發生時間）</label>
+          <input type="datetime-local" id="repWhen" style="width:100%">
           <div class="qgrid">
             <div class="qbox out">
               <div class="qh">出貨給客戶（送出）</div>
@@ -733,6 +735,7 @@
           <option value="site">📍 場名管理</option>
           <option value="cust">🏷️ 客戶編輯</option>
           <option value="people">🧑‍💼 操作人員編輯</option>
+          <option value="tx">📦 棧板明細管理</option>
         </select>
 
         <!-- 場名管理 -->
@@ -790,6 +793,41 @@
           <div class="editbox hide" id="peopleEdit"></div>
           <div class="msg" id="peopleMsg"></div>
           <button type="button" class="btnG" id="peopleRefresh" style="margin-top:14px;width:100%">🔄 重新整理人員</button>
+        </div>
+
+        <!-- 棧板明細管理 -->
+        <div id="mgrTx" class="mgrsec hide" style="margin-top:18px">
+          <p class="csub" style="margin-top:0">查詢指定日期區間與客戶的每一筆棧板紀錄，可逐筆修改、刪除或補登（含歸還細節）。</p>
+          <div class="row2">
+            <div><label class="fld">起始日期</label><input type="date" id="txFrom" style="width:100%"></div>
+            <div><label class="fld">結束日期</label><input type="date" id="txTo" style="width:100%"></div>
+          </div>
+          <label class="fld">客戶（可不選＝全部）</label>
+          <select id="txCust" style="width:100%"><option value="">— 全部客戶 —</option></select>
+          <button type="button" class="btnG" id="txQuery" style="margin-top:12px;width:100%">🔍 查詢明細</button>
+          <div class="msg" id="txMsg"></div>
+          <div id="txList" style="margin-top:12px"></div>
+
+          <details style="margin-top:18px">
+            <summary style="cursor:pointer;font-weight:700;padding:8px 0">➕ 補登一筆紀錄</summary>
+            <div style="margin-top:10px">
+              <label class="fld">日期時間</label>
+              <input type="datetime-local" id="txnWhen" style="width:100%">
+              <div class="row2" style="margin-top:8px">
+                <div><label class="fld">場</label><select id="txnSite" style="width:100%"></select></div>
+                <div><label class="fld">動作</label><select id="txnAct" style="width:100%"></select></div>
+              </div>
+              <label class="fld">客戶</label>
+              <select id="txnCust" style="width:100%"><option value="">— 請選擇客戶 —</option></select>
+              <div class="row2" style="margin-top:8px">
+                <div><label class="fld">棧板別</label><select id="txnType" style="width:100%"></select></div>
+                <div><label class="fld">數量</label><input type="number" id="txnQty" min="1" step="1" value="1" style="width:100%"></div>
+              </div>
+              <label class="fld">備註</label>
+              <input type="text" id="txnNote" placeholder="（可空白）" style="width:100%">
+              <button type="button" class="btnG" id="txAddBtn" style="margin-top:12px;width:100%">確認補登</button>
+            </div>
+          </details>
         </div>
       </section>
     </div>
@@ -1135,6 +1173,127 @@ function switchMgr(v){
   if($("#mgrSite"))   $("#mgrSite").classList.toggle("hide", v!=="site");
   if($("#mgrCust"))   $("#mgrCust").classList.toggle("hide", v!=="cust");
   if($("#mgrPeople")) $("#mgrPeople").classList.toggle("hide", v!=="people");
+  if($("#mgrTx"))     $("#mgrTx").classList.toggle("hide", v!=="tx");
+  if(v==="tx") txMgrInit();
+}
+
+/* ---- 棧板明細管理（管理員）---- */
+var TXACTS=["送出","歸還","報廢","新購"];
+var txInited=false;
+function txMgrInit(){
+  // 確保客戶/場/人員資料已載入
+  if(!custCache.length) loadCustomers();
+  if(!peopleSites.length) loadPeople();
+  // 預設日期＝本月
+  var d=new Date();
+  var first=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-01";
+  var today=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+  if($("#txFrom")&&!$("#txFrom").value) $("#txFrom").value=first;
+  if($("#txTo")&&!$("#txTo").value) $("#txTo").value=today;
+  txFillSelectors();
+  if(!txInited){
+    txInited=true;
+    if($("#txQuery")) $("#txQuery").onclick=loadTxList;
+    if($("#txAddBtn")) $("#txAddBtn").onclick=addTxRow;
+  }
+}
+function txCustOptions(cur){
+  return '<option value="">— 請選擇客戶 —</option>'+(custCache||[]).map(function(c){
+    return '<option value="'+esc(c.編號)+'"'+(String(c.編號)===String(cur)?" selected":"")+'>'+esc(c.名稱)+'（'+esc(c.編號)+'）</option>';
+  }).join("");
+}
+function txFillSelectors(){
+  // 查詢用客戶下拉（含全部）
+  if($("#txCust")) $("#txCust").innerHTML='<option value="">— 全部客戶 —</option>'+(custCache||[]).map(function(c){
+    return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）</option>';
+  }).join("");
+  // 補登表單
+  if($("#txnSite")) $("#txnSite").innerHTML=selOpts(peopleSites,"","（不分場）");
+  if($("#txnAct"))  $("#txnAct").innerHTML=selOpts(TXACTS,"歸還");
+  if($("#txnType")) $("#txnType").innerHTML=selOpts(["大","小"],"大");
+  if($("#txnCust")) $("#txnCust").innerHTML=txCustOptions("");
+  if($("#txnWhen")&&!$("#txnWhen").value) $("#txnWhen").value=fmtNowLocal();
+}
+async function loadTxList(){
+  var box=$("#txList"), m=$("#txMsg");
+  if(m){ m.className="msg"; m.textContent="查詢中…"; }
+  var r=await api({action:"txAll", uid:ME.uid, from:$("#txFrom").value, to:$("#txTo").value, cust:$("#txCust").value});
+  if(!r.ok){ if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); } return; }
+  if(m){ m.className="msg ok"; m.textContent="共 "+r.list.length+" 筆"; }
+  if(!r.list.length){ box.innerHTML='<p class="csub">此區間無紀錄。</p>'; return; }
+  box.innerHTML=r.list.map(txCard).join("");
+}
+function txCard(x){
+  var color=x.動作==="送出"?"var(--red)":(x.動作==="歸還"?"var(--brand-d)":"var(--mut)");
+  return '<div class="editbox" id="txrow-'+x.row+'" style="margin-bottom:10px">'+
+    '<div class="erow"><span class="elab">時間</span><b>'+esc(x.時間)+'</b></div>'+
+    '<div class="erow"><span class="elab">客戶</span><b>'+esc(x.客戶||x.客戶編號)+'</b></div>'+
+    '<div class="erow"><span class="elab">場 / 動作</span>'+
+      '<b style="color:'+color+'">'+esc(x.場||"—")+'　'+esc(x.動作)+' '+esc(x.棧板別)+'×'+x.數量+'</b></div>'+
+    (x.備註?'<div class="erow"><span class="elab">備註</span><b>'+esc(x.備註)+'</b></div>':'')+
+    '<div style="display:flex;gap:8px;margin-top:8px">'+
+      '<button type="button" class="btnG" style="flex:1" onclick="editTxRow('+x.row+')">✏️ 修改</button>'+
+      '<button type="button" class="btnG" style="flex:1" onclick="delTxRow('+x.row+')">🗑️ 刪除</button>'+
+    '</div></div>';
+}
+var txRowCache={};
+function editTxRow(row){
+  var box=$("#txrow-"+row); if(!box) return;
+  // 從目前顯示重新查一次該列資料？用 dataset 較簡單：直接讀畫面 — 改為重新查 API 較穩，但成本高。
+  // 改用就地讀取：解析方式繁雜，因此改為提供完整編輯欄位（值由 API 重新帶不便），這裡直接重新查單列。
+  api({action:"txAll", uid:ME.uid, from:$("#txFrom").value, to:$("#txTo").value, cust:$("#txCust").value}).then(function(r){
+    if(!r.ok) return;
+    var x=r.list.filter(function(t){return t.row===row;})[0]; if(!x) return;
+    var whenLocal=(x.時間||"").replace(" ","T").slice(0,16);
+    box.innerHTML=
+      '<label class="fld">時間</label><input type="datetime-local" id="txe-when-'+row+'" value="'+esc(whenLocal)+'" style="width:100%">'+
+      '<div class="row2" style="margin-top:8px">'+
+        '<div><label class="fld">場</label><select id="txe-site-'+row+'">'+selOpts(peopleSites,x.場||"","（不分場）")+'</select></div>'+
+        '<div><label class="fld">動作</label><select id="txe-act-'+row+'">'+selOpts(TXACTS,x.動作)+'</select></div>'+
+      '</div>'+
+      '<label class="fld">客戶</label><select id="txe-cust-'+row+'">'+txCustOptions(x.客戶編號)+'</select>'+
+      '<div class="row2" style="margin-top:8px">'+
+        '<div><label class="fld">棧板別</label><select id="txe-type-'+row+'">'+selOpts(["大","小"],x.棧板別)+'</select></div>'+
+        '<div><label class="fld">數量</label><input type="number" id="txe-qty-'+row+'" min="0" step="1" value="'+(Number(x.數量)||0)+'" style="width:100%"></div>'+
+      '</div>'+
+      '<label class="fld">備註</label><input type="text" id="txe-note-'+row+'" value="'+esc(x.備註||"")+'" style="width:100%">'+
+      '<div style="display:flex;gap:8px;margin-top:10px">'+
+        '<button type="button" class="btnG" style="flex:1" onclick="saveTxRow('+row+')">💾 儲存</button>'+
+        '<button type="button" class="btnG" style="flex:1" onclick="loadTxList()">取消</button>'+
+      '</div>';
+  });
+}
+async function saveTxRow(row){
+  var m=$("#txMsg");
+  var when=gid("txe-when-"+row)?gid("txe-when-"+row).value:"";
+  var r=await post({action:"txAnyUpdate", uid:ME.uid, row:row,
+    時間:when, 場:gid("txe-site-"+row).value, 動作:gid("txe-act-"+row).value,
+    客戶編號:gid("txe-cust-"+row).value, 棧板別:gid("txe-type-"+row).value,
+    數量:gid("txe-qty-"+row).value, 備註:gid("txe-note-"+row).value});
+  if(r.ok){ if(m){ m.className="msg ok"; m.textContent="✅ 已更新"; } loadTxList(); }
+  else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+}
+async function delTxRow(row){
+  if(!confirm("確定刪除這筆紀錄？刪除後無法復原。")) return;
+  var m=$("#txMsg");
+  var r=await post({action:"txAnyDelete", uid:ME.uid, row:row});
+  if(r.ok){ if(m){ m.className="msg ok"; m.textContent="✅ 已刪除"; } loadTxList(); }
+  else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+}
+async function addTxRow(){
+  var m=$("#txMsg");
+  var act=$("#txnAct").value;
+  var dept=(act==="報廢"||act==="新購"||act==="無流通");
+  var cust=$("#txnCust").value;
+  if(!dept && !cust){ if(m){ m.className="msg err"; m.textContent="⚠ 請選擇客戶"; } return; }
+  var r=await post({action:"txAnyAdd", uid:ME.uid,
+    時間:$("#txnWhen").value, 場:$("#txnSite").value, 動作:act,
+    客戶編號:cust, 棧板別:$("#txnType").value, 數量:$("#txnQty").value, 備註:$("#txnNote").value});
+  if(r.ok){
+    if(m){ m.className="msg ok"; m.textContent="✅ 已補登一筆"; }
+    $("#txnQty").value="1"; $("#txnNote").value=""; $("#txnWhen").value=fmtNowLocal();
+    loadTxList();
+  }else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
 }
 
 /* ---- UI 綁定 ---- */
@@ -2001,11 +2160,16 @@ function buildRepCusts(){
     b.onclick=function(){ pickRepCust(b.dataset.id, b.textContent); };});
   var ab=$("#repAddCust"); if(ab) ab.onclick=repAddCust;
 }
+function fmtNowLocal(){
+  var d=new Date(); function p(n){return ("0"+n).slice(-2);}
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes());
+}
 function pickRepCust(id,name){
   REP.cust=id; REP.name=name;
   document.querySelectorAll("#repCusts button[data-id]").forEach(function(b){
     b.classList.toggle("on", b.dataset.id===id);});
   $("#repName").textContent=name;
+  if($("#repWhen") && !$("#repWhen").value) $("#repWhen").value=fmtNowLocal();
   $("#repForm").classList.remove("hide");
 }
 async function repAddSite(){
@@ -2049,6 +2213,7 @@ function repReset(){
   ["out大","out小","in大","in小"].forEach(function(k){ gid("q_"+k).value="0"; });
   document.querySelectorAll("#repCusts button").forEach(function(b){b.classList.remove("on");});
   $("#repForm").classList.add("hide");
+  if($("#repWhen")) $("#repWhen").value="";
   $("#repPhoto").value=""; $("#repPhotoPv").classList.add("hide"); $("#repPhotoPv").innerHTML="";
 }
 async function repSubmit(){
@@ -2063,8 +2228,9 @@ async function repSubmit(){
   var site=(ME.role==="管理員" && $("#repSite"))?$("#repSite").value:undefined;
   var btn=$("#repSubmit"); btn.disabled=true; btn.textContent="送出中…";
   try{
-    var r=await post({action:"record",uid:ME.uid,客戶編號:REP.cust,items:items,照片:REP.photo,場:site});
-    if(r.ok){ m.className="msg ok"; m.textContent="✅ 已回報 "+REP.name+"（"+r.筆數+" 筆）"; repReset(); loadRepToday(); }
+    var when=$("#repWhen")?$("#repWhen").value:"";
+    var r=await post({action:"record",uid:ME.uid,客戶編號:REP.cust,items:items,照片:REP.photo,場:site,時間:when});
+    if(r.ok){ m.className="msg ok"; m.textContent="✅ 已回報 "+REP.name+"（這趟視為 1 筆）"; repReset(); loadRepToday(); }
     else { m.className="msg err"; m.textContent="⚠ "+r.error; }
   }catch(err){ m.className="msg err"; m.textContent="送出失敗："+err; }
   btn.disabled=false; btn.textContent="✅ 送出回報";
@@ -2082,15 +2248,22 @@ async function loadRepToday(){
   var r=await api({action:"todayMine",uid:ME.uid});
   if(!r.ok){ box.textContent=r.error; return; }
   if(!r.list.length){ box.innerHTML='<span style="color:var(--mut)">尚未回報</span>'; return; }
-  box.innerHTML=r.list.map(function(x){
-    if(x.動作==="無流通") return '<div style="padding:8px 0;border-bottom:1px solid var(--line);color:var(--mut)">'+x.時間+'　今日無流通</div>';
-    var color=x.動作==="送出"?"var(--red)":"var(--brand-d)";
-    var label=x.動作==="送出"?"出":"進";
-    var att=x.附件?' <a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">簽收</a>':'';
-    return '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline">'+
-      '<span style="color:'+color+';font-weight:800;min-width:30px">'+label+'</span>'+
-      '<span style="font-weight:700">'+esc(x.客戶)+'　'+x.棧板別+'×'+x.數量+'</span>'+
-      '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+x.時間+att+'</span></div>';
+  var head=(r.site?esc(r.site)+'　':'')+r.筆數+' 筆';
+  box.innerHTML='<div style="font-weight:800;margin-bottom:8px">今日 '+head+'</div>'+
+    r.list.map(function(g){
+    if(g.無流通) return '<div style="padding:10px 0;border-bottom:1px solid var(--line);color:var(--mut)">'+g.時間+'　今日無流通</div>';
+    var items=(g.items||[]).map(function(it){
+      var color=it.動作==="送出"?"var(--red)":"var(--brand-d)";
+      var label=it.動作==="送出"?"出":(it.動作==="歸還"?"進":it.動作);
+      return '<span style="color:'+color+';font-weight:800;margin-right:10px">'+label+' '+it.棧板別+'×'+it.數量+'</span>';
+    }).join("");
+    var att=g.附件?' <a class="lnk" href="'+esc(g.附件)+'" target="_blank" rel="noopener">簽收</a>':'';
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">'+
+      '<div style="display:flex;gap:8px;align-items:baseline">'+
+        '<span style="font-weight:800">'+esc(g.客戶)+'</span>'+
+        '<span style="color:var(--brand-d);font-weight:700">1筆</span>'+
+        '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+g.時間+att+'</span></div>'+
+      '<div style="margin-top:4px">'+items+'</div></div>';
   }).join("");
 }
 
