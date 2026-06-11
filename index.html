@@ -392,13 +392,9 @@
 
   <div id="app" class="app hide">
     <nav class="tabs" id="tabs">
-      <button data-tab="rec" class="on">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        <span>記錄</span>
-      </button>
       <button data-tab="report" class="hide">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        <span>回報</span>
+        <span>回報棧板進出</span>
       </button>
       <button data-tab="qry" class="hide">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M9 19v-7M14 19V9M19 19v-4"/></svg>
@@ -534,7 +530,7 @@
       </div>
 
       <!-- 記錄 -->
-      <section id="rec" class="card">
+      <section id="rec" class="card hide">
         <h2 class="ctitle">登記棧板進出</h2>
         <p class="csub">選擇場別與客戶，現場簽名並附上單據照片。</p>
 
@@ -1007,19 +1003,17 @@ function boot(){
     $("#lkGo").onclick=function(){ var v=$("#lkCustSel").value; if(v){ lookReturn="app"; openLook(v); } };
     setDateRange("month");
   }
-  // 做帳只看月結算，沒有記錄
+  // 做帳只看月結算
   if(ME.role==="做帳"){
     $("#rec").classList.add("hide");
-    $("[data-tab=rec]").classList.add("hide");
     switchTab("set");
   }
   bindUI();
   initSign();
-  // 現場：大字回報介面為主畫面（隱藏舊記錄/查詢分頁）
+  // 現場：大字回報介面為主畫面（隱藏查詢分頁）
   if(ME.role==="現場"){
     buildReport();
     $("[data-tab=report]").classList.remove("hide");
-    $("[data-tab=rec]").classList.add("hide");
     $("[data-tab=qry]").classList.add("hide");
     switchTab("report");
   }
