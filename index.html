@@ -726,64 +726,70 @@
       <!-- 客戶及操作人員設定（管理員） -->
       <section id="peoplemgr" class="card hide">
         <h2 class="ctitle">客戶及操作人員設定</h2>
-        <p class="csub">管理場名、客戶主檔與可登入人員。客戶與人員皆以下拉選單挑選後編輯。</p>
+        <p class="csub">用下方下拉選單切換要管理的項目：場名管理、客戶編輯、操作人員編輯。</p>
+
+        <label class="fld">管理項目</label>
+        <select id="mgrPick">
+          <option value="site">📍 場名管理</option>
+          <option value="cust">🏷️ 客戶編輯</option>
+          <option value="people">🧑‍💼 操作人員編輯</option>
+        </select>
 
         <!-- 場名管理 -->
-        <div class="big" style="margin:4px 0 8px;font-weight:700">📍 場名管理</div>
-        <p class="csub" style="margin-top:-6px">回報與報表會用到的「場」。新增後，回報表單與人員的場別選單立即可選。</p>
-        <div id="siteChips" class="chips"></div>
-        <div class="row2" style="margin-top:10px">
-          <input type="text" id="newSite" placeholder="新場名（例：朴子）">
-          <button type="button" class="btnG" id="addSite" style="white-space:nowrap">新增場</button>
+        <div id="mgrSite" class="mgrsec" style="margin-top:18px">
+          <p class="csub" style="margin-top:0">回報與報表會用到的「場」。新增後，回報表單與人員的場別選單立即可選。</p>
+          <div id="siteChips" class="chips"></div>
+          <div class="row2" style="margin-top:10px">
+            <input type="text" id="newSite" placeholder="新場名（例：朴子）">
+            <button type="button" class="btnG" id="addSite" style="white-space:nowrap">新增場</button>
+          </div>
+          <div class="msg" id="siteMsg"></div>
         </div>
-        <div class="msg" id="siteMsg"></div>
-
-        <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
 
         <!-- 客戶 -->
-        <div class="big" style="margin:4px 0 8px;font-weight:700">🏷️ 客戶</div>
-        <p class="csub" style="margin-top:-6px">全部客戶（含 0 結餘與停用）。編號為主鍵不可改。</p>
-        <div class="row2">
-          <input type="text" id="ncode" placeholder="客戶編號">
-          <input type="text" id="nname" placeholder="客戶名稱">
+        <div id="mgrCust" class="mgrsec hide" style="margin-top:18px">
+          <p class="csub" style="margin-top:0">全部客戶（含 0 結餘與停用）。編號為主鍵不可改。</p>
+          <div class="row2">
+            <input type="text" id="ncode" placeholder="客戶編號">
+            <input type="text" id="nname" placeholder="客戶名稱">
+          </div>
+          <button type="button" class="btnG" id="addCust" style="margin-top:10px;width:100%">➕ 新增客戶</button>
+
+          <label class="fld">選擇客戶編輯</label>
+          <select id="custPick"><option value="">— 請選擇客戶 —</option></select>
+          <div class="editbox hide" id="custEdit"></div>
+          <div class="msg" id="custMsg"></div>
+          <button type="button" class="btnG" id="custRefresh" style="margin-top:14px;width:100%">🔄 重新整理客戶</button>
         </div>
-        <button type="button" class="btnG" id="addCust" style="margin-top:10px;width:100%">➕ 新增客戶</button>
-
-        <label class="fld">選擇客戶編輯</label>
-        <select id="custPick"><option value="">— 請選擇客戶 —</option></select>
-        <div class="editbox hide" id="custEdit"></div>
-        <div class="msg" id="custMsg"></div>
-        <button type="button" class="btnG" id="custRefresh" style="margin-top:14px;width:100%">🔄 重新整理客戶</button>
-
-        <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
 
         <!-- 操作人員 -->
-        <div class="big" style="margin:4px 0 8px;font-weight:700">🧑‍💼 操作人員</div>
-        <p class="csub" style="margin-top:-6px">可登入系統的人員。登入代碼為主鍵不可改，等同個人專屬密碼，請勿外流。</p>
-        <input type="text" id="pName" placeholder="姓名" style="width:100%;margin-bottom:8px">
-        <div class="row2">
-          <input type="text" id="pCode" placeholder="登入代碼">
-          <button type="button" class="btnG" id="pGen" style="white-space:nowrap">產生代碼</button>
-        </div>
-        <div class="row2" style="margin-top:8px">
-          <select id="pRole">
-            <option value="現場">現場</option>
-            <option value="做帳">做帳</option>
-            <option value="管理員">管理員</option>
-            <option value="經銷">經銷</option>
-          </select>
-          <select id="pSite">
-            <option value="">（不分場）</option>
-          </select>
-        </div>
-        <input type="text" id="pCust" placeholder="客戶編號（經銷帳號才需填）" style="width:100%;margin-top:8px">
-        <button type="button" class="btnG" id="addPerson" style="margin-top:10px;width:100%">➕ 新增人員</button>
+        <div id="mgrPeople" class="mgrsec hide" style="margin-top:18px">
+          <p class="csub" style="margin-top:0">可登入系統的人員。登入代碼為主鍵不可改，等同個人專屬密碼，請勿外流。</p>
+          <input type="text" id="pName" placeholder="姓名" style="width:100%;margin-bottom:8px">
+          <div class="row2">
+            <input type="text" id="pCode" placeholder="登入代碼">
+            <button type="button" class="btnG" id="pGen" style="white-space:nowrap">產生代碼</button>
+          </div>
+          <div class="row2" style="margin-top:8px">
+            <select id="pRole">
+              <option value="現場">現場</option>
+              <option value="做帳">做帳</option>
+              <option value="管理員">管理員</option>
+              <option value="經銷">經銷</option>
+            </select>
+            <select id="pSite">
+              <option value="">（不分場）</option>
+            </select>
+          </div>
+          <input type="text" id="pCust" placeholder="客戶編號（經銷帳號才需填）" style="width:100%;margin-top:8px">
+          <button type="button" class="btnG" id="addPerson" style="margin-top:10px;width:100%">➕ 新增人員</button>
 
-        <label class="fld">選擇人員編輯</label>
-        <select id="peoplePick"><option value="">— 請選擇人員 —</option></select>
-        <div class="editbox hide" id="peopleEdit"></div>
-        <div class="msg" id="peopleMsg"></div>
-        <button type="button" class="btnG" id="peopleRefresh" style="margin-top:14px;width:100%">🔄 重新整理人員</button>
+          <label class="fld">選擇人員編輯</label>
+          <select id="peoplePick"><option value="">— 請選擇人員 —</option></select>
+          <div class="editbox hide" id="peopleEdit"></div>
+          <div class="msg" id="peopleMsg"></div>
+          <button type="button" class="btnG" id="peopleRefresh" style="margin-top:14px;width:100%">🔄 重新整理人員</button>
+        </div>
       </section>
     </div>
   </div>
@@ -1097,7 +1103,12 @@ function switchTab(t){
   if(t==="report") loadRepToday();
   if(t==="qry") loadBalances();
   if(t==="set"){ loadSettlement(); }
-  if(t==="people"){ loadPeople(); loadCustomers(); }
+  if(t==="people"){ loadPeople(); loadCustomers(); switchMgr($("#mgrPick")?$("#mgrPick").value:"site"); }
+}
+function switchMgr(v){
+  if($("#mgrSite"))   $("#mgrSite").classList.toggle("hide", v!=="site");
+  if($("#mgrCust"))   $("#mgrCust").classList.toggle("hide", v!=="cust");
+  if($("#mgrPeople")) $("#mgrPeople").classList.toggle("hide", v!=="people");
 }
 
 /* ---- UI 綁定 ---- */
@@ -1124,6 +1135,7 @@ function bindUI(){
   $("#genExcel").onclick=genReport;
   $("#addCust").onclick=addCustomer;
   $("#custRefresh").onclick=loadCustomers;
+  if($("#mgrPick")) $("#mgrPick").onchange=function(){ switchMgr(this.value); };
   if($("#custPick")) $("#custPick").onchange=function(){ showCustEdit(this.value); };
   if($("#peoplePick")) $("#peoplePick").onchange=function(){ showPeopleEdit(this.value); };
   $("#addPerson").onclick=addPerson;
