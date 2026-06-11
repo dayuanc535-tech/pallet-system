@@ -183,6 +183,29 @@
   .badge.out{background:var(--red-soft);color:var(--red)}
   .badge.in{background:var(--ok-soft);color:var(--brand-d)}
   .badge.dep{background:#f3ede1;color:var(--wood)}
+
+  /* ---- 現場回報（大字） ---- */
+  .custgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:10px}
+  .custgrid button{padding:16px 10px;border:1.5px solid var(--line2);background:var(--surface);
+    border-radius:14px;font-size:16px;font-weight:800;color:var(--ink);cursor:pointer;transition:.15s;line-height:1.3}
+  .custgrid button:hover{background:var(--sunken)}
+  .custgrid button.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-d)}
+  .repname{font-size:20px;font-weight:800;color:var(--brand-d);margin:18px 0 12px}
+  .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.qgrid{grid-template-columns:1fr}}
+  .qbox{border:1.5px solid var(--line);border-radius:14px;padding:14px;background:var(--sunken)}
+  .qbox.out{border-color:rgba(192,57,43,.3)}
+  .qbox.in{border-color:rgba(46,125,79,.3)}
+  .qbox .qh{font-size:14px;font-weight:800;margin-bottom:6px}
+  .qbox.out .qh{color:var(--red)}
+  .qbox.in .qh{color:var(--brand-d)}
+  .qline{display:flex;align-items:center;justify-content:space-between;margin:12px 0 0}
+  .qline span{font-size:15px;font-weight:700;color:var(--ink2)}
+  .stepper{display:flex;align-items:center;gap:10px}
+  .stepper button{width:44px;height:44px;border:1px solid var(--line2);background:var(--surface);
+    border-radius:11px;font-size:24px;font-weight:700;color:var(--brand);cursor:pointer}
+  .stepper button:hover{background:var(--brand-soft)}
+  .stepper b{min-width:34px;text-align:center;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
   .hide{display:none!important}
 </style>
 </head>
@@ -214,6 +237,10 @@
       <button data-tab="rec" class="on">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         <span>記錄</span>
+      </button>
+      <button data-tab="report" class="hide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>回報</span>
       </button>
       <button data-tab="qry">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M9 19v-7M14 19V9M19 19v-4"/></svg>
@@ -364,6 +391,45 @@
         <div class="msg" id="recMsg"></div>
       </section>
 
+      <!-- 現場回報（大字介面） -->
+      <section id="report" class="card hide">
+        <h2 class="ctitle">回報棧板進出</h2>
+        <p class="csub" id="repSub">點選客戶 → 填進／出數量 → 拍簽收單 → 送出。今日若無流通請按最下方按鈕。</p>
+
+        <label class="fld">選擇客戶</label>
+        <div id="repCusts" class="custgrid"></div>
+
+        <div id="repForm" class="hide">
+          <div class="repname" id="repName">—</div>
+          <div class="qgrid">
+            <div class="qbox out">
+              <div class="qh">出貨給客戶（送出）</div>
+              <div class="qline"><span>大棧板</span><div class="stepper"><button type="button" data-k="out大" data-d="-1">−</button><b id="q_out大">0</b><button type="button" data-k="out大" data-d="1">＋</button></div></div>
+              <div class="qline"><span>小棧板</span><div class="stepper"><button type="button" data-k="out小" data-d="-1">−</button><b id="q_out小">0</b><button type="button" data-k="out小" data-d="1">＋</button></div></div>
+            </div>
+            <div class="qbox in">
+              <div class="qh">客戶歸還（進）</div>
+              <div class="qline"><span>大棧板</span><div class="stepper"><button type="button" data-k="in大" data-d="-1">−</button><b id="q_in大">0</b><button type="button" data-k="in大" data-d="1">＋</button></div></div>
+              <div class="qline"><span>小棧板</span><div class="stepper"><button type="button" data-k="in小" data-d="-1">−</button><b id="q_in小">0</b><button type="button" data-k="in小" data-d="1">＋</button></div></div>
+            </div>
+          </div>
+
+          <label class="fld">拍 / 上傳簽收單</label>
+          <label class="btnG" style="display:block;text-align:center;padding:14px">
+            📷 拍照 / 選擇簽收單<input type="file" id="repPhoto" accept="image/*" capture="environment" class="hide">
+          </label>
+          <div id="repPhotoPv" class="hide" style="margin-top:8px"></div>
+
+          <button class="btnP" id="repSubmit">✅ 送出回報</button>
+          <div class="msg" id="repMsg"></div>
+        </div>
+
+        <button type="button" class="btnG" id="repNoFlow" style="margin-top:18px;width:100%;padding:14px;font-size:15px">📭 今日無棧板流通</button>
+
+        <div class="big" style="margin:24px 0 8px;font-weight:700">今日已回報</div>
+        <div id="repToday" class="big">—</div>
+      </section>
+
       <!-- 查詢 -->
       <section id="qry" class="card hide">
         <h2 class="ctitle">庫存與客戶結餘</h2>
@@ -446,6 +512,31 @@
       <div id="mineHist" class="big">載入中…</div>
       <button type="button" class="btnG" id="mineRefresh" style="margin-top:14px;width:100%">🔄 重新整理</button>
     </div>
+  </div>
+
+  <!-- 客戶代號查詢（月份＋對帳 PDF，獨立畫面） -->
+  <div id="lookView" class="mine hide">
+    <div class="card">
+      <div class="big" id="lookName" style="font-size:18px;font-weight:800">—</div>
+      <div class="row2" style="margin-top:12px;align-items:center">
+        <input type="month" id="lookMonth">
+        <button type="button" class="btnG" id="lookQuery">查詢</button>
+      </div>
+      <div class="dgrid" style="margin-top:14px">
+        <div class="dcard"><div class="dl">🚚 民雄場（本月）</div>
+          <div class="dz">送出 大<b id="lk1s大">0</b>/小<b id="lk1s小">0</b><br>歸還 大<b id="lk1r大">0</b>/小<b id="lk1r小">0</b></div></div>
+        <div class="dcard"><div class="dl">🚚 義竹場（本月）</div>
+          <div class="dz">送出 大<b id="lk2s大">0</b>/小<b id="lk2s小">0</b><br>歸還 大<b id="lk2r大">0</b>/小<b id="lk2r小">0</b></div></div>
+      </div>
+      <div class="tot" id="lookAmt" style="margin-top:14px"></div>
+      <button class="btnP" id="lookPdf">📄 輸出對帳單 PDF</button>
+      <div class="msg" id="lookMsg"></div>
+    </div>
+    <div class="card">
+      <div class="big" style="font-weight:700;margin-bottom:8px">本月進出明細</div>
+      <div id="lookDetail" class="big">—</div>
+    </div>
+    <div style="text-align:center;margin-top:6px"><a href="#" class="lnk" id="lookExit">← 查別的客戶</a></div>
   </div>
 </div>
 
@@ -545,13 +636,9 @@ async function doLookup(){
   var cust = $("#gCust").value.trim().toUpperCase(), m = $("#gMsg"); m.className="msg";
   if(!cust){ m.className="msg err"; m.textContent="請輸入客戶代號"; return; }
   try{
-    var r = await api({action:"lookup", cust:cust});
+    var r = await api({action:"statement", cust:cust});
     if(!r.ok){ m.className="msg err"; m.textContent=r.error; return; }
-    lookCust = cust;
-    $("#gate").classList.add("hide");
-    $("#mineView").classList.remove("hide");
-    $("#mineRefresh").onclick = reLookup;
-    fillMine(r);
+    openLook(cust);
   }catch(err){ m.className="msg err"; m.textContent="查詢失敗："+err; }
 }
 async function reLookup(){
@@ -616,6 +703,14 @@ function boot(){
   }
   bindUI();
   initSign();
+  // 現場：大字回報介面為主畫面（隱藏舊記錄/查詢分頁）
+  if(ME.role==="現場"){
+    buildReport();
+    $("[data-tab=report]").classList.remove("hide");
+    $("[data-tab=rec]").classList.add("hide");
+    $("[data-tab=qry]").classList.add("hide");
+    switchTab("report");
+  }
   // 管理員預設停在儀表板
   if(ME.role==="管理員") switchTab("dash");
 }
@@ -626,10 +721,12 @@ function switchTab(t){
     b.classList.toggle("on", b.dataset.tab===t);});
   $("#dash").classList.toggle("hide", t!=="dash");
   $("#rec").classList.toggle("hide", t!=="rec");
+  $("#report").classList.toggle("hide", t!=="report");
   $("#qry").classList.toggle("hide", t!=="qry");
   $("#set").classList.toggle("hide", t!=="set");
   $("#custmgr").classList.toggle("hide", t!=="cust");
   if(t==="dash") loadDashboard();
+  if(t==="report") loadRepToday();
   if(t==="qry") loadBalances();
   if(t==="set"){ loadSettlement(); loadReports(); }
   if(t==="cust") loadCustomers();
@@ -1058,6 +1155,134 @@ async function loadLoan(){
   $("#dLoan1Big").textContent=z.民雄.大; $("#dLoan1Sml").textContent=z.民雄.小;
   $("#dLoan2Big").textContent=z.義竹.大; $("#dLoan2Sml").textContent=z.義竹.小;
   $("#dLoanTBig").textContent=r.total.大; $("#dLoanTSml").textContent=r.total.小;
+}
+
+/* ---- 現場回報（大字） ---- */
+var REP={cust:"",name:"",q:{out大:0,out小:0,in大:0,in小:0},photo:""};
+function buildReport(){
+  $("#repCusts").innerHTML=ME.customers.map(function(c){
+    return '<button type="button" data-id="'+c.編號+'">'+esc(c.名稱)+'</button>';}).join("");
+  document.querySelectorAll("#repCusts button").forEach(function(b){
+    b.onclick=function(){ pickRepCust(b.dataset.id, b.textContent); };});
+  document.querySelectorAll("#report .stepper button").forEach(function(b){
+    b.onclick=function(){ repStep(b.dataset.k, parseInt(b.dataset.d,10)); };});
+  $("#repPhoto").onchange=repOnPhoto;
+  $("#repSubmit").onclick=repSubmit;
+  $("#repNoFlow").onclick=repNoFlow;
+}
+function pickRepCust(id,name){
+  REP.cust=id; REP.name=name;
+  document.querySelectorAll("#repCusts button").forEach(function(b){
+    b.classList.toggle("on", b.dataset.id===id);});
+  $("#repName").textContent=name;
+  $("#repForm").classList.remove("hide");
+}
+function repStep(k,d){
+  REP.q[k]=Math.max(0,(REP.q[k]||0)+d);
+  gid("q_"+k).textContent=REP.q[k];
+}
+function repOnPhoto(e){
+  var f=e.target.files[0]; if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){ REP.photo=rd.result;
+    $("#repPhotoPv").classList.remove("hide");
+    $("#repPhotoPv").innerHTML='<img src="'+rd.result+'" style="max-width:100%;border-radius:10px;border:1px solid var(--line)">';
+  };
+  rd.readAsDataURL(f);
+}
+function repReset(){
+  REP={cust:"",name:"",q:{out大:0,out小:0,in大:0,in小:0},photo:""};
+  ["out大","out小","in大","in小"].forEach(function(k){ gid("q_"+k).textContent="0"; });
+  document.querySelectorAll("#repCusts button").forEach(function(b){b.classList.remove("on");});
+  $("#repForm").classList.add("hide");
+  $("#repPhoto").value=""; $("#repPhotoPv").classList.add("hide"); $("#repPhotoPv").innerHTML="";
+}
+async function repSubmit(){
+  var m=$("#repMsg"); m.className="msg";
+  if(!REP.cust){ m.className="msg err"; m.textContent="請先選客戶"; return; }
+  var items=[];
+  if(REP.q.out大>0) items.push({動作:"送出",棧板別:"大",數量:REP.q.out大});
+  if(REP.q.out小>0) items.push({動作:"送出",棧板別:"小",數量:REP.q.out小});
+  if(REP.q.in大>0)  items.push({動作:"歸還",棧板別:"大",數量:REP.q.in大});
+  if(REP.q.in小>0)  items.push({動作:"歸還",棧板別:"小",數量:REP.q.in小});
+  if(!items.length){ m.className="msg err"; m.textContent="請至少填一個數量"; return; }
+  var btn=$("#repSubmit"); btn.disabled=true; btn.textContent="送出中…";
+  try{
+    var r=await post({action:"record",uid:ME.uid,客戶編號:REP.cust,items:items,照片:REP.photo});
+    if(r.ok){ m.className="msg ok"; m.textContent="✅ 已回報 "+REP.name+"（"+r.筆數+" 筆）"; repReset(); loadRepToday(); }
+    else { m.className="msg err"; m.textContent="⚠ "+r.error; }
+  }catch(err){ m.className="msg err"; m.textContent="送出失敗："+err; }
+  btn.disabled=false; btn.textContent="✅ 送出回報";
+}
+async function repNoFlow(){
+  if(!confirm("確定回報「今日無棧板流通」？")) return;
+  var m=$("#repMsg");
+  var r=await post({action:"noFlow",uid:ME.uid});
+  if(r.ok){ m.className="msg ok"; m.textContent="✅ 已記錄今日無流通"; loadRepToday(); }
+  else { m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+}
+async function loadRepToday(){
+  var box=$("#repToday"); if(!box)return;
+  var r=await api({action:"todayMine",uid:ME.uid});
+  if(!r.ok){ box.textContent=r.error; return; }
+  if(!r.list.length){ box.innerHTML='<span style="color:var(--mut)">尚未回報</span>'; return; }
+  box.innerHTML=r.list.map(function(x){
+    if(x.動作==="無流通") return '<div style="padding:8px 0;border-bottom:1px solid var(--line);color:var(--mut)">'+x.時間+'　今日無流通</div>';
+    var color=x.動作==="送出"?"var(--red)":"var(--brand-d)";
+    var label=x.動作==="送出"?"出":"進";
+    var att=x.附件?' <a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">簽收</a>':'';
+    return '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline">'+
+      '<span style="color:'+color+';font-weight:800;min-width:30px">'+label+'</span>'+
+      '<span style="font-weight:700">'+esc(x.客戶)+'　'+x.棧板別+'×'+x.數量+'</span>'+
+      '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+x.時間+att+'</span></div>';
+  }).join("");
+}
+
+/* ---- 客戶代號查詢（月份＋對帳 PDF） ---- */
+var LOOK="";
+function openLook(cust){
+  LOOK=cust;
+  $("#gate").classList.add("hide"); $("#gate").innerHTML="";
+  $("#mineView").classList.add("hide");
+  $("#lookView").classList.remove("hide");
+  if(!$("#lookMonth").value){ var d=new Date(); $("#lookMonth").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2); }
+  $("#lookQuery").onclick=loadStatement;
+  $("#lookPdf").onclick=exportPdf;
+  $("#lookExit").onclick=function(e){ e.preventDefault(); $("#lookView").classList.add("hide"); showGate("look"); };
+  loadStatement();
+}
+async function loadStatement(){
+  var r=await api({action:"statement",cust:LOOK,month:$("#lookMonth").value});
+  if(!r.ok){ $("#lookName").textContent=r.error; return; }
+  $("#lookName").textContent=r.客戶+"（"+r.客戶編號+"）";
+  var z=r.byZone;
+  gid("lk1s大").textContent=z.民雄.送.大; gid("lk1s小").textContent=z.民雄.送.小;
+  gid("lk1r大").textContent=z.民雄.還.大; gid("lk1r小").textContent=z.民雄.還.小;
+  gid("lk2s大").textContent=z.義竹.送.大; gid("lk2s小").textContent=z.義竹.送.小;
+  gid("lk2r大").textContent=z.義竹.還.大; gid("lk2r小").textContent=z.義竹.還.小;
+  var col=r.類別==="折讓"?"var(--brand-d)":(r.類別==="應收款"?"var(--red)":"var(--ink)");
+  $("#lookAmt").innerHTML=
+    '<div class="b"><div class="n" style="color:'+col+'">$'+r.金額+'</div><div class="l">'+r.類別+'（本月）</div></div>'+
+    '<div class="b"><div class="n">'+r.期末未還.大+'/'+r.期末未還.小+'</div><div class="l">期末未還 大/小</div></div>';
+  if(!r.detail.length){ $("#lookDetail").innerHTML='<span style="color:var(--mut)">本月無進出</span>'; return; }
+  $("#lookDetail").innerHTML=r.detail.map(function(x){
+    var color=x.動作==="送出"?"var(--red)":"var(--brand-d)";
+    var att=x.附件?' <a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">簽收</a>':'';
+    return '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline">'+
+      '<span style="color:'+color+';font-weight:800;min-width:44px">'+esc(x.動作)+'</span>'+
+      '<span style="font-weight:700">'+esc(x.場)+'　'+x.棧板別+'×'+x.數量+'</span>'+
+      '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+esc(x.時間)+att+'</span></div>';
+  }).join("");
+}
+async function exportPdf(){
+  var btn=$("#lookPdf"), m=$("#lookMsg"); m.className="msg";
+  btn.disabled=true; btn.textContent="產生中…（約 10 秒）";
+  try{
+    var r=await post({action:"statementPdf",cust:LOOK,month:$("#lookMonth").value});
+    if(r.ok){ m.className="msg ok"; m.innerHTML='✅ <a class="lnk" href="'+r.url+'" target="_blank" rel="noopener">開啟 '+esc(r.檔名)+'</a>'; }
+    else { m.className="msg err"; m.textContent="⚠ "+r.error; }
+  }catch(err){ m.className="msg err"; m.textContent="產生失敗："+err; }
+  btn.disabled=false; btn.textContent="📄 輸出對帳單 PDF";
 }
 </script>
 </body>
