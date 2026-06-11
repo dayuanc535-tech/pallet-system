@@ -314,6 +314,22 @@
   .txqrow .txqtime{font-size:12.5px;color:var(--mut);font-variant-numeric:tabular-nums}
   .txqrow .txqside .lnk{font-size:13.5px}
   .txqrow .txqside .csub{margin:0}
+  /* 調整累計未還 */
+  .adjcur{margin:14px 0 4px}
+  .adjcurbox{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--sunken);border:1px solid var(--line);border-radius:var(--r-in);padding:12px 16px}
+  .adjcurl{font-size:13px;color:var(--mut);font-weight:700}
+  .adjcurnums{display:flex;gap:18px}
+  .adjcurnums b{font-size:18px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+  .adjpv{margin-top:14px;background:var(--brand-soft);border-radius:var(--r-in);padding:12px 16px}
+  .adjpv .adjline{display:flex;align-items:baseline;gap:12px;padding:3px 0}
+  .adjpv .adjline:not(:last-child){border-bottom:1px solid rgba(0,0,0,.05)}
+  .adjpv .adjlab{font-size:13px;color:var(--mut);font-weight:700;min-width:54px}
+  .adjpv .adjline b{font-size:16px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+  .adjpv .adjdelta{font-size:13px;font-weight:800;padding:1px 8px;border-radius:999px;margin-left:2px}
+  .adjpv .adjdelta.up{color:var(--red);background:rgba(193,67,52,.12)}
+  .adjpv .adjdelta.down{color:var(--brand-d);background:var(--brand-soft)}
+  .adjpv .adjsame{font-size:14px;color:var(--mut);font-weight:700}
   .chip{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);border-radius:999px;
     padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s}
   .chip:hover{background:var(--sunken)}
@@ -781,6 +797,7 @@
           <option value="cust">客戶編輯</option>
           <option value="people">操作人員編輯</option>
           <option value="tx">棧板明細管理</option>
+          <option value="adj">調整累計未還</option>
         </select>
 
         <!-- 場名管理 -->
@@ -879,6 +896,28 @@
               <button type="button" class="btnG" id="txAddBtn" style="margin-top:4px;width:100%">確認補登</button>
             </div>
           </details>
+        </div>
+
+        <!-- 調整累計未還 -->
+        <div id="mgrAdj" class="mgrsec hide" style="margin-top:18px">
+          <p class="csub" style="margin-top:0">校正某客戶目前的「累計未還」。系統會在本月記一筆「調整」差異，後續送出／歸還照常從校正後的數字繼續累加，不影響歷史明細與帳單金額。</p>
+          <label class="fld">選擇客戶</label>
+          <select id="adjCust" style="width:100%"><option value="">— 請選擇客戶 —</option></select>
+          <div id="adjCur" class="adjcur hide">
+            <div class="adjcurbox"><span class="adjcurl">目前累計未還</span>
+              <div class="adjcurnums"><b id="adjCurBig">大 0</b><b id="adjCurSmall">小 0</b></div>
+            </div>
+          </div>
+          <label class="fld">校正後的累計未還</label>
+          <div class="row2">
+            <div><label class="fld" style="margin-top:0">大棧板</label><input type="number" id="adjBig" min="0" step="1" inputmode="numeric" style="width:100%"></div>
+            <div><label class="fld" style="margin-top:0">小棧板</label><input type="number" id="adjSmall" min="0" step="1" inputmode="numeric" style="width:100%"></div>
+          </div>
+          <label class="fld">原因備註（可空白）</label>
+          <input type="text" id="adjNote" placeholder="例：盤點後實際數量、單據漏登" style="width:100%">
+          <div id="adjPreview" class="adjpv hide"></div>
+          <button type="button" class="btnG" id="adjBtn" style="margin-top:14px;width:100%">確認調整</button>
+          <div class="msg" id="adjMsg"></div>
         </div>
       </section>
     </div>
@@ -1232,7 +1271,92 @@ function switchMgr(v){
   if($("#mgrCust"))   $("#mgrCust").classList.toggle("hide", v!=="cust");
   if($("#mgrPeople")) $("#mgrPeople").classList.toggle("hide", v!=="people");
   if($("#mgrTx"))     $("#mgrTx").classList.toggle("hide", v!=="tx");
+  if($("#mgrAdj"))    $("#mgrAdj").classList.toggle("hide", v!=="adj");
   if(v==="tx") txMgrInit();
+  if(v==="adj") adjInit();
+}
+
+/* ---- 調整累計未還（管理員）---- */
+var adjInited=false, adjBalMap={};
+function adjInit(){
+  if(!custCache.length) loadCustomers();
+  // 客戶下拉
+  if($("#adjCust")) $("#adjCust").innerHTML='<option value="">— 請選擇客戶 —</option>'+(custCache||[]).map(function(c){
+    return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）</option>';
+  }).join("");
+  if(!adjInited){
+    adjInited=true;
+    if($("#adjCust"))  $("#adjCust").onchange=adjOnCust;
+    if($("#adjBig"))   $("#adjBig").oninput=adjPreview;
+    if($("#adjSmall")) $("#adjSmall").oninput=adjPreview;
+    if($("#adjBtn"))   $("#adjBtn").onclick=adjSubmit;
+  }
+  adjResetForm();
+  adjLoadBalances();
+}
+function adjResetForm(){
+  if($("#adjCust"))  $("#adjCust").value="";
+  if($("#adjBig"))   $("#adjBig").value="";
+  if($("#adjSmall")) $("#adjSmall").value="";
+  if($("#adjNote"))  $("#adjNote").value="";
+  if($("#adjCur"))   $("#adjCur").classList.add("hide");
+  if($("#adjPreview")) $("#adjPreview").classList.add("hide");
+  if($("#adjMsg")){ $("#adjMsg").className="msg"; $("#adjMsg").textContent=""; }
+}
+async function adjLoadBalances(){
+  var r=await api({action:"balances", uid:ME.uid});
+  adjBalMap={};
+  if(r&&r.ok&&r.customers) r.customers.forEach(function(c){ adjBalMap[String(c.編號)]={大:c.大||0,小:c.小||0}; });
+  adjOnCust();
+}
+function adjCurOf(cid){ return adjBalMap[String(cid)]||{大:0,小:0}; }
+function adjOnCust(){
+  var cid=$("#adjCust")?$("#adjCust").value:"";
+  if(!cid){ if($("#adjCur")) $("#adjCur").classList.add("hide"); if($("#adjPreview")) $("#adjPreview").classList.add("hide"); return; }
+  var b=adjCurOf(cid);
+  if($("#adjCurBig"))   $("#adjCurBig").textContent="大 "+b.大;
+  if($("#adjCurSmall")) $("#adjCurSmall").textContent="小 "+b.小;
+  if($("#adjCur"))   $("#adjCur").classList.remove("hide");
+  if($("#adjBig"))   $("#adjBig").value=b.大;
+  if($("#adjSmall")) $("#adjSmall").value=b.小;
+  adjPreview();
+}
+function adjPreview(){
+  var box=$("#adjPreview"); if(!box) return;
+  var cid=$("#adjCust")?$("#adjCust").value:"";
+  if(!cid){ box.classList.add("hide"); return; }
+  var b=adjCurOf(cid);
+  var nb=$("#adjBig").value, ns=$("#adjSmall").value;
+  var tb=nb===""?b.大:Number(nb), ts=ns===""?b.小:Number(ns);
+  if(isNaN(tb)||tb<0||isNaN(ts)||ts<0){ box.classList.add("hide"); return; }
+  var db=tb-b.大, ds=ts-b.小;
+  if(!db&&!ds){ box.classList.remove("hide"); box.innerHTML='<span class="adjsame">與目前相同，無需調整</span>'; return; }
+  function chip(lab,from,to,d){
+    if(!d) return '<div class="adjline"><span class="adjlab">'+lab+'</span><b>'+from+'　不變</b></div>';
+    var arrow=d>0?'↑':'↓', cls=d>0?'up':'down';
+    return '<div class="adjline"><span class="adjlab">'+lab+'</span><b>'+from+' → '+to+'　<span class="adjdelta '+cls+'">'+arrow+Math.abs(d)+'</span></b></div>';
+  }
+  box.classList.remove("hide");
+  box.innerHTML=chip("大棧板",b.大,tb,db)+chip("小棧板",b.小,ts,ds);
+}
+async function adjSubmit(){
+  var m=$("#adjMsg"), cid=$("#adjCust")?$("#adjCust").value:"";
+  if(!cid){ if(m){ m.className="msg err"; m.textContent="請先選擇客戶"; } return; }
+  var nb=$("#adjBig").value, ns=$("#adjSmall").value;
+  var b=adjCurOf(cid);
+  var tb=nb===""?b.大:Number(nb), ts=ns===""?b.小:Number(ns);
+  if(isNaN(tb)||tb<0||isNaN(ts)||ts<0){ if(m){ m.className="msg err"; m.textContent="目標數量需為 0 或正整數"; } return; }
+  if(tb===b.大&&ts===b.小){ if(m){ m.className="msg err"; m.textContent="調整後與目前相同，未做變更"; } return; }
+  var cname=($("#adjCust").selectedOptions[0]||{}).textContent||cid;
+  if(!confirm("確定把「"+cname+"」的累計未還校正為　大 "+tb+"　小 "+ts+"？\n（目前：大 "+b.大+"　小 "+b.小+"）此筆調整會記錄於本月。")) return;
+  var btn=$("#adjBtn"); if(btn){ btn.disabled=true; btn.textContent="調整中…"; }
+  var r=await post({action:"txAdjust", uid:ME.uid, 客戶編號:cid, 目標大:tb, 目標小:ts, 備註:$("#adjNote")?$("#adjNote").value:""});
+  if(btn){ btn.disabled=false; btn.textContent="確認調整"; }
+  if(!r||!r.ok){ if(m){ m.className="msg err"; m.textContent=""+((r&&r.error)||"調整失敗"); } return; }
+  if(m){ m.className="msg ok"; m.textContent="已校正：大 "+r.調整後.大+"　小 "+r.調整後.小; }
+  // 更新本地結餘並刷新顯示
+  adjBalMap[String(cid)]={大:r.調整後.大,小:r.調整後.小};
+  adjOnCust();
 }
 
 /* ---- 進出明細（唯讀：業務／帳務／管理員，每筆可查看簽收單）---- */
@@ -1279,7 +1403,7 @@ function groupTx(raw){
     var g=map[key];
     if(!g){
       g=map[key]={ 時間:x.時間, 客戶:x.客戶, 客戶編號:x.客戶編號, 場:x.場||"",
-        act:{ 送出:{大:0,小:0}, 歸還:{大:0,小:0}, 報廢:{大:0,小:0}, 新購:{大:0,小:0} },
+        act:{ 送出:{大:0,小:0}, 歸還:{大:0,小:0}, 報廢:{大:0,小:0}, 新購:{大:0,小:0}, 調整:{大:0,小:0} },
         無流通:false, 附件:"", 備註:[] };
       order.push(g);
     }
@@ -1303,6 +1427,12 @@ function txqCard(g){
   add('歸還','var(--brand-d)');
   add('報廢','var(--mut)');
   add('新購','var(--mut)');
+  (function(){
+    var o=g.act['調整'], parts=[];
+    if(o.大) parts.push('大'+(o.大>0?'+':'')+o.大);
+    if(o.小) parts.push('小'+(o.小>0?'+':'')+o.小);
+    if(parts.length) lines.push('<div class="txqmeta"><span style="color:var(--brand);font-weight:800">累計校正　'+parts.join('　')+'</span></div>');
+  })();
   if(!lines.length && g.無流通) lines.push('<div class="txqmeta" style="color:var(--mut)">當日無流通</div>');
   var note=(g.場?esc(g.場):"")+(g.備註.length?'　'+esc(g.備註.join('／')):'');
   var sign=g.附件
