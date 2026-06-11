@@ -330,6 +330,18 @@
   .adjpv .adjdelta.up{color:var(--red);background:rgba(193,67,52,.12)}
   .adjpv .adjdelta.down{color:var(--brand-d);background:var(--brand-soft)}
   .adjpv .adjsame{font-size:14px;color:var(--mut);font-weight:700}
+  .adjhist{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+  .adjhisthead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .adjhisthead span{font-weight:800;font-size:15px;color:var(--ink)}
+  .adjhistlist{display:flex;flex-direction:column;gap:8px}
+  .adjhrow{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-in);padding:11px 14px}
+  .adjhmain{min-width:0}
+  .adjhcust{font-weight:800;font-size:15px;color:var(--ink)}
+  .adjhnote{font-size:12.5px;color:var(--mut);margin-top:3px;line-height:1.5}
+  .adjhmeta{text-align:right;white-space:nowrap;flex:0 0 auto}
+  .adjhtime{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+  .adjhby{font-size:12px;color:var(--ink2);font-weight:700;margin-top:2px}
   .chip{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);border-radius:999px;
     padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s}
   .chip:hover{background:var(--sunken)}
@@ -918,6 +930,14 @@
           <div id="adjPreview" class="adjpv hide"></div>
           <button type="button" class="btnG" id="adjBtn" style="margin-top:14px;width:100%">確認調整</button>
           <div class="msg" id="adjMsg"></div>
+
+          <div class="adjhist">
+            <div class="adjhisthead">
+              <span>調整紀錄一覽</span>
+              <button type="button" class="btnMini" id="adjHistRefresh">重新整理</button>
+            </div>
+            <div id="adjHistList" class="adjhistlist"><span class="csub">載入中…</span></div>
+          </div>
         </div>
       </section>
     </div>
@@ -1278,21 +1298,45 @@ function switchMgr(v){
 
 /* ---- 調整累計未還（管理員）---- */
 var adjInited=false, adjBalMap={};
-function adjInit(){
-  if(!custCache.length) loadCustomers();
-  // 客戶下拉
-  if($("#adjCust")) $("#adjCust").innerHTML='<option value="">— 請選擇客戶 —</option>'+(custCache||[]).map(function(c){
-    return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）</option>';
-  }).join("");
+async function adjInit(){
   if(!adjInited){
     adjInited=true;
     if($("#adjCust"))  $("#adjCust").onchange=adjOnCust;
     if($("#adjBig"))   $("#adjBig").oninput=adjPreview;
     if($("#adjSmall")) $("#adjSmall").oninput=adjPreview;
     if($("#adjBtn"))   $("#adjBtn").onclick=adjSubmit;
+    if($("#adjHistRefresh")) $("#adjHistRefresh").onclick=adjLoadHist;
   }
+  if(!custCache.length) await loadCustomers();
+  adjFillCust();
   adjResetForm();
   adjLoadBalances();
+  adjLoadHist();
+}
+function adjFillCust(){
+  if(!$("#adjCust")) return;
+  var cur=$("#adjCust").value;
+  $("#adjCust").innerHTML='<option value="">— 請選擇客戶 —</option>'+(custCache||[]).map(function(c){
+    return '<option value="'+esc(c.編號)+'"'+(String(c.編號)===String(cur)?" selected":"")+'>'+esc(c.名稱)+'（'+esc(c.編號)+'）</option>';
+  }).join("");
+}
+async function adjLoadHist(){
+  var box=$("#adjHistList"); if(!box) return;
+  box.innerHTML='<span class="csub">載入中…</span>';
+  var r=await api({action:"txAdjList", uid:ME.uid});
+  if(!r||!r.ok){ box.innerHTML='<span class="csub">'+esc((r&&r.error)||"載入失敗")+'</span>'; return; }
+  if(!r.list.length){ box.innerHTML='<span class="csub">尚無任何調整紀錄。</span>'; return; }
+  box.innerHTML=r.list.map(function(x){
+    var d=Number(x.差異)||0, arrow=d>0?'↑':'↓', cls=d>0?'up':'down';
+    var delta='<span class="adjdelta '+cls+'">'+esc(x.棧板別)+' '+arrow+Math.abs(d)+'</span>';
+    return '<div class="adjhrow">'+
+      '<div class="adjhmain">'+
+        '<div class="adjhcust">'+esc(x.客戶||x.客戶編號||"—")+'　'+delta+'</div>'+
+        (x.備註?'<div class="adjhnote">'+esc(x.備註)+'</div>':'')+
+      '</div>'+
+      '<div class="adjhmeta"><div class="adjhtime">'+esc(x.時間)+'</div><div class="adjhby">'+esc(x.經手人||"")+'</div></div>'+
+    '</div>';
+  }).join("");
 }
 function adjResetForm(){
   if($("#adjCust"))  $("#adjCust").value="";
@@ -1357,6 +1401,7 @@ async function adjSubmit(){
   // 更新本地結餘並刷新顯示
   adjBalMap[String(cid)]={大:r.調整後.大,小:r.調整後.小};
   adjOnCust();
+  adjLoadHist();
 }
 
 /* ---- 進出明細（唯讀：業務／帳務／管理員，每筆可查看簽收單）---- */
