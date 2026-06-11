@@ -37,8 +37,13 @@
   .brand{display:flex;align-items:center;gap:11px}
   .logo{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;
     background:linear-gradient(135deg,#2e7d4f 0%,#12998e 55%,#2f74c0 100%);color:#fff;box-shadow:var(--sh)}
-  .brand .bt b{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+  .brand .bt b{display:block;font-size:25px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
   .brand .bt i{font-style:normal;font-size:11.5px;color:var(--mut)}
+  .clock{display:flex;flex-direction:column;gap:1px;padding-left:14px;margin-left:14px;
+    border-left:1px solid var(--line);line-height:1.2}
+  .clock b{font-size:12.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .clock i{font-style:normal;font-size:17px;font-weight:800;color:var(--brand-d);
+    font-variant-numeric:tabular-nums;letter-spacing:.02em}
   .who{margin-left:auto;text-align:right;font-size:12px;color:var(--mut);line-height:1.45}
   .who b{color:var(--ink);font-size:13px}
   .owner{display:flex;align-items:center;gap:9px;padding-left:13px;margin-left:14px;
@@ -49,10 +54,14 @@
   .owner-tx i{display:block;font-style:normal;font-size:10.5px;color:var(--mut);letter-spacing:.02em}
   .owner-tx b{font-size:13px;font-weight:800;color:var(--ink)}
   @media(max-width:560px){
+    .brand .bt b{font-size:21px}
     .owner{padding-left:9px;margin-left:9px}
     .owner-pic{width:32px;height:32px}
     .owner-tx i{display:none}
     .owner-tx b{font-size:12px}
+    .clock{padding-left:9px;margin-left:9px}
+    .clock b{display:none}
+    .clock i{font-size:14px}
   }
 
   /* ---- 應用區 / 側欄導覽 ---- */
@@ -398,7 +407,11 @@
           <path d="M6.5 10v4M12 10v4M17.5 10v4"/>
         </svg>
       </span>
-      <div class="bt"><b>棧板管理系統</b><i>有機肥料部 · 物流結算</i></div>
+      <div class="bt"><b>棧板管理系統</b><i>有機肥料部</i></div>
+    </div>
+    <div class="clock" id="clock">
+      <b id="clockDate">—</b>
+      <i id="clockTime">—</i>
     </div>
     <div class="who" id="who"></div>
     <div class="owner">
@@ -834,6 +847,14 @@ var GAS_URL  = "https://script.google.com/macros/s/AKfycbyOOX6lyw9VkAl9jqekWNN4h
 var ME = null;
 
 function $(s){return document.querySelector(s);}
+function _p2(n){ return ("0"+n).slice(-2); }
+function tickClock(){
+  var d=$("#clockDate"), t=$("#clockTime"); if(!d||!t) return;
+  var now=new Date(), wk=["日","一","二","三","四","五","六"][now.getDay()];
+  d.textContent=now.getFullYear()+"/"+_p2(now.getMonth()+1)+"/"+_p2(now.getDate())+"（週"+wk+"）";
+  t.textContent=_p2(now.getHours())+":"+_p2(now.getMinutes())+":"+_p2(now.getSeconds());
+}
+tickClock(); setInterval(tickClock, 1000);
 function api(params){
   var u = GAS_URL + "?" + Object.keys(params).map(function(k){
     return k+"="+encodeURIComponent(params[k]);}).join("&");
