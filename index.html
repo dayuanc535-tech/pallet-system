@@ -28,7 +28,7 @@
     border-bottom:1px solid var(--line);padding:12px 4px;margin-bottom:20px}
   .brand{display:flex;align-items:center;gap:11px}
   .logo{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;
-    background:var(--brand);color:#fff;box-shadow:var(--sh)}
+    background:linear-gradient(135deg,#2e7d4f 0%,#12998e 55%,#2f74c0 100%);color:#fff;box-shadow:var(--sh)}
   .brand .bt b{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
   .brand .bt i{font-style:normal;font-size:11.5px;color:var(--mut)}
   .who{margin-left:auto;text-align:right;font-size:12px;color:var(--mut);line-height:1.45}
@@ -41,9 +41,17 @@
     border:1px solid var(--line);background:var(--surface);border-radius:11px;
     padding:13px 16px;font-size:16.5px;font-weight:700;color:var(--ink2);cursor:pointer;
     transition:.15s}
-  .tabs button svg{width:20px;height:20px;opacity:.7}
-  .tabs button:hover{background:var(--sunken)}
-  .tabs button.on{background:var(--brand-soft);color:var(--brand-d);border-color:var(--brand)}
+  .tabs button svg{width:20px;height:20px;opacity:.92;color:var(--tc,var(--brand))}
+  .tabs button[data-tab=dash]  {--tc:#2e7d4f;--tcs:#e7f3ec}
+  .tabs button[data-tab=rec]   {--tc:#2f74c0;--tcs:#e6f0fa}
+  .tabs button[data-tab=report]{--tc:#12998e;--tcs:#e1f5f1}
+  .tabs button[data-tab=qry]   {--tc:#7b54c4;--tcs:#efe9f9}
+  .tabs button[data-tab=look]  {--tc:#4f63cf;--tcs:#e9ecfb}
+  .tabs button[data-tab=set]   {--tc:#d98a2b;--tcs:#fbf0df}
+  .tabs button[data-tab=cust]  {--tc:#d24f86;--tcs:#fbe7f0}
+  .tabs button[data-tab=people]{--tc:#e0613a;--tcs:#fcebe4}
+  .tabs button:hover{background:var(--tcs,var(--sunken))}
+  .tabs button.on{background:var(--tcs);color:var(--tc);border-color:var(--tc)}
   .tabs button.on svg{opacity:1}
   @media(min-width:820px){
     .app{display:grid;grid-template-columns:248px minmax(0,1fr);gap:34px;align-items:start}
@@ -123,10 +131,12 @@
   /* ---- 統計方塊 ---- */
   .big{font-size:13px;color:var(--ink2)}
   .tot{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-  .tot .b{flex:1;min-width:120px;background:var(--sunken);border:1px solid var(--line);
-    border-radius:14px;padding:16px;text-align:center}
-  .tot .b .n{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
-  .tot .b .l{font-size:12px;color:var(--mut);margin-top:3px;line-height:1.4}
+  .tot .b{flex:1;min-width:120px;background:var(--acs,var(--sunken));border:1px solid var(--line);
+    border-top:3px solid var(--ac,var(--brand));border-radius:14px;padding:16px;text-align:center}
+  .tot .b:nth-child(2n+1){--ac:#2f74c0;--acs:#eef5fc}
+  .tot .b:nth-child(2n+2){--ac:#d98a2b;--acs:#fcf3e6}
+  .tot .b .n{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ac,var(--ink))}
+  .tot .b .l{font-size:12px;color:var(--mut);margin-top:3px;line-height:1.4;font-weight:700}
   .pos{color:var(--red);font-weight:700}
 
   /* ---- 訊息 ---- */
@@ -154,14 +164,17 @@
   .gentry{display:flex;align-items:center;gap:12px;width:100%;text-align:left;
     background:var(--surface);border:1px solid var(--line);border-radius:14px;
     padding:13px 15px;margin-top:11px;cursor:pointer;transition:border-color .15s,background .15s}
-  .gentry:hover{border-color:var(--brand);background:var(--brand-soft)}
+  .gentry[data-k=staff]{--tc:#2e7d4f;--tcs:#e7f3ec}
+  .gentry[data-k=admin]{--tc:#2f74c0;--tcs:#e6f0fa}
+  .gentry[data-k=acct] {--tc:#d98a2b;--tcs:#fbf0df}
+  .gentry:hover{border-color:var(--tc,var(--brand));background:var(--tcs,var(--brand-soft))}
   .gentry .gei{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;
-    background:var(--brand-soft);border:1px solid var(--line);flex:0 0 auto}
+    background:var(--tcs,var(--brand-soft));border:1px solid var(--line);flex:0 0 auto;color:var(--tc,var(--brand))}
   .gentry:hover .gei{background:var(--surface)}
   .gentry .get{flex:1;min-width:0}
   .gentry .geh{font-size:15px;font-weight:800;color:var(--ink)}
   .gentry .ged{font-size:12px;color:var(--mut);margin-top:2px}
-  .gentry .gea{color:var(--brand-d);font-weight:800;font-size:20px;line-height:1;flex:0 0 auto}
+  .gentry .gea{color:var(--tc,var(--brand-d));font-weight:800;font-size:20px;line-height:1;flex:0 0 auto}
   .gswitch{margin-top:20px;font-size:13px;color:var(--brand-d);font-weight:700;cursor:pointer;display:inline-block}
   .gswitch:hover{text-decoration:underline}
   .gatecard .msg{text-align:left}
@@ -170,15 +183,22 @@
 
   /* ---- 儀表板 ---- */
   .dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
-  .dcard{background:var(--sunken);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
-  .dcard .dl{font-size:12px;color:var(--mut);font-weight:700;display:flex;align-items:center;gap:6px}
+  .dcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+    border-top:3px solid var(--ac,var(--brand))}
+  .dgrid .dcard:nth-child(6n+1){--ac:#2e7d4f;--acs:#e7f3ec}
+  .dgrid .dcard:nth-child(6n+2){--ac:#2f74c0;--acs:#e6f0fa}
+  .dgrid .dcard:nth-child(6n+3){--ac:#d98a2b;--acs:#fbf0df}
+  .dgrid .dcard:nth-child(6n+4){--ac:#7b54c4;--acs:#efe9f9}
+  .dgrid .dcard:nth-child(6n+5){--ac:#d24f86;--acs:#fbe7f0}
+  .dgrid .dcard:nth-child(6n+6){--ac:#12998e;--acs:#e1f5f1}
+  .dcard .dl{font-size:12px;color:var(--ac,var(--mut));font-weight:800;display:flex;align-items:center;gap:6px}
   .dcard .dn{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:5px}
   .dcard .dn small{font-size:13px;font-weight:700;color:var(--mut);margin-left:3px}
   .dcard .dz{font-size:12.5px;color:var(--ink2);margin-top:9px;line-height:1.7;border-top:1px solid var(--line);padding-top:8px}
   .dcard .dz b{color:var(--ink);font-variant-numeric:tabular-nums}
   .dcard.click{cursor:pointer;transition:.15s}
-  .dcard.click:hover{border-color:var(--brand);background:var(--brand-soft)}
-  .dcard.on{border-color:var(--brand);background:var(--brand-soft)}
+  .dcard.click:hover{border-color:var(--ac,var(--brand));background:var(--acs,var(--brand-soft))}
+  .dcard.on{border-color:var(--ac,var(--brand));background:var(--acs,var(--brand-soft))}
   .daterow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
   .daterow input[type=date]{width:auto;flex:1;min-width:130px}
   .chip{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);border-radius:999px;
@@ -721,17 +741,17 @@ function showGate(mode){
         '<div class="gt">棧板管理系統</div>'+
         '<div class="gs">請選擇登入身分</div>'+
         '<div class="gentry" data-k="staff">'+
-          '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.4 3.1-5.5 7-5.5s7 2.1 7 5.5"/></svg></div>'+
+          '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.4 3.1-5.5 7-5.5s7 2.1 7 5.5"/></svg></div>'+
           '<div class="get"><div class="geh">員工登入</div><div class="ged">現場 / 做帳人員用代碼登入</div></div>'+
           '<div class="gea">›</div>'+
         '</div>'+
         '<div class="gentry" data-k="admin">'+
-          '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-2.9 8-7 9.5C7.9 19 5 15.4 5 11V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg></div>'+
+          '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.4-2.9 8-7 9.5C7.9 19 5 15.4 5 11V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg></div>'+
           '<div class="get"><div class="geh">管理員權限</div><div class="ged">客戶、人員與全場資料管理</div></div>'+
           '<div class="gea">›</div>'+
         '</div>'+
         '<div class="gentry" data-k="acct">'+
-          '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8.5 7h7M8.5 11h7M8.5 15h4"/></svg></div>'+
+          '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8.5 7h7M8.5 11h7M8.5 15h4"/></svg></div>'+
           '<div class="get"><div class="geh">帳務中心</div><div class="ged">月結算 / 對帳</div></div>'+
           '<div class="gea">›</div>'+
         '</div>'+
