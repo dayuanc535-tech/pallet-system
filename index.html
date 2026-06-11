@@ -140,21 +140,22 @@
   .btnMini:active{transform:translateY(1px);box-shadow:none}
   .btnMini:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
   /* ---- 月結算 表格放大 ---- */
-  #setTable{font-size:16px}
-  #setTable th,#setTable td{padding:15px 11px}
+  #setTable{font-size:18px}
+  #setTable th,#setTable td{padding:16px 12px}
+  #setTable th{font-size:16px}
   #setTable td:not(:first-child){font-variant-numeric:tabular-nums;font-weight:600}
   /* ---- 月結算 每日明細 ---- */
   .sdwrap{margin-top:18px;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--sh-md),var(--sh-in)}
-  .sdhead{background:var(--sunken);padding:13px 16px;font-weight:800;font-size:16px;color:var(--ink);
+  .sdhead{background:var(--sunken);padding:13px 16px;font-weight:800;font-size:17px;color:var(--ink);
     border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .sdhead .sub{font-size:13px;font-weight:700;color:var(--mut)}
   .sdday{padding:6px 16px;background:#f4efe6;font-size:13px;font-weight:800;color:#a96612;
     border-bottom:1px solid var(--line)}
   .sdrow{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line)}
   .sdrow:last-child{border-bottom:none}
-  .sdact{min-width:52px;font-weight:800;font-size:16px}
+  .sdact{min-width:52px;font-weight:800;font-size:17px}
   .sdact.out{color:var(--red)} .sdact.in{color:var(--brand-d)}
-  .sdinfo{font-weight:700;font-size:16px;color:var(--ink)}
+  .sdinfo{font-weight:700;font-size:17px;color:var(--ink)}
   .sdtime{margin-left:auto;color:var(--mut);font-size:13px;white-space:nowrap}
   .sdthumb{width:46px;height:46px;border-radius:9px;object-fit:cover;border:1px solid var(--line2);
     cursor:pointer;box-shadow:var(--sh);transition:transform .12s}
@@ -617,7 +618,7 @@
           <table id="setTable" class="hide">
             <thead><tr>
               <th>客戶</th><th>送出<br>大/小</th><th>歸還<br>大/小</th>
-              <th>本月金額</th><th>類別</th><th>期末<br>未還</th><th>月報表</th>
+              <th>本月金額</th><th>類別</th><th>期末未還<br>大/小</th><th>月報表</th>
             </tr></thead>
             <tbody id="setBody"></tbody>
           </table>
