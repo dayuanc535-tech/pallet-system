@@ -776,6 +776,7 @@
               <option value="做帳">做帳</option>
               <option value="管理員">管理員</option>
               <option value="經銷">經銷</option>
+              <option value="業務">業務</option>
             </select>
             <select id="pSite">
               <option value="">（不分場）</option>
@@ -809,6 +810,18 @@
       <div id="mineHist" class="big">載入中…</div>
       <button type="button" class="btnG" id="mineRefresh" style="margin-top:14px;width:100%">🔄 重新整理</button>
     </div>
+  </div>
+
+  <!-- 業務人員：只看被指派的客戶（獨立畫面） -->
+  <div id="salesView" class="mine hide">
+    <div class="card">
+      <div class="big" id="salesWho" style="font-weight:800">—</div>
+      <p class="csub" style="margin-top:6px">選擇你負責的客戶，查看未還數量、各場進出明細並可輸出對帳單。</p>
+      <label class="fld">我的客戶</label>
+      <select id="salesPick"><option value="">— 請選擇客戶 —</option></select>
+      <div id="salesEmpty" class="big hide" style="color:var(--mut);margin-top:14px">目前沒有指派給你的客戶，請洽管理員在「客戶編輯 → 負責業務」指派。</div>
+    </div>
+    <div style="text-align:center;margin-top:6px"><a href="#" class="lnk" id="salesLogout">登出</a></div>
   </div>
 
   <!-- 客戶代號查詢（月份＋對帳 PDF，獨立畫面） -->
@@ -882,11 +895,10 @@ function getMode(){
   try{
     var urlCode = getCode();
     var mode = getMode();
-    if(mode==="look" && !urlCode){ showGate("look"); return; }
     var code = urlCode || localStorage.getItem("pallet_code") || "";
     if(!code){
       showGate("staff");
-      if(mode==="staff"||mode==="admin"||mode==="acct") openLogin(mode);
+      if(mode==="staff"||mode==="admin"||mode==="acct"||mode==="look") openLogin(mode);
       return;
     }
     ME = await api({action:"me", uid:code});
@@ -913,7 +925,7 @@ function showGate(mode){
   g.innerHTML =
     '<div class="gatecard">'+
       '<div class="glogo"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2e7d4f" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="4" rx="1"/><rect x="3" y="14" width="18" height="4" rx="1"/><path d="M6.5 10v4M12 10v4M17.5 10v4"/></svg></div>'+
-      '<div id="gMenu" class="'+(mode==="look"?"hide":"")+'">'+
+      '<div id="gMenu">'+
         '<div class="gt">棧板管理系統</div>'+
         '<div class="gs">請選擇登入身分</div>'+
         '<div class="gentry" data-k="staff">'+
@@ -931,7 +943,11 @@ function showGate(mode){
           '<div class="get"><div class="geh">帳務中心</div><div class="ged">做帳 / 管理員　月結算 / 對帳</div></div>'+
           '<div class="gea">›</div>'+
         '</div>'+
-        '<div class="gswitch" id="toLook">我要查詢客戶棧板 →</div>'+
+        '<div class="gentry" data-k="look">'+
+          '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>'+
+          '<div class="get"><div class="geh">業務查詢</div><div class="ged">業務人員登入查負責客戶棧板</div></div>'+
+          '<div class="gea">›</div>'+
+        '</div>'+
       '</div>'+
       '<div id="gStaff" class="hide">'+
         '<div class="gt" id="gStaffTitle">現場人員回報</div>'+
@@ -940,13 +956,6 @@ function showGate(mode){
         '<button class="btnP" id="gLogin">登入</button>'+
         '<div class="gswitch" id="backMenu">← 返回</div>'+
       '</div>'+
-      '<div id="gLook" class="'+(mode==="look"?"":"hide")+'">'+
-        '<div class="gt">查詢客戶棧板明細</div>'+
-        '<div class="gs">輸入客戶代號<br>查該客戶未還數量與進出明細</div>'+
-        '<input id="gCust" type="text" placeholder="例如 3B1169A100" autocomplete="off" autocapitalize="characters">'+
-        '<button class="btnP" id="gLookBtn">查詢</button>'+
-        '<div class="gswitch" id="toStaff">← 返回登入</div>'+
-      '</div>'+
       '<div class="msg" id="gMsg"></div>'+
     '</div>';
   document.querySelectorAll(".gentry").forEach(function(b){
@@ -954,23 +963,20 @@ function showGate(mode){
   });
   $("#gLogin").onclick = doLogin;
   $("#gCode").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
-  $("#gLookBtn").onclick = doLookup;
-  $("#gCust").addEventListener("keydown", function(e){ if(e.key==="Enter") doLookup(); });
-  $("#toLook").onclick = function(){ $("#gMenu").classList.add("hide"); $("#gLook").classList.remove("hide"); $("#gMsg").className="msg"; };
-  $("#toStaff").onclick = function(){ $("#gLook").classList.add("hide"); $("#gMenu").classList.remove("hide"); $("#gMsg").className="msg"; };
   $("#backMenu").onclick = function(){ $("#gStaff").classList.add("hide"); $("#gMenu").classList.remove("hide"); $("#gMsg").className="msg"; $("#gCode").value=""; };
 }
 function openLogin(kind){
   loginTarget = kind;
-  var titles = {staff:"現場人員回報", admin:"管理員權限", acct:"帳務中心"};
+  var titles = {staff:"現場人員回報", admin:"管理員權限", acct:"帳務中心", look:"業務查詢"};
   var subs = {
     staff:"輸入管理員給你的代碼<br>登入後即可回報送出 / 歸還",
     admin:"輸入管理員密碼登入<br>可管理客戶、人員與全場資料",
-    acct:"輸入做帳 / 管理員代碼登入<br>進入月結算 / 對帳"
+    acct:"輸入做帳 / 管理員代碼登入<br>進入月結算 / 對帳",
+    look:"輸入你的業務代碼登入<br>只看管理員指派給你的客戶"
   };
   $("#gStaffTitle").innerHTML = titles[kind] || titles.staff;
   $("#gStaffSub").innerHTML = subs[kind] || subs.staff;
-  $("#gCode").placeholder = kind==="staff" ? "例如 mh-7k2、adm-xxxxxx" : "輸入密碼";
+  $("#gCode").placeholder = kind==="look" ? "輸入你的業務代碼" : (kind==="staff" ? "例如 mh-7k2、adm-xxxxxx" : "輸入密碼");
   $("#gMenu").classList.add("hide");
   $("#gStaff").classList.remove("hide");
   $("#gMsg").className="msg"; $("#gCode").value="";
@@ -1019,6 +1025,26 @@ function boot(){
     return;
   }
 
+  // 業務人員：只看被指派的客戶，登入即進入客戶選單
+  if(ME.role==="業務"){
+    var mine=ME.myCusts||[];
+    $("#salesWho").innerHTML='<b>'+esc(ME.name)+'</b>　業務人員';
+    var sp=$("#salesPick");
+    if(!mine.length){
+      sp.classList.add("hide");
+      $("#salesEmpty").classList.remove("hide");
+    }else{
+      $("#salesEmpty").classList.add("hide");
+      sp.classList.remove("hide");
+      sp.innerHTML='<option value="">— 請選擇客戶 —</option>'+mine.map(function(c){
+        return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'</option>';}).join("");
+      sp.onchange=function(){ var v=sp.value; if(v){ salesMode=true; lookReturn="sales"; openLook(v); } };
+    }
+    $("#salesLogout").onclick=logout;
+    $("#salesView").classList.remove("hide");
+    return;
+  }
+
   $("#app").classList.remove("hide");
   $("#who").innerHTML = '<b>'+ME.name+'</b><br>'+ME.role+(ME.site?'・'+ME.site:'')+' · <a href="#" class="logout" id="logout">登出</a>';
   $("#logout").onclick=logout;
@@ -1055,7 +1081,7 @@ function boot(){
       return '<option value="'+c.編號+'">'+esc(c.名稱)+'</option>';}).join("");
     $("#lkCustSel").innerHTML = ME.customers.map(function(c){
       return '<option value="'+c.編號+'">'+esc(c.名稱)+'</option>';}).join("");
-    $("#lkGo").onclick=function(){ var v=$("#lkCustSel").value; if(v){ lookReturn="app"; openLook(v); } };
+    $("#lkGo").onclick=function(){ var v=$("#lkCustSel").value; if(v){ salesMode=false; lookReturn="app"; openLook(v); } };
     setDateRange("month");
   }
   // 做帳只看月結算
@@ -1650,13 +1676,29 @@ function showCustEdit(id){
     '<label class="fld">狀態</label>'+
     '<select id="estat"><option value="">啟用</option>'+
       '<option value="停用"'+(c.狀態==="停用"?" selected":"")+'>停用</option></select>'+
+    '<label class="fld">負責業務</label>'+
+    '<select id="ebiz">'+bizOptions(c.業務||"")+'</select>'+
     '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="saveCustomer(\''+esc(c.編號)+'\')">💾 儲存客戶</button>';
+}
+// 業務下拉選項（來源＝角色清單裡 role==業務 的人員，value＝登入代碼）
+function bizOptions(cur){
+  var biz=(peopleCache||[]).filter(function(p){return p.角色==="業務";});
+  var html='<option value="">— 未指派 —</option>';
+  var found=false;
+  biz.forEach(function(p){
+    var sel=String(p.登入代碼)===String(cur)?" selected":""; if(sel) found=true;
+    html+='<option value="'+esc(p.登入代碼)+'"'+sel+'>'+esc(p.姓名)+'（'+esc(p.登入代碼)+'）</option>';
+  });
+  // 指派的人員若已被刪除/改角色，仍保留原值不致清空
+  if(cur && !found) html+='<option value="'+esc(cur)+'" selected>'+esc(cur)+'（已不在業務名單）</option>';
+  return html;
 }
 async function saveCustomer(id){
   var name=($("#ename")&&$("#ename").value||"").trim();
   var stat=$("#estat")?$("#estat").value:"";
+  var biz=$("#ebiz")?$("#ebiz").value:"";
   if(!name){ box2("名稱不可空白", true); return; }
-  var r=await post({action:"custSave", uid:ME.uid, 客戶編號:id, 客戶名稱:name, 狀態:stat});
+  var r=await post({action:"custSave", uid:ME.uid, 客戶編號:id, 客戶名稱:name, 狀態:stat, 業務:biz});
   if(r.ok){ box2("✅ 已更新 "+id, false); loadCustomers(); }
   else box2("⚠ "+(r.error||"失敗"), true);
 }
@@ -1687,6 +1729,8 @@ async function loadPeople(){
   if(r.sites&&r.sites.length){ peopleSites=r.sites; ME.sites=r.sites; }
   renderSites();
   renderPeoplePick();
+  // 人員載入後，若客戶編輯框已開著，重畫一次讓「負責業務」下拉有最新業務名單
+  if($("#custPick") && $("#custPick").value) showCustEdit($("#custPick").value);
 }
 function renderSites(){
   var box=$("#siteChips"); if(!box) return;
@@ -2052,11 +2096,13 @@ async function loadRepToday(){
 
 /* ---- 客戶代號查詢（月份＋對帳 PDF） ---- */
 var LOOK="";
-var lookReturn="gate";   // "gate"＝從入口查詢；"app"＝管理員在系統內查詢
+var salesMode=false;     // 業務登入查詢時為 true，帶 uid 做權限檢查
+var lookReturn="gate";   // "gate"＝從入口查詢；"app"＝管理員在系統內查詢；"sales"＝業務選單
 function openLook(cust){
   LOOK=cust;
   $("#mineView").classList.add("hide");
   if(lookReturn==="app"){ var app=$("#app"); if(app) app.classList.add("hide"); }
+  else if(lookReturn==="sales"){ $("#salesView").classList.add("hide"); }
   else { $("#gate").classList.add("hide"); $("#gate").innerHTML=""; }
   $("#lookView").classList.remove("hide");
   if(!$("#lookMonth").value){ var d=new Date(); $("#lookMonth").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2); }
@@ -2064,12 +2110,15 @@ function openLook(cust){
   $("#lookPdf").onclick=exportPdf;
   $("#lookExit").onclick=function(e){ e.preventDefault(); $("#lookView").classList.add("hide");
     if(lookReturn==="app"){ var a=$("#app"); if(a) a.classList.remove("hide"); switchTab("look"); }
+    else if(lookReturn==="sales"){ var sp=$("#salesPick"); if(sp) sp.value=""; $("#salesView").classList.remove("hide"); }
     else showGate("look");
   };
   loadStatement();
 }
 async function loadStatement(){
-  var r=await api({action:"statement",cust:LOOK,month:$("#lookMonth").value});
+  var req=salesMode?{action:"salesStatement",uid:ME.uid,cust:LOOK,month:$("#lookMonth").value}
+                   :{action:"statement",cust:LOOK,month:$("#lookMonth").value};
+  var r=await api(req);
   if(!r.ok){ $("#lookName").textContent=r.error; return; }
   $("#lookName").textContent=r.客戶+"（"+r.客戶編號+"）";
   var z=r.byZone;
@@ -2095,7 +2144,8 @@ async function exportPdf(){
   var btn=$("#lookPdf"), m=$("#lookMsg"); m.className="msg";
   btn.disabled=true; btn.textContent="產生中…（約 10 秒）";
   try{
-    var r=await post({action:"statementPdf",cust:LOOK,month:$("#lookMonth").value});
+    var r=await post(salesMode?{action:"salesStatementPdf",uid:ME.uid,cust:LOOK,month:$("#lookMonth").value}
+                              :{action:"statementPdf",cust:LOOK,month:$("#lookMonth").value});
     if(r.ok){ var how=await deliverFile(r.b64, r.檔名, r.mime);
       m.className="msg ok"; m.textContent=(how==="cancel"?"已取消分享":"✅ 已產生 "+r.檔名+"（請選擇分享或開啟）"); }
     else { m.className="msg err"; m.textContent="⚠ "+r.error; }
