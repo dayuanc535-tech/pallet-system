@@ -207,6 +207,11 @@
   .sdact{min-width:52px;font-weight:800;font-size:17px}
   .sdact.out{color:var(--red)} .sdact.in{color:var(--brand-d)}
   .sdinfo{font-weight:700;font-size:17px;color:var(--ink)}
+  .sdgroup{flex:1;min-width:0}
+  .sdgline{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+  .sdgline:last-of-type{margin-bottom:0}
+  .sdgline b{font-weight:800;font-size:17px;color:var(--ink)}
+  .sdgroup .sdsite{margin-top:5px;font-size:13px;color:var(--mut);font-weight:700}
   .sdtime{margin-left:auto;color:var(--mut);font-size:13px;white-space:nowrap}
   .sdthumb{width:46px;height:46px;border-radius:9px;object-fit:cover;border:1px solid var(--line2);
     cursor:pointer;box-shadow:var(--sh);transition:transform .12s}
@@ -1865,24 +1870,34 @@ async function loadSetDetail(cust, name, m){
   box.innerHTML='<div class="sdwrap"><div class="sdhead">本月每日明細<span class="sub">載入中…</span></div></div>';
   var r=await api({action:"statement", cust:cust, month:m});
   if(!r.ok){ box.innerHTML='<div class="sdwrap"><div class="sdhead">本月每日明細<span class="sub">'+esc(r.error)+'</span></div></div>'; return; }
-  var det=r.detail||[];
-  var head='<div class="sdhead">'+esc(name||r.客戶||"")+' · '+m+' 每日明細'+
-    '<span class="sub">共 '+det.length+' 筆，點照片可放大檢視</span></div>';
-  if(!det.length){ box.innerHTML='<div class="sdwrap">'+head+'<div class="sdrow"><span style="color:var(--mut)">本月無進出紀錄</span></div></div>'; return; }
-  det=det.slice().sort(function(a,b){return String(a.時間)<String(b.時間)?-1:1;}); // 由早到晚
-  var lastDay="", html="";
+  var det=(r.detail||[]).slice().sort(function(a,b){return String(a.時間)<String(b.時間)?-1:1;}); // 由早到晚
+  // 同一時間（同客戶）視為一筆：合併送出大小、歸還大小
+  var groups={}, order=[];
   det.forEach(function(x){
-    var s=String(x.時間||"");          // 格式 "MM-dd HH:mm"
-    var day=s.slice(0,5), tm=s.slice(6,11);
+    var key=String(x.時間||"");
+    var g=groups[key];
+    if(!g){ g=groups[key]={時間:key, 場:x.場||"", 送出:{大:0,小:0}, 歸還:{大:0,小:0}, 報廢:{大:0,小:0}, 新購:{大:0,小:0}, photos:[]}; order.push(g); }
+    if(!g.場 && x.場) g.場=x.場;
+    if(g[x.動作] && (x.棧板別==="大"||x.棧板別==="小")) g[x.動作][x.棧板別]+=Number(x.數量)||0;
+    String(x.附件||"").split(/\s+/).forEach(function(u){ if(/^https?:/.test(u) && g.photos.indexOf(u)<0) g.photos.push(u); });
+  });
+  var head='<div class="sdhead">'+esc(name||r.客戶||"")+' · '+m+' 每日明細'+
+    '<span class="sub">共 '+order.length+' 筆，點照片可放大檢視</span></div>';
+  if(!order.length){ box.innerHTML='<div class="sdwrap">'+head+'<div class="sdrow"><span style="color:var(--mut)">本月無進出紀錄</span></div></div>'; return; }
+  function szs(o){ var p=[]; if(o.大)p.push('大×'+o.大); if(o.小)p.push('小×'+o.小); return p.join('　'); }
+  var lastDay="", html="";
+  order.forEach(function(g){
+    var s=g.時間, day=s.slice(0,5), tm=s.slice(6,11);   // 格式 "MM-dd HH:mm"
     if(day!==lastDay){ html+='<div class="sdday">'+esc(day)+'</div>'; lastDay=day; }
-    var isOut=x.動作==="送出";
-    var photos=String(x.附件||"").split(/\s+/).filter(function(u){return /^https?:/.test(u);});
-    var thumb=photos.length
-      ? photos.map(function(u){return '<img class="sdthumb" src="'+esc(driveImg(u,240))+'" loading="lazy" onclick="viewImg(event,\''+esc(driveImg(u,1600))+'\')" alt="簽收單" onerror="this.replaceWith(Object.assign(document.createElement(\'a\'),{href:\''+esc(u)+'\',target:\'_blank\',className:\'lnk\',textContent:\'簽收單\'}))">';}).join("")
+    var thumb=g.photos.length
+      ? g.photos.map(function(u){return '<img class="sdthumb" src="'+esc(driveImg(u,240))+'" loading="lazy" onclick="viewImg(event,\''+esc(driveImg(u,1600))+'\')" alt="簽收單" onerror="this.replaceWith(Object.assign(document.createElement(\'a\'),{href:\''+esc(u)+'\',target:\'_blank\',className:\'lnk\',textContent:\'簽收單\'}))">';}).join("")
       : '<span class="sdnoimg">無照片</span>';
+    var lines="";
+    function ln(act,cls){ var t=szs(g[act]); if(t) lines+='<div class="sdgline"><span class="sdact '+cls+'">'+act+'</span><b>'+t+'</b></div>'; }
+    ln('送出','out'); ln('歸還','in'); ln('報廢','in'); ln('新購','out');
+    if(!lines) lines='<div class="sdgline"><span style="color:var(--mut)">無流通</span></div>';
     html+='<div class="sdrow">'+
-      '<span class="sdact '+(isOut?'out':'in')+'">'+esc(x.動作)+'</span>'+
-      '<span class="sdinfo">'+esc(x.場)+'　'+esc(x.棧板別)+' × '+x.數量+'</span>'+
+      '<div class="sdgroup">'+lines+(g.場?'<div class="sdsite">'+esc(g.場)+'</div>':'')+'</div>'+
       '<span class="sdtime">'+esc(tm)+'</span>'+thumb+'</div>';
   });
   box.innerHTML='<div class="sdwrap">'+head+html+'</div>';
