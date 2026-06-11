@@ -362,10 +362,6 @@
 
   <div id="app" class="app hide">
     <nav class="tabs" id="tabs">
-      <button data-tab="dash" class="hide">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-        <span>儀表板</span>
-      </button>
       <button data-tab="rec" class="on">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         <span>記錄</span>
@@ -960,11 +956,10 @@ function boot(){
     $("#setCust").innerHTML='<option value="">全部客戶</option>'+ME.customers.map(function(c){
       return '<option value="'+c.編號+'">'+esc(c.名稱)+'</option>';}).join("");
   }
-  // 管理員：客戶主檔 + 儀表板（並以儀表板為首頁）＋ 回報 ＋ 明細查詢
+  // 管理員：客戶主檔 + 月結算 ＋ 回報 ＋ 明細查詢
   if(ME.role==="管理員"){
     $("[data-tab=cust]").classList.remove("hide");
     $("[data-tab=people]").classList.remove("hide");
-    $("[data-tab=dash]").classList.remove("hide");
     $("[data-tab=report]").classList.remove("hide");
     buildReport();
     $("#dCustSel").innerHTML = ME.customers.map(function(c){
@@ -990,8 +985,8 @@ function boot(){
     $("[data-tab=qry]").classList.add("hide");
     switchTab("report");
   }
-  // 管理員預設停在儀表板
-  if(ME.role==="管理員") switchTab("dash");
+  // 管理員預設停在月結算及明細查詢
+  if(ME.role==="管理員") switchTab("set");
   // 帳務中心：登入後直接到月結算 / 對帳
   if(pendingView){
     if(pendingView==="set" && (ME.role==="做帳" || ME.role==="管理員")) switchTab("set");
