@@ -1221,6 +1221,8 @@ async function loadTxList(){
   if(!r.ok){ if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); } return; }
   if(m){ m.className="msg ok"; m.textContent="共 "+r.list.length+" 筆"; }
   if(!r.list.length){ box.innerHTML='<p class="csub">此區間無紀錄。</p>'; return; }
+  txRowCache={};
+  r.list.forEach(function(x){ txRowCache[x.row]=x; });
   box.innerHTML=r.list.map(txCard).join("");
 }
 function txCard(x){
@@ -1239,29 +1241,25 @@ function txCard(x){
 var txRowCache={};
 function editTxRow(row){
   var box=$("#txrow-"+row); if(!box) return;
-  // 從目前顯示重新查一次該列資料？用 dataset 較簡單：直接讀畫面 — 改為重新查 API 較穩，但成本高。
-  // 改用就地讀取：解析方式繁雜，因此改為提供完整編輯欄位（值由 API 重新帶不便），這裡直接重新查單列。
-  api({action:"txAll", uid:ME.uid, from:$("#txFrom").value, to:$("#txTo").value, cust:$("#txCust").value}).then(function(r){
-    if(!r.ok) return;
-    var x=r.list.filter(function(t){return t.row===row;})[0]; if(!x) return;
-    var whenLocal=(x.時間||"").replace(" ","T").slice(0,16);
-    box.innerHTML=
-      '<label class="fld">時間</label><input type="datetime-local" id="txe-when-'+row+'" value="'+esc(whenLocal)+'" style="width:100%">'+
-      '<div class="row2" style="margin-top:8px">'+
-        '<div><label class="fld">場</label><select id="txe-site-'+row+'">'+selOpts(peopleSites,x.場||"","（不分場）")+'</select></div>'+
-        '<div><label class="fld">動作</label><select id="txe-act-'+row+'">'+selOpts(TXACTS,x.動作)+'</select></div>'+
-      '</div>'+
-      '<label class="fld">客戶</label><select id="txe-cust-'+row+'">'+txCustOptions(x.客戶編號)+'</select>'+
-      '<div class="row2" style="margin-top:8px">'+
-        '<div><label class="fld">棧板別</label><select id="txe-type-'+row+'">'+selOpts(["大","小"],x.棧板別)+'</select></div>'+
-        '<div><label class="fld">數量</label><input type="number" id="txe-qty-'+row+'" min="0" step="1" value="'+(Number(x.數量)||0)+'" style="width:100%"></div>'+
-      '</div>'+
-      '<label class="fld">備註</label><input type="text" id="txe-note-'+row+'" value="'+esc(x.備註||"")+'" style="width:100%">'+
-      '<div style="display:flex;gap:8px;margin-top:10px">'+
-        '<button type="button" class="btnG" style="flex:1" onclick="saveTxRow('+row+')">💾 儲存</button>'+
-        '<button type="button" class="btnG" style="flex:1" onclick="loadTxList()">取消</button>'+
-      '</div>';
-  });
+  var x=txRowCache[row]; if(!x){ loadTxList(); return; }
+  var whenLocal=(x.時間||"").replace(" ","T").slice(0,16);
+  box.innerHTML=
+    '<label class="fld">時間</label><input type="datetime-local" id="txe-when-'+row+'" value="'+esc(whenLocal)+'" style="width:100%">'+
+    '<div class="row2" style="margin-top:8px">'+
+      '<div><label class="fld">場</label><select id="txe-site-'+row+'">'+selOpts(peopleSites,x.場||"","（不分場）")+'</select></div>'+
+      '<div><label class="fld">動作</label><select id="txe-act-'+row+'">'+selOpts(TXACTS,x.動作)+'</select></div>'+
+    '</div>'+
+    '<label class="fld">客戶</label><select id="txe-cust-'+row+'">'+txCustOptions(x.客戶編號)+'</select>'+
+    '<div class="row2" style="margin-top:8px">'+
+      '<div><label class="fld">棧板別</label><select id="txe-type-'+row+'">'+selOpts(["大","小"],x.棧板別)+'</select></div>'+
+      '<div><label class="fld">數量</label><input type="number" id="txe-qty-'+row+'" min="0" step="1" value="'+(Number(x.數量)||0)+'" style="width:100%"></div>'+
+    '</div>'+
+    '<label class="fld">備註</label><input type="text" id="txe-note-'+row+'" value="'+esc(x.備註||"")+'" style="width:100%">'+
+    '<div style="display:flex;gap:8px;margin-top:10px">'+
+      '<button type="button" class="btnG" style="flex:1;background:var(--brand);color:#fff" onclick="saveTxRow('+row+')">💾 儲存修改</button>'+
+      '<button type="button" class="btnG" style="flex:1" onclick="loadTxList()">取消</button>'+
+    '</div>';
+  box.scrollIntoView({block:"nearest"});
 }
 async function saveTxRow(row){
   var m=$("#txMsg");
