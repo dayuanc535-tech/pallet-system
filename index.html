@@ -55,24 +55,27 @@
   .owner-tx b{font-size:13px;font-weight:800;color:var(--ink)}
   .tbbreak{display:none}
   @media(max-width:560px){
-    /* 兩行式：上排＝品牌＋版權所有人（頭像直立），下排＝時間＋登入身分 */
-    .topbar{flex-wrap:wrap;column-gap:10px;row-gap:2px;padding:8px 16px}
-    .brand{flex:1 1 auto;order:1;align-self:center}
-    .brand .bt b{font-size:19px;white-space:nowrap;line-height:1.1}
+    /* 格狀：左欄＝品牌(上)＋時間(下)，右欄＝版權所有人（頭像直立，跨兩列）；版權所有與時間切齊 */
+    .topbar{display:grid;grid-template-columns:1fr auto;
+      grid-template-areas:"brand owner" "clock owner" "who who";
+      column-gap:14px;row-gap:3px;align-items:center;padding:9px 16px}
+    .logo{width:38px;height:38px;border-radius:11px}
+    .brand{grid-area:brand;align-self:center;gap:10px}
+    .brand .bt b{font-size:20px;white-space:nowrap;line-height:1.12}
     .brand .bt i{font-size:11px}
-    .owner{order:2;flex-direction:column;align-items:center;text-align:center;
-      gap:0;margin-left:8px;padding-left:0;border-left:none}
-    .owner-pic{width:36px;height:36px}
-    .owner-tx{text-align:center;line-height:1.1}
-    .owner-tx b{font-size:12px;font-weight:800;white-space:nowrap;display:block}
-    .owner-tx i{display:block;font-size:9px;color:var(--mut);margin-top:0}
-    .tbbreak{display:block;flex-basis:100%;height:0;order:3;margin:0;padding:0}
-    .clock{order:4;margin-left:0;padding-left:0;border-left:none;
-      flex-direction:row;align-items:baseline;gap:7px;margin-top:-2px}
+    .clock{grid-area:clock;align-self:end;margin:0;padding:0;border-left:none;
+      flex-direction:row;align-items:baseline;gap:8px}
     .clock b{display:none}
-    .clock i{font-size:14px}
-    .who{order:5;margin-left:auto;align-self:center;font-size:11px;line-height:1.25}
+    .clock i{font-size:16px}
+    .who{grid-area:who;justify-self:end;text-align:right;margin:0;font-size:11px;line-height:1.3}
     .who b{font-size:12px}
+    .owner{grid-area:owner;align-self:stretch;justify-content:space-between;
+      flex-direction:column;align-items:center;gap:3px;margin:0;padding:2px 0;border-left:none}
+    .owner-pic{width:50px;height:50px;border-width:2.5px}
+    .owner-tx{text-align:center;line-height:1.16}
+    .owner-tx b{font-size:15px;font-weight:800;white-space:nowrap;display:block}
+    .owner-tx i{display:block;font-size:11.5px;color:var(--mut);margin-top:1px}
+    .tbbreak{display:none}
   }
 
   /* ---- 應用區 / 側欄導覽 ---- */
