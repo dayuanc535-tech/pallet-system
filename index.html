@@ -674,7 +674,7 @@
       <!-- 現場回報（大字介面） -->
       <section id="report" class="card hide">
         <h2 class="ctitle">回報棧板進出</h2>
-        <p class="csub" id="repSub">點選客戶 → 填進／出數量 → 拍簽收單 → 送出。今日若無流通請按最下方按鈕。</p>
+        <p class="csub" id="repSub">點選客戶 → 填進／出數量 → 拍簽收單 → 送出。</p>
 
         <div id="repSiteWrap" class="hide">
           <label class="fld">場別</label>
@@ -716,8 +716,6 @@
           <button class="btnP" id="repSubmit">送出回報</button>
           <div class="msg" id="repMsg"></div>
         </div>
-
-        <button type="button" class="btnG" id="repNoFlow" style="margin-top:18px;width:100%;padding:14px;font-size:15px">今日無棧板流通</button>
 
         <div class="big" style="margin:24px 0 8px;font-weight:700">今日已回報</div>
         <div id="repToday" class="big">—</div>
@@ -1562,7 +1560,11 @@ function groupTx(raw){
     if(x.備註 && g.備註.indexOf(x.備註)<0) g.備註.push(x.備註);
     if(x.row){ g.rows.push(x); txRowCache[x.row]=x; }
   });
-  return order;
+  // 無流通不再呈現：濾掉沒有任何實際進出/校正數量的群組（含歷史既有的無流通紀錄）
+  return order.filter(function(g){
+    var a=g.act;
+    return a.送出.大||a.送出.小||a.歸還.大||a.歸還.小||a.報廢.大||a.報廢.小||a.新購.大||a.新購.小||a.調整.大||a.調整.小;
+  });
 }
 function txqCard(g){
   var lines=[];
@@ -2671,7 +2673,6 @@ function buildReport(){
   });
   $("#repPhoto").onchange=repOnPhoto;
   $("#repSubmit").onclick=repSubmit;
-  $("#repNoFlow").onclick=repNoFlow;
   if($("#repNow")) $("#repNow").onclick=function(){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); repWhenConfirm(); };
   if($("#repWhen")) $("#repWhen").oninput=repWhenConfirm;
 }
@@ -2775,14 +2776,6 @@ async function repSubmit(){
   }catch(err){ m.className="msg err"; m.textContent="送出失敗："+err; }
   btn.disabled=false; btn.textContent="送出回報";
 }
-async function repNoFlow(){
-  if(!confirm("確定回報「今日無棧板流通」？")) return;
-  var m=$("#repMsg");
-  var site=(ME.role==="管理員" && $("#repSite"))?$("#repSite").value:undefined;
-  var r=await post({action:"noFlow",uid:ME.uid,場:site});
-  if(r.ok){ m.className="msg ok"; m.textContent="已記錄今日無流通"; loadRepToday(); }
-  else { m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
-}
 async function loadRepToday(){
   var box=$("#repToday"); if(!box)return;
   var r=await api({action:"todayMine",uid:ME.uid});
@@ -2791,7 +2784,7 @@ async function loadRepToday(){
   var head=(r.site?esc(r.site)+'　':'')+r.筆數+' 筆';
   box.innerHTML='<div style="font-weight:800;margin-bottom:8px">今日 '+head+'</div>'+
     r.list.map(function(g){
-    if(g.無流通) return '<div style="padding:10px 0;border-bottom:1px solid var(--line);color:var(--mut)">'+g.時間+'　今日無流通</div>';
+    if(g.無流通) return '';
     var items=(g.items||[]).map(function(it){
       var color=it.動作==="送出"?"var(--red)":"var(--brand-d)";
       var label=it.動作==="送出"?"出":(it.動作==="歸還"?"進":it.動作);
