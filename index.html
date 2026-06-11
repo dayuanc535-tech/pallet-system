@@ -139,6 +139,31 @@
   .btnMini:hover{filter:brightness(1.03);transform:translateY(-1px);box-shadow:var(--sh-md)}
   .btnMini:active{transform:translateY(1px);box-shadow:none}
   .btnMini:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
+  /* ---- 月結算 表格放大 ---- */
+  #setTable{font-size:16.5px}
+  #setTable th,#setTable td{padding:15px 11px}
+  #setTable td:not(:first-child){font-variant-numeric:tabular-nums;font-weight:600}
+  /* ---- 月結算 每日明細 ---- */
+  .sdwrap{margin-top:18px;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--sh-md),var(--sh-in)}
+  .sdhead{background:var(--sunken);padding:13px 16px;font-weight:800;font-size:16px;color:var(--ink);
+    border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .sdhead .sub{font-size:13px;font-weight:700;color:var(--mut)}
+  .sdday{padding:6px 16px;background:#f4efe6;font-size:13.5px;font-weight:800;color:#a96612;
+    border-bottom:1px solid var(--line)}
+  .sdrow{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .sdrow:last-child{border-bottom:none}
+  .sdact{min-width:52px;font-weight:800;font-size:15.5px}
+  .sdact.out{color:var(--red)} .sdact.in{color:var(--brand-d)}
+  .sdinfo{font-weight:700;font-size:15.5px;color:var(--ink)}
+  .sdtime{margin-left:auto;color:var(--mut);font-size:13px;white-space:nowrap}
+  .sdthumb{width:46px;height:46px;border-radius:9px;object-fit:cover;border:1px solid var(--line2);
+    cursor:pointer;box-shadow:var(--sh);transition:transform .12s}
+  .sdthumb:hover{transform:scale(1.06)}
+  .sdnoimg{font-size:12px;color:var(--mut);font-weight:700}
+  .imgbox{position:fixed;inset:0;z-index:100;background:rgba(20,18,14,.86);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;cursor:zoom-out}
+  .imgbox img{max-width:94vw;max-height:84vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .imgbox-x{color:#fff;font-weight:700;font-size:14px;opacity:.85}
 
   /* ---- 表格 ---- */
   table{width:100%;border-collapse:collapse;font-size:15.5px;font-variant-numeric:tabular-nums}
@@ -598,6 +623,8 @@
           </table>
         </div>
 
+        <div id="setDetail"></div>
+
         <button class="btnP" id="genExcel">📄 產生 Excel 存到雲端硬碟</button>
         <div class="msg" id="setMsg"></div>
 
@@ -707,6 +734,11 @@
     </div>
     <div style="text-align:center;margin-top:6px"><a href="#" class="lnk" id="lookExit">← 查別的客戶</a></div>
   </div>
+</div>
+
+<div id="imgBox" class="imgbox hide" onclick="closeImg()">
+  <img id="imgBoxImg" alt="簽收單">
+  <div class="imgbox-x">✕ 點任意處關閉</div>
 </div>
 
 <script>
@@ -1259,7 +1291,46 @@ async function loadSettlement(){
       '<td>'+c.期末.大+'/'+c.期末.小+'</td>'+
       '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\')">📄 PDF</button></td></tr>';
   }).join("");
+  if(pick) loadSetDetail(pick, rows[0]?rows[0].名稱:"", m);
+  else $("#setDetail").innerHTML="";
 }
+async function loadSetDetail(cust, name, m){
+  var box=$("#setDetail");
+  box.innerHTML='<div class="sdwrap"><div class="sdhead">本月每日明細<span class="sub">載入中…</span></div></div>';
+  var r=await api({action:"statement", cust:cust, month:m});
+  if(!r.ok){ box.innerHTML='<div class="sdwrap"><div class="sdhead">本月每日明細<span class="sub">'+esc(r.error)+'</span></div></div>'; return; }
+  var det=r.detail||[];
+  var head='<div class="sdhead">📅 '+esc(name||r.客戶||"")+' · '+m+' 每日明細'+
+    '<span class="sub">共 '+det.length+' 筆，點照片可放大檢視</span></div>';
+  if(!det.length){ box.innerHTML='<div class="sdwrap">'+head+'<div class="sdrow"><span style="color:var(--mut)">本月無進出紀錄</span></div></div>'; return; }
+  det=det.slice().sort(function(a,b){return String(a.時間)<String(b.時間)?-1:1;}); // 由早到晚
+  var lastDay="", html="";
+  det.forEach(function(x){
+    var s=String(x.時間||"");          // 格式 "MM-dd HH:mm"
+    var day=s.slice(0,5), tm=s.slice(6,11);
+    if(day!==lastDay){ html+='<div class="sdday">'+esc(day)+'</div>'; lastDay=day; }
+    var isOut=x.動作==="送出";
+    var photos=String(x.附件||"").split(/\s+/).filter(function(u){return /^https?:/.test(u);});
+    var thumb=photos.length
+      ? photos.map(function(u){return '<img class="sdthumb" src="'+esc(driveImg(u,240))+'" loading="lazy" onclick="viewImg(event,\''+esc(driveImg(u,1600))+'\')" alt="簽收單" onerror="this.replaceWith(Object.assign(document.createElement(\'a\'),{href:\''+esc(u)+'\',target:\'_blank\',className:\'lnk\',textContent:\'📷 簽收單\'}))">';}).join("")
+      : '<span class="sdnoimg">無照片</span>';
+    html+='<div class="sdrow">'+
+      '<span class="sdact '+(isOut?'out':'in')+'">'+esc(x.動作)+'</span>'+
+      '<span class="sdinfo">'+esc(x.場)+'　'+esc(x.棧板別)+' × '+x.數量+'</span>'+
+      '<span class="sdtime">'+esc(tm)+'</span>'+thumb+'</div>';
+  });
+  box.innerHTML='<div class="sdwrap">'+head+html+'</div>';
+}
+function driveImg(url, w){
+  var m=String(url).match(/\/d\/([-\w]{20,})/)||String(url).match(/[?&]id=([-\w]{20,})/);
+  return m ? "https://drive.google.com/thumbnail?id="+m[1]+"&sz=w"+(w||1000) : url;
+}
+function viewImg(e, url){
+  if(e){ e.stopPropagation(); }
+  $("#imgBoxImg").src=url;
+  $("#imgBox").classList.remove("hide");
+}
+function closeImg(){ $("#imgBox").classList.add("hide"); $("#imgBoxImg").src=""; }
 async function setCustPdf(btn, cust, name){
   var m=curMonth(); if(!m) return;
   var msg=$("#setMsg"); msg.className="msg";
