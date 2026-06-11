@@ -6,22 +6,25 @@
 <title>棧板管理系統</title>
 <style>
   :root{
-    --bg:#f4f1ea; --surface:#ffffff; --sunken:#faf8f3;
-    --ink:#241f18; --ink2:#564e44; --mut:#8a8073;
-    --line:rgba(60,46,28,.12); --line2:rgba(60,46,28,.22);
-    --brand:#2e7d4f; --brand-d:#245f3d; --brand-soft:#e9f3ec;
+    --bg:#f4f1ea; --surface:#ffffff; --sunken:#faf8f3; --raised:#fffdf8;
+    --ink:#211c14; --ink2:#574e43; --mut:#928777;
+    --line:rgba(58,44,24,.10); --line2:rgba(58,44,24,.17); --line3:rgba(58,44,24,.055);
+    --brand:#2e7d4f; --brand-d:#235d3c; --brand-soft:#e9f2ec;
     --wood:#b8762e;
     --red:#c0392b; --red-soft:#fcebe9; --ok-soft:#e9f4ec;
-    --r-card:16px; --r-ctl:12px; --r-in:10px;
-    --sh:0 1px 2px rgba(28,32,40,.07),0 2px 6px rgba(28,32,40,.05);
-    --sh-md:0 1px 2px rgba(28,32,40,.06),0 6px 16px rgba(28,32,40,.09),0 14px 30px rgba(28,32,40,.06);
-    --sh-lg:0 2px 6px rgba(28,32,40,.08),0 16px 32px rgba(28,32,40,.14),0 28px 56px rgba(28,32,40,.10);
-    --sh-in:inset 0 1px 0 rgba(255,255,255,.7);
+    --r-card:18px; --r-ctl:13px; --r-in:11px; --r-sm:9px;
+    --sh:0 1px 2px rgba(24,28,34,.05),0 1px 3px rgba(24,28,34,.04);
+    --sh-md:0 1px 2px rgba(24,28,34,.045),0 4px 10px rgba(24,28,34,.055),0 12px 26px rgba(24,28,34,.05);
+    --sh-lg:0 2px 6px rgba(24,28,34,.05),0 12px 28px rgba(24,28,34,.09),0 30px 60px rgba(24,28,34,.08);
+    --sh-in:inset 0 1px 0 rgba(255,255,255,.65);
+    --ring:0 0 0 3px rgba(46,125,79,.15);
+    --ease:cubic-bezier(.22,.61,.24,1);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
-    font-size:17px;line-height:1.5}
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;
+    font-size:17px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
   body{background:
     radial-gradient(1200px 480px at 50% -120px,rgba(46,125,79,.07),transparent 70%),
     linear-gradient(180deg,#f8f6f1 0%,var(--bg) 360px);
@@ -33,7 +36,7 @@
     background:rgba(248,246,241,.88);backdrop-filter:saturate(140%) blur(12px);
     -webkit-backdrop-filter:saturate(140%) blur(12px);
     border-bottom:1px solid var(--line);padding:12px 16px;margin:0 -16px 22px;
-    box-shadow:0 1px 0 rgba(255,255,255,.6),0 6px 18px rgba(28,32,40,.06)}
+    box-shadow:0 1px 0 rgba(255,255,255,.55),0 4px 16px rgba(24,28,34,.05)}
   .brand{display:flex;align-items:center;gap:11px}
   .logo{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;
     background:linear-gradient(135deg,#3a9462 0%,#2e7d4f 52%,#1f5a39 100%);color:#fff;box-shadow:var(--sh)}
@@ -113,7 +116,7 @@
 
   /* ---- 卡片 ---- */
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
-    padding:22px;margin-bottom:16px;box-shadow:var(--sh-md),var(--sh-in)}
+    padding:24px;margin-bottom:18px;box-shadow:var(--sh-md),var(--sh-in)}
   .panels>.card:last-child{margin-bottom:0}
   .ctitle{font-size:20px;font-weight:800;color:var(--ink);margin:0;letter-spacing:-.01em}
   .csub{font-size:14px;color:var(--mut);margin:5px 0 18px;line-height:1.55}
@@ -125,7 +128,7 @@
     width:100%;padding:12px 13px;border:1px solid var(--line2);border-radius:var(--r-in);
     font-size:16px;background:var(--sunken);color:var(--ink);transition:.15s}
   select:focus,input:focus,textarea:focus{outline:none;border-color:var(--brand);
-    background:#fff;box-shadow:0 0 0 3px rgba(46,125,79,.15)}
+    background:#fff;box-shadow:var(--ring)}
   select:disabled{opacity:.7}
 
   /* ---- 分段切換 ---- */
@@ -243,9 +246,9 @@
   .big{font-size:13px;color:var(--ink2)}
   .tot{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
   .tot .b{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--line);
-    border-top:3px solid var(--brand);border-radius:14px;padding:18px 16px;text-align:center;
+    border-top:3px solid var(--brand);border-radius:var(--r-card);padding:20px 16px;text-align:center;
     box-shadow:var(--sh-md),var(--sh-in)}
-  .tot .b .n{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .tot .b .n{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);letter-spacing:-.015em}
   .tot .b .l{font-size:13px;color:var(--mut);margin-top:3px;line-height:1.4;font-weight:700}
   .pos{color:var(--red);font-weight:700}
 
@@ -313,14 +316,14 @@
   /* ---- 儀表板 ---- */
   .dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
   .dcard{--ac:var(--brand);--acs:var(--brand-soft);
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:17px 18px;
     border-top:3px solid var(--ac);box-shadow:var(--sh-md),var(--sh-in);
-    transition:transform .14s,box-shadow .15s,border-color .15s,background .15s}
+    transition:transform .16s var(--ease),box-shadow .18s var(--ease),border-color .15s,background .15s}
   .dcard .dl{font-size:12px;color:var(--ink2);font-weight:800;display:flex;align-items:center;gap:6px;
     text-transform:none;letter-spacing:.01em}
-  .dcard .dn{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:5px}
+  .dcard .dn{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:6px;letter-spacing:-.015em}
   .dcard .dn small{font-size:13px;font-weight:700;color:var(--mut);margin-left:3px}
-  .dcard .dz{font-size:12.5px;color:var(--ink2);margin-top:9px;line-height:1.7;border-top:1px solid var(--line);padding-top:8px}
+  .dcard .dz{font-size:12.5px;color:var(--ink2);margin-top:9px;line-height:1.7;border-top:1px solid var(--line3);padding-top:8px}
   .dcard .dz b{color:var(--ink);font-variant-numeric:tabular-nums}
   .dcard.click{cursor:pointer}
   .dcard.click:hover{border-color:var(--ac,var(--brand));background:var(--acs,var(--brand-soft));
@@ -430,8 +433,8 @@
   .multidd.open .multidd-trigger{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft)}
   .multidd-trigger .cv{width:16px;height:16px;flex:none;color:var(--ink2);transition:transform .18s}
   .multidd.open .multidd-trigger .cv{transform:rotate(180deg)}
-  .multidd-panel{position:absolute;z-index:40;left:0;right:0;margin-top:6px;background:var(--surface);
-    border:1px solid var(--line2);border-radius:var(--r-in);box-shadow:0 8px 24px rgba(0,0,0,.13);padding:12px}
+  .multidd-panel{position:absolute;z-index:40;left:0;right:0;margin-top:7px;background:var(--raised);
+    border:1px solid var(--line);border-radius:var(--r-ctl);box-shadow:var(--sh-lg);padding:12px}
   .multidd-panel.hide{display:none}
   .multidd-panel .multidd-head{display:flex;justify-content:flex-end;margin-bottom:8px}
   .multidd-panel .chkgrid{max-height:240px;border:none;background:transparent;padding:0}
