@@ -26,7 +26,7 @@
     radial-gradient(1200px 480px at 50% -120px,rgba(46,125,79,.07),transparent 70%),
     linear-gradient(180deg,#f8f6f1 0%,var(--bg) 360px);
     background-attachment:fixed;min-height:100vh}
-  .page{max-width:1280px;margin:0 auto;padding:0 28px 56px}
+  .page{max-width:1340px;margin:0 auto;padding:0 28px 56px}
 
   /* ---- 頂部品牌列 ---- */
   .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
@@ -36,7 +36,7 @@
     box-shadow:0 1px 0 rgba(255,255,255,.6),0 6px 18px rgba(28,32,40,.06)}
   .brand{display:flex;align-items:center;gap:11px}
   .logo{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;
-    background:linear-gradient(135deg,#2e7d4f 0%,#12998e 55%,#2f74c0 100%);color:#fff;box-shadow:var(--sh)}
+    background:linear-gradient(135deg,#3a9462 0%,#2e7d4f 52%,#1f5a39 100%);color:#fff;box-shadow:var(--sh)}
   .brand .bt b{display:block;font-size:25px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
   .brand .bt i{font-style:normal;font-size:11.5px;color:var(--mut)}
   .clock{display:flex;flex-direction:column;gap:1px;padding-left:14px;margin-left:14px;
@@ -67,23 +67,17 @@
   /* ---- 應用區 / 側欄導覽 ---- */
   .app{display:block}
   .tabs{display:flex;gap:6px;margin-bottom:16px}
-  .tabs button{display:flex;align-items:center;justify-content:center;gap:9px;flex:1;
+  .tabs button{--tc:var(--brand-d);--tcs:var(--brand-soft);
+    display:flex;align-items:center;justify-content:center;gap:9px;flex:1;
     border:1px solid var(--line);background:var(--surface);border-radius:11px;
     padding:13px 16px;font-size:16.5px;font-weight:700;color:var(--ink2);cursor:pointer;
-    box-shadow:var(--sh);transition:transform .12s,box-shadow .15s,background .15s,color .15s}
-  .tabs button svg{width:20px;height:20px;opacity:.92;color:var(--tc,var(--brand))}
-  .tabs button[data-tab=dash]  {--tc:#2e7d4f;--tcs:#e7f3ec}
-  .tabs button[data-tab=rec]   {--tc:#2f74c0;--tcs:#e6f0fa}
-  .tabs button[data-tab=report]{--tc:#12998e;--tcs:#e1f5f1}
-  .tabs button[data-tab=qry]   {--tc:#7b54c4;--tcs:#efe9f9}
-  .tabs button[data-tab=look]  {--tc:#4f63cf;--tcs:#e9ecfb}
-  .tabs button[data-tab=set]   {--tc:#d98a2b;--tcs:#fbf0df}
-  .tabs button[data-tab=cust]  {--tc:#d24f86;--tcs:#fbe7f0}
-  .tabs button[data-tab=people]{--tc:#e0613a;--tcs:#fcebe4}
-  .tabs button:hover{background:var(--tcs,var(--sunken));transform:translateY(-1px);
+    box-shadow:var(--sh);transition:transform .12s,box-shadow .15s,background .15s,color .15s,border-color .15s}
+  .tabs button svg{width:20px;height:20px;opacity:.78;color:currentColor;transition:opacity .15s}
+  .tabs button:hover{background:var(--sunken);color:var(--ink);transform:translateY(-1px);
     box-shadow:0 4px 12px rgba(28,32,40,.10)}
-  .tabs button.on{background:var(--tcs);color:var(--tc);border-color:var(--tc);
-    box-shadow:0 2px 4px rgba(28,32,40,.08),0 8px 18px color-mix(in srgb,var(--tc) 30%,transparent)}
+  .tabs button:hover svg{opacity:.92}
+  .tabs button.on{background:var(--tcs);color:var(--tc);border-color:color-mix(in srgb,var(--tc) 42%,transparent);
+    box-shadow:0 2px 4px rgba(28,32,40,.06),0 8px 18px rgba(36,95,61,.16)}
   .tabs button.on svg{opacity:1}
   /* 手機：導覽改為整齊的圖示宮格（每格圖示在上、文字在下、等高），避免長標題被擠成細直排 */
   @media(max-width:819px){
@@ -97,6 +91,7 @@
     .app{display:grid;grid-template-columns:248px minmax(0,1fr);gap:34px;align-items:start}
     .tabs{flex-direction:column;position:sticky;top:88px;margin-bottom:0}
     .tabs button{justify-content:flex-start;text-align:left}
+    .tabs button.on{box-shadow:inset 3px 0 0 var(--tc),0 2px 4px rgba(28,32,40,.06),0 8px 18px rgba(36,95,61,.14)}
     /* 桌機：單獨直排的表單欄位限制可讀寬度（多欄位的 flex 列因非 .card 直接子層不受影響） */
     .card>select,.card>input[type=text],.card>input[type=number],
     .card>input[type=month],.card>textarea{max-width:640px}
@@ -166,6 +161,9 @@
   .btnG{display:inline-block;background:var(--surface);border:1px solid var(--line2);color:var(--ink2);
     padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
   .btnG:hover{background:var(--sunken)}
+  .btnDel{white-space:nowrap;background:var(--red-soft);border:1px solid rgba(192,57,43,.32);color:var(--red);
+    padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;text-align:center;transition:.15s}
+  .btnDel:hover{background:var(--red);color:#fff;border-color:var(--red)}
   .btnMini{white-space:nowrap;background:#fbf0df;border:1px solid #d98a2b;color:#a96612;
     padding:6px 11px;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;
     box-shadow:var(--sh);transition:transform .12s,box-shadow .15s,filter .15s}
@@ -221,11 +219,9 @@
   .big{font-size:13px;color:var(--ink2)}
   .tot{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
   .tot .b{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--line);
-    border-top:3px solid var(--ac,var(--brand));border-radius:14px;padding:18px 16px;text-align:center;
+    border-top:3px solid var(--brand);border-radius:14px;padding:18px 16px;text-align:center;
     box-shadow:var(--sh-md),var(--sh-in)}
-  .tot .b:nth-child(2n+1){--ac:#2f74c0;--acs:#eef5fc}
-  .tot .b:nth-child(2n+2){--ac:#d98a2b;--acs:#fcf3e6}
-  .tot .b .n{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ac,var(--ink))}
+  .tot .b .n{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
   .tot .b .l{font-size:13px;color:var(--mut);margin-top:3px;line-height:1.4;font-weight:700}
   .pos{color:var(--red);font-weight:700}
 
@@ -246,7 +242,7 @@
   .gatecard{max-width:390px;margin:36px auto 0;background:var(--surface);border:1px solid var(--line);
     border-radius:18px;padding:30px 26px;box-shadow:var(--sh-lg),var(--sh-in);text-align:center}
   .glogo{display:grid;place-items:center;width:58px;height:58px;border-radius:16px;margin:0 auto 18px;
-    background:linear-gradient(135deg,#2e7d4f 0%,#12998e 55%,#2f74c0 100%);border:none;
+    background:linear-gradient(135deg,#3a9462 0%,#2e7d4f 52%,#1f5a39 100%);border:none;
     box-shadow:0 4px 12px rgba(46,125,79,.30),inset 0 1px 0 rgba(255,255,255,.35)}
   .glogo svg{stroke:#fff !important}
   .gatecard .gt{font-size:19px;font-weight:800;color:var(--ink)}
@@ -257,9 +253,7 @@
     background:var(--surface);border:1px solid var(--line);border-radius:14px;
     padding:13px 15px;margin-top:11px;cursor:pointer;box-shadow:var(--sh);
     transition:transform .14s,box-shadow .15s,border-color .15s,background .15s}
-  .gentry[data-k=staff]{--tc:#2e7d4f;--tcs:#e7f3ec}
-  .gentry[data-k=admin]{--tc:#2f74c0;--tcs:#e6f0fa}
-  .gentry[data-k=acct] {--tc:#d98a2b;--tcs:#fbf0df}
+  .gentry{--tc:var(--brand-d);--tcs:var(--brand-soft)}
   .gentry:hover{border-color:var(--tc,var(--brand));background:var(--tcs,var(--brand-soft));
     transform:translateY(-2px);box-shadow:var(--sh-md)}
   .gentry .gei{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;
@@ -277,16 +271,12 @@
 
   /* ---- 儀表板 ---- */
   .dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
-  .dcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
-    border-top:3px solid var(--ac,var(--brand));box-shadow:var(--sh-md),var(--sh-in);
-    transition:transform .14s,box-shadow .15s}
-  .dgrid .dcard:nth-child(6n+1){--ac:#2e7d4f;--acs:#e7f3ec}
-  .dgrid .dcard:nth-child(6n+2){--ac:#2f74c0;--acs:#e6f0fa}
-  .dgrid .dcard:nth-child(6n+3){--ac:#d98a2b;--acs:#fbf0df}
-  .dgrid .dcard:nth-child(6n+4){--ac:#7b54c4;--acs:#efe9f9}
-  .dgrid .dcard:nth-child(6n+5){--ac:#d24f86;--acs:#fbe7f0}
-  .dgrid .dcard:nth-child(6n+6){--ac:#12998e;--acs:#e1f5f1}
-  .dcard .dl{font-size:12px;color:var(--ac,var(--mut));font-weight:800;display:flex;align-items:center;gap:6px}
+  .dcard{--ac:var(--brand);--acs:var(--brand-soft);
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+    border-top:3px solid var(--ac);box-shadow:var(--sh-md),var(--sh-in);
+    transition:transform .14s,box-shadow .15s,border-color .15s,background .15s}
+  .dcard .dl{font-size:12px;color:var(--ink2);font-weight:800;display:flex;align-items:center;gap:6px;
+    text-transform:none;letter-spacing:.01em}
   .dcard .dn{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:5px}
   .dcard .dn small{font-size:13px;font-weight:700;color:var(--mut);margin-left:3px}
   .dcard .dz{font-size:12.5px;color:var(--ink2);margin-top:9px;line-height:1.7;border-top:1px solid var(--line);padding-top:8px}
@@ -2021,7 +2011,19 @@ function showPeopleEdit(code){
     '<select id="eSite">'+selOpts(peopleSites,p.場,"（不分場）")+'</select>'+
     '<label class="fld">客戶編號（經銷帳號才需填）</label>'+
     '<input type="text" id="eCust" value="'+esc(p.客戶編號)+'" placeholder="客戶編號">'+
-    '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="savePerson(\''+esc(p.登入代碼)+'\')">儲存人員</button>';
+    '<div style="display:flex;gap:10px;margin-top:12px">'+
+      '<button type="button" class="btnG" style="flex:1" onclick="savePerson(\''+esc(p.登入代碼)+'\')">儲存人員</button>'+
+      '<button type="button" class="btnDel" onclick="delPerson(\''+esc(p.登入代碼)+'\',\''+esc(p.姓名)+'\')">刪除</button>'+
+    '</div>';
+}
+async function delPerson(code,name){
+  if(!confirm("確定要刪除人員「"+name+"」（登入代碼 "+code+"）嗎？\n此操作無法復原，該人員將無法再登入系統。")) return;
+  var r=await post({action:"roleDelete", uid:ME.uid, 登入代碼:code});
+  if(r.ok){
+    pbox("已刪除 "+name, false);
+    var r2=await api({action:"roleList", uid:ME.uid});
+    if(r2.ok){ peopleCache=r2.people||[]; renderPeoplePick(""); }
+  }else pbox(""+(r.error||"刪除失敗"), true);
 }
 async function savePerson(code){
   var name=($("#eName")&&$("#eName").value||"").trim();
