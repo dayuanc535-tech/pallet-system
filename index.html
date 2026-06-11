@@ -580,7 +580,7 @@
       <!-- 查詢 -->
       <section id="qry" class="card hide">
         <h2 class="ctitle">庫存與客戶結餘</h2>
-        <p class="csub">全部門目前持有（新購 − 報廢）。</p>
+        <p class="csub">目前全部客戶手上未歸還的棧板總計（＝下方明細各欄加總）。</p>
         <div class="tot" id="deptTot"></div>
         <div class="big" style="margin:4px 0 8px;font-weight:700">各客戶手上未歸還</div>
         <table>
@@ -1252,9 +1252,12 @@ async function loadBalances(){
   $("#balBody").innerHTML='<tr><td colspan="4" style="color:#6b766f">載入中…</td></tr>';
   var r=await api({action:"balances"});
   if(!r.ok){$("#balBody").innerHTML='<tr><td colspan="4">'+r.error+'</td></tr>';return;}
+  // 上方卡片＝下方明細加總，確保上下一致
+  var sum大=0,sum小=0;
+  r.customers.forEach(function(c){ sum大+=Number(c.大)||0; sum小+=Number(c.小)||0; });
   $("#deptTot").innerHTML=
-    box("大棧板在庫",r.inStock["大"],"持有"+r.dept["大"])+
-    box("小棧板在庫",r.inStock["小"],"持有"+r.dept["小"]);
+    box("大棧板在客戶手上",sum大,"全部客戶未還總計")+
+    box("小棧板在客戶手上",sum小,"全部客戶未還總計");
   if(!r.customers.length){
     $("#balBody").innerHTML='<tr><td colspan="4" style="color:#6b766f">目前沒有未歸還</td></tr>';return;}
   $("#balBody").innerHTML=r.customers.map(function(c){
