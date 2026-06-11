@@ -2160,16 +2160,27 @@ async function loadSettlement(){
       '<td><span class="plt">大</span>'+Math.max(0,c.期末.大)+'　<span class="plt">小</span>'+Math.max(0,c.期末.小)+'</td>'+
       '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\',\''+c.__month+'\')">PDF</button></td></tr>';
   }).join("");
-  // 單月＋單客戶時，附上每日明細
-  if(months.length===1 && custFilter.length===1 && all.length){
-    loadSetDetail(all[0].編號, all[0].名稱, months[0]);
-  } else $("#setDetail").innerHTML="";
+  // 所選範圍：逐一列出每個客戶每個月的每日明細
+  if(all.length){ loadAllDetails(all); } else $("#setDetail").innerHTML="";
 }
-async function loadSetDetail(cust, name, m){
+// 依序抓取並呈現所選範圍內每個客戶每個月的每日明細
+async function loadAllDetails(list){
   var box=$("#setDetail");
-  box.innerHTML='<div class="sdwrap"><div class="sdhead">本月每日明細<span class="sub">載入中…</span></div></div>';
+  box.innerHTML='<div class="sdwrap sdload"><div class="sdhead">每日明細<span class="sub">載入中… 0/'+list.length+'</span></div></div>';
+  var out="";
+  for(var i=0;i<list.length;i++){
+    var c=list[i];
+    var ld=box.querySelector(".sdload .sub"); if(ld) ld.textContent="載入中… "+(i+1)+"/"+list.length+"（"+esc(c.名稱)+" "+c.__month+"）";
+    out+=await buildDetailBlock(c.編號, c.名稱, c.__month);
+    box.innerHTML=out+'<div class="sdwrap sdload"><div class="sdhead">每日明細<span class="sub">載入中… '+(i+1)+'/'+list.length+'</span></div></div>';
+  }
+  box.innerHTML=out;
+}
+// 回傳單一客戶單一月份的每日明細區塊 HTML
+async function buildDetailBlock(cust, name, m){
   var r=await api({action:"statement", cust:cust, month:m});
-  if(!r.ok){ box.innerHTML='<div class="sdwrap"><div class="sdhead">本月每日明細<span class="sub">'+esc(r.error)+'</span></div></div>'; return; }
+  var label=esc(name||"")+' · '+m+' 每日明細';
+  if(!r.ok){ return '<div class="sdwrap"><div class="sdhead">'+label+'<span class="sub">'+esc(r.error)+'</span></div></div>'; }
   var det=(r.detail||[]).slice().sort(function(a,b){return String(a.時間)<String(b.時間)?-1:1;}); // 由早到晚
   // 同一時間（同客戶）視為一筆：合併送出大小、歸還大小
   var groups={}, order=[];
@@ -2183,7 +2194,7 @@ async function loadSetDetail(cust, name, m){
   });
   var head='<div class="sdhead">'+esc(name||r.客戶||"")+' · '+m+' 每日明細'+
     '<span class="sub">共 '+order.length+' 筆，點照片可放大檢視</span></div>';
-  if(!order.length){ box.innerHTML='<div class="sdwrap">'+head+'<div class="sdrow"><span style="color:var(--mut)">本月無進出紀錄</span></div></div>'; return; }
+  if(!order.length){ return '<div class="sdwrap">'+head+'<div class="sdrow"><span style="color:var(--mut)">本月無進出紀錄</span></div></div>'; }
   function szs(o){ var p=[]; if(o.大)p.push('大×'+o.大); if(o.小)p.push('小×'+o.小); return p.join('　'); }
   var lastDay="", html="";
   order.forEach(function(g){
@@ -2200,7 +2211,7 @@ async function loadSetDetail(cust, name, m){
       '<div class="sdgroup">'+lines+(g.場?'<div class="sdsite">'+esc(g.場)+'</div>':'')+'</div>'+
       '<span class="sdtime">'+esc(tm)+'</span>'+thumb+'</div>';
   });
-  box.innerHTML='<div class="sdwrap">'+head+html+'</div>';
+  return '<div class="sdwrap">'+head+html+'</div>';
 }
 function driveImg(url, w){
   var m=String(url).match(/\/d\/([-\w]{20,})/)||String(url).match(/[?&]id=([-\w]{20,})/);
