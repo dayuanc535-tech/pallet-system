@@ -648,6 +648,7 @@
           </label>
           <div id="repPhotoPv" class="hide" style="margin-top:8px"></div>
 
+          <div id="repWhenConfirm" style="margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:var(--brand-soft);color:var(--brand-d);font-weight:700;text-align:center"></div>
           <button class="btnP" id="repSubmit">✅ 送出回報</button>
           <div class="msg" id="repMsg"></div>
         </div>
@@ -2147,7 +2148,8 @@ function buildReport(){
   $("#repPhoto").onchange=repOnPhoto;
   $("#repSubmit").onclick=repSubmit;
   $("#repNoFlow").onclick=repNoFlow;
-  if($("#repNow")) $("#repNow").onclick=function(){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); };
+  if($("#repNow")) $("#repNow").onclick=function(){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); repWhenConfirm(); };
+  if($("#repWhen")) $("#repWhen").oninput=repWhenConfirm;
 }
 function buildRepSite(){
   var cur=$("#repSite").value;
@@ -2168,12 +2170,22 @@ function fmtNowLocal(){
   var d=new Date(); function p(n){return ("0"+n).slice(-2);}
   return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes());
 }
+function repWhenConfirm(){
+  var box=$("#repWhenConfirm"); if(!box) return;
+  var v=$("#repWhen")?$("#repWhen").value:"";
+  if(!v){ box.textContent="⚠ 尚未選擇日期時間"; return; }
+  var pretty=v.replace("T","　").slice(0,16);
+  var todayStr=fmtNowLocal().slice(0,10);
+  var tag=v.slice(0,10)===todayStr?"（今天）":"";
+  box.textContent="🕒 這筆將記錄於："+pretty+tag;
+}
 function pickRepCust(id,name){
   REP.cust=id; REP.name=name;
   document.querySelectorAll("#repCusts button[data-id]").forEach(function(b){
     b.classList.toggle("on", b.dataset.id===id);});
   $("#repName").textContent=name;
   if($("#repWhen") && !$("#repWhen").value) $("#repWhen").value=fmtNowLocal();
+  repWhenConfirm();
   $("#repForm").classList.remove("hide");
 }
 async function repAddSite(){
