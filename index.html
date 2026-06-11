@@ -1297,9 +1297,10 @@ function renderPeople(){
     $("#peopleBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">尚無人員</td></tr>';return;}
   $("#peopleBody").innerHTML=peopleCache.map(function(p){
     var bind=p.已綁定
-      ? '<span style="color:#256e3d">已綁</span>'
-      : '<span style="color:#b9722d">未綁</span>';
-    return '<tr>'+
+      ? '<span style="color:#256e3d">✓ 已綁</span>'
+      : '<span style="color:#b9722d;font-weight:700">⚠ 未綁</span>';
+    var trStyle=p.已綁定 ? '' : ' style="background:#fbf3e6;box-shadow:inset 3px 0 0 #d98a2b"';
+    return '<tr'+trStyle+'>'+
       '<td><b>'+esc(p.姓名)+'</b><br><span style="color:#6b766f;font-variant-numeric:tabular-nums;font-size:12px">'+esc(p.登入代碼)+'</span></td>'+
       '<td>'+roleTag(p.角色)+'</td>'+
       '<td>'+(esc(p.場)||'—')+'</td>'+
