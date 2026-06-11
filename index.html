@@ -878,9 +878,14 @@ function getMode(){
 (async function(){
   try{
     var urlCode = getCode();
-    if(getMode()==="look" && !urlCode){ showGate("look"); return; }
+    var mode = getMode();
+    if(mode==="look" && !urlCode){ showGate("look"); return; }
     var code = urlCode || localStorage.getItem("pallet_code") || "";
-    if(!code){ showGate("staff"); return; }
+    if(!code){
+      showGate("staff");
+      if(mode==="staff"||mode==="admin"||mode==="acct") openLogin(mode);
+      return;
+    }
     ME = await api({action:"me", uid:code});
     ME.uid = code;
     if(!ME.known){ localStorage.removeItem("pallet_code"); showGate("staff"); return; }
