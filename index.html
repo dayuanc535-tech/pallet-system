@@ -26,7 +26,7 @@
     radial-gradient(1200px 480px at 50% -120px,rgba(46,125,79,.07),transparent 70%),
     linear-gradient(180deg,#f8f6f1 0%,var(--bg) 360px);
     background-attachment:fixed;min-height:100vh}
-  .page{max-width:1560px;margin:0 auto;padding:0 28px 56px}
+  .page{max-width:1280px;margin:0 auto;padding:0 28px 56px}
 
   /* ---- 頂部品牌列 ---- */
   .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
@@ -63,10 +63,21 @@
   .tabs button.on{background:var(--tcs);color:var(--tc);border-color:var(--tc);
     box-shadow:0 2px 4px rgba(28,32,40,.08),0 8px 18px color-mix(in srgb,var(--tc) 30%,transparent)}
   .tabs button.on svg{opacity:1}
+  /* 手機：導覽改為整齊的圖示宮格（每格圖示在上、文字在下、等高），避免長標題被擠成細直排 */
+  @media(max-width:819px){
+    .tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
+    .tabs button{flex-direction:column;gap:7px;padding:15px 8px;min-height:90px;
+      text-align:center;justify-content:center;font-size:13.5px;line-height:1.25;
+      word-break:break-word}
+    .tabs button svg{width:24px;height:24px}
+  }
   @media(min-width:820px){
     .app{display:grid;grid-template-columns:248px minmax(0,1fr);gap:34px;align-items:start}
     .tabs{flex-direction:column;position:sticky;top:88px;margin-bottom:0}
     .tabs button{justify-content:flex-start;text-align:left}
+    /* 桌機：單獨直排的表單欄位限制可讀寬度（多欄位的 flex 列因非 .card 直接子層不受影響） */
+    .card>select,.card>input[type=text],.card>input[type=number],
+    .card>input[type=month],.card>textarea{max-width:640px}
   }
 
   /* ---- 卡片 ---- */
