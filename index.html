@@ -133,6 +133,12 @@
   .btnG{display:inline-block;background:var(--surface);border:1px solid var(--line2);color:var(--ink2);
     padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
   .btnG:hover{background:var(--sunken)}
+  .btnMini{white-space:nowrap;background:#fbf0df;border:1px solid #d98a2b;color:#a96612;
+    padding:6px 11px;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer;
+    box-shadow:var(--sh);transition:transform .12s,box-shadow .15s,filter .15s}
+  .btnMini:hover{filter:brightness(1.03);transform:translateY(-1px);box-shadow:var(--sh-md)}
+  .btnMini:active{transform:translateY(1px);box-shadow:none}
+  .btnMini:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
 
   /* ---- 表格 ---- */
   table{width:100%;border-collapse:collapse;font-size:15.5px;font-variant-numeric:tabular-nums}
@@ -569,7 +575,7 @@
       <!-- 月結算 -->
       <section id="set" class="card hide">
         <h2 class="ctitle">月結算</h2>
-        <p class="csub">選擇月份後查詢明細，並可產出 Excel 報表存到雲端硬碟。</p>
+        <p class="csub">選擇月份後查詢明細。可篩選單一客戶、按該列「📄 PDF」產出該客戶月報表，或產出整月 Excel 存到雲端硬碟。</p>
 
         <label class="fld">結算月份</label>
         <div class="row2">
@@ -577,13 +583,16 @@
           <button type="button" class="btnG" id="setQuery">查詢明細</button>
         </div>
 
+        <label class="fld" style="margin-top:14px">篩選客戶</label>
+        <select id="setCust"><option value="">全部客戶</option></select>
+
         <div id="setSummary" class="tot" style="margin-top:16px"></div>
 
         <div style="overflow-x:auto">
           <table id="setTable" class="hide">
             <thead><tr>
               <th>客戶</th><th>送出<br>大/小</th><th>歸還<br>大/小</th>
-              <th>本月金額</th><th>類別</th><th>期末<br>未還</th>
+              <th>本月金額</th><th>類別</th><th>期末<br>未還</th><th>月報表</th>
             </tr></thead>
             <tbody id="setBody"></tbody>
           </table>
@@ -890,6 +899,8 @@ function boot(){
   if(ME.role==="做帳" || ME.role==="管理員"){
     $("[data-tab=set]").classList.remove("hide");
     var d=new Date(); $("#setMonth").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2);
+    $("#setCust").innerHTML='<option value="">全部客戶</option>'+ME.customers.map(function(c){
+      return '<option value="'+c.編號+'">'+esc(c.名稱)+'</option>';}).join("");
   }
   // 管理員：客戶主檔 + 儀表板（並以儀表板為首頁）＋ 回報 ＋ 明細查詢
   if(ME.role==="管理員"){
@@ -967,6 +978,7 @@ function bindUI(){
   $("#submit").onclick=submit;
   $("#refresh").onclick=loadBalances;
   $("#setQuery").onclick=loadSettlement;
+  $("#setCust").onchange=loadSettlement;
   $("#genExcel").onclick=genReport;
   $("#addCust").onclick=addCustomer;
   $("#custRefresh").onclick=loadCustomers;
@@ -1225,25 +1237,40 @@ function box(l,n,sub){
 function curMonth(){ return $("#setMonth").value || ""; }
 async function loadSettlement(){
   var m=curMonth(); if(!m) return;
-  $("#setBody").innerHTML='<tr><td colspan="6" style="color:#6b766f">載入中…</td></tr>';
+  $("#setBody").innerHTML='<tr><td colspan="7" style="color:#6b766f">載入中…</td></tr>';
   $("#setTable").classList.remove("hide");
   var r=await api({action:"settlement", month:m});
-  if(!r.ok){$("#setBody").innerHTML='<tr><td colspan="6">'+r.error+'</td></tr>';return;}
+  if(!r.ok){$("#setBody").innerHTML='<tr><td colspan="7">'+r.error+'</td></tr>';return;}
   var t=r.totals;
   $("#setSummary").innerHTML=
     box("本月應開發票","$"+t.應開,"送出未還")+
     box("本月折讓","$"+t.折讓,"已歸還");
-  if(!r.rows.length){
-    $("#setBody").innerHTML='<tr><td colspan="6" style="color:#6b766f">本月無紀錄</td></tr>';return;}
-  $("#setBody").innerHTML=r.rows.map(function(c){
+  var pick=$("#setCust")?$("#setCust").value:"";
+  var rows=pick ? r.rows.filter(function(c){return String(c.編號)===pick;}) : r.rows;
+  if(!rows.length){
+    $("#setBody").innerHTML='<tr><td colspan="7" style="color:#6b766f">'+(pick?"此客戶本月無紀錄":"本月無紀錄")+'</td></tr>';return;}
+  $("#setBody").innerHTML=rows.map(function(c){
     var cls=c.類別==="應開發票"?"pos":"";
-    return '<tr><td>'+c.名稱+'</td>'+
+    return '<tr><td>'+esc(c.名稱)+'</td>'+
       '<td>'+c.送出.大+'/'+c.送出.小+'</td>'+
       '<td>'+c.歸還.大+'/'+c.歸還.小+'</td>'+
       '<td class="'+cls+'">$'+c.金額+'</td>'+
       '<td>'+c.類別+'</td>'+
-      '<td>'+c.期末.大+'/'+c.期末.小+'</td></tr>';
+      '<td>'+c.期末.大+'/'+c.期末.小+'</td>'+
+      '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\')">📄 PDF</button></td></tr>';
   }).join("");
+}
+async function setCustPdf(btn, cust, name){
+  var m=curMonth(); if(!m) return;
+  var msg=$("#setMsg"); msg.className="msg";
+  btn.disabled=true; var orig=btn.textContent; btn.textContent="產生中…";
+  try{
+    var r=await post({action:"statementPdf", cust:cust, month:m});
+    if(r.ok){ msg.className="msg ok";
+      msg.innerHTML='✅ '+esc(name)+' '+m+' 月報表：<a class="lnk" href="'+r.url+'" target="_blank" rel="noopener">開啟 '+esc(r.檔名)+'</a>'; }
+    else { msg.className="msg err"; msg.textContent="⚠ "+r.error; }
+  }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
+  btn.disabled=false; btn.textContent=orig;
 }
 async function genReport(){
   var m=curMonth(), btn=$("#genExcel"), msg=$("#setMsg");
