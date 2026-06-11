@@ -279,6 +279,15 @@
     padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s}
   .chip:hover{background:var(--sunken)}
   .chip.on{background:var(--brand-soft);color:var(--brand-d);border-color:var(--brand)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips:empty::before{content:"尚未設定任何場";color:var(--ink2);font-size:13px}
+  .sitechip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);
+    background:var(--brand-soft);color:var(--brand-d);border-radius:999px;
+    padding:7px 8px 7px 14px;font-size:13.5px;font-weight:700}
+  .sitechip button{border:none;background:rgba(0,0,0,.06);color:inherit;width:20px;height:20px;
+    border-radius:999px;font-size:13px;line-height:1;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;padding:0;transition:.15s}
+  .sitechip button:hover{background:rgba(180,30,30,.16);color:#b41e1e}
   .drawer{margin-top:14px;border-top:1px dashed var(--line2);padding-top:12px}
   .ed input,.ed select{padding:7px 8px;font-size:14px}
   .lnk{color:var(--brand-d);font-weight:700;cursor:pointer;text-decoration:none}
@@ -681,6 +690,16 @@
         <h2 class="ctitle">人員帳號</h2>
         <p class="csub">新增或編輯可登入系統的人員。登入代碼為主鍵不可改，等同個人專屬密碼，請勿外流。</p>
 
+        <div class="big" style="margin:4px 0 10px;font-weight:700">📍 場名管理</div>
+        <p class="csub" style="margin-top:-6px">回報與報表會用到的「場」。新增後，回報表單與人員的場別選單立即可選。</p>
+        <div id="siteChips" class="chips"></div>
+        <div class="row2" style="margin-top:10px">
+          <input type="text" id="newSite" placeholder="新場名（例：朴子）">
+          <button type="button" class="btnG" id="addSite" style="white-space:nowrap">新增場</button>
+        </div>
+        <div class="msg" id="siteMsg"></div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
+
         <div class="big" style="margin:4px 0 8px;font-weight:700">➕ 新增人員</div>
         <input type="text" id="pName" placeholder="姓名" style="width:100%;margin-bottom:8px">
         <div class="row2">
@@ -696,8 +715,6 @@
           </select>
           <select id="pSite">
             <option value="">（不分場）</option>
-            <option value="民雄">民雄</option>
-            <option value="義竹">義竹</option>
           </select>
         </div>
         <input type="text" id="pCust" placeholder="客戶編號（經銷帳號才需填）" style="width:100%;margin-top:8px">
@@ -1035,6 +1052,8 @@ function bindUI(){
   $("#addCust").onclick=addCustomer;
   $("#custRefresh").onclick=loadCustomers;
   $("#addPerson").onclick=addPerson;
+  $("#addSite").onclick=addSiteNow;
+  $("#newSite").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); addSiteNow(); } };
   $("#peopleRefresh").onclick=loadPeople;
   $("#pGen").onclick=genCode;
   // 儀表板
@@ -1506,8 +1525,42 @@ async function loadPeople(){
   if(!r.ok){$("#peopleBody").innerHTML='<tr><td colspan="5">'+esc(r.error)+'</td></tr>';return;}
   peopleCache=r.people||[];
   if(r.roles&&r.roles.length) peopleRoles=r.roles;
-  if(r.sites&&r.sites.length) peopleSites=r.sites;
+  if(r.sites&&r.sites.length){ peopleSites=r.sites; ME.sites=r.sites; }
+  renderSites();
   renderPeople();
+}
+function renderSites(){
+  var box=$("#siteChips"); if(!box) return;
+  box.innerHTML=peopleSites.map(function(s){
+    return '<span class="sitechip">'+esc(s)+
+      '<button type="button" title="刪除" onclick="removeSite(\''+esc(s)+'\');return false">✕</button></span>';
+  }).join("");
+  var sel=$("#pSite");
+  if(sel) sel.innerHTML='<option value="">（不分場）</option>'+selOpts(peopleSites,"");
+}
+async function saveSites(list){
+  var m=$("#siteMsg"); m.className="msg"; m.textContent="儲存中…";
+  var r=await post({action:"siteSave", uid:ME.uid, sites:list});
+  if(r.ok){
+    peopleSites=r.sites; ME.sites=r.sites;
+    renderSites();
+    // 同步現場回報表單與記錄表單的場別選單
+    if($("#repSite")) $("#repSite").innerHTML=peopleSites.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");
+    if($("#site")&&!(ME.role==="現場"&&ME.site)) $("#site").innerHTML=peopleSites.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");
+    m.className="msg ok"; m.textContent="✅ 已更新場名";
+  }else{ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+}
+function addSiteNow(){
+  var inp=$("#newSite"); var v=(inp.value||"").trim();
+  if(!v){ inp.focus(); return; }
+  if(peopleSites.indexOf(v)>=0){ var m=$("#siteMsg"); m.className="msg err"; m.textContent="⚠ 「"+v+"」已存在"; return; }
+  inp.value="";
+  saveSites(peopleSites.concat([v]));
+}
+async function removeSite(s){
+  if(peopleSites.length<=1){ var m=$("#siteMsg"); m.className="msg err"; m.textContent="⚠ 至少要保留一個場"; return; }
+  if(!confirm("刪除場「"+s+"」？\n已記錄的舊資料不會被刪，但報表會把該場歸入「其他」。")) return;
+  saveSites(peopleSites.filter(function(x){return x!==s;}));
 }
 function roleTag(role){
   var col=role==="管理員"?"#b9722d":(role==="做帳"?"#2e7d4f":(role==="經銷"?"#6b766f":"#256e3d"));
