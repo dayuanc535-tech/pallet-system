@@ -342,6 +342,17 @@
   .adjhmeta{text-align:right;white-space:nowrap;flex:0 0 auto}
   .adjhtime{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
   .adjhby{font-size:12px;color:var(--ink2);font-weight:700;margin-top:2px}
+  /* 進出明細：管理員逐列管理 */
+  .txqadm{margin-top:8px}
+  .txqadm>summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--brand-d);
+    list-style:none;display:inline-flex;align-items:center;gap:5px;padding:3px 0}
+  .txqadm>summary::-webkit-details-marker{display:none}
+  .txqadm>summary::before{content:"⚙";font-size:13px}
+  .txqadm[open]>summary{margin-bottom:2px}
+  .txmrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .txmlbl{font-size:13.5px;font-weight:700;color:var(--ink2);min-width:0}
+  .txmbtns{display:flex;gap:6px;align-items:center;flex:0 0 auto}
+  .btnMini.btnDel{color:var(--red);border-color:rgba(193,67,52,.35)}
   .chip{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);border-radius:999px;
     padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s}
   .chip:hover{background:var(--sunken)}
@@ -746,6 +757,34 @@
         <select id="txqCust"><option value="">全部客戶</option></select>
         <div class="msg" id="txqMsg" style="margin-top:12px"></div>
         <div id="txqList" style="margin-top:12px"></div>
+
+        <!-- 補登一筆（管理員）-->
+        <details id="txqAddWrap" class="hide" style="margin-top:18px;border-top:1px solid var(--line);padding-top:6px">
+          <summary style="cursor:pointer;font-weight:700;padding:8px 0">＋ 補登一筆紀錄</summary>
+          <div style="margin-top:10px">
+            <label class="fld">日期時間</label>
+            <input type="datetime-local" id="txqnWhen" style="width:100%">
+            <div class="row2" style="margin-top:8px">
+              <div><label class="fld">場</label><select id="txqnSite" style="width:100%"></select></div>
+              <div><label class="fld">動作</label><select id="txqnAct" style="width:100%"></select></div>
+            </div>
+            <label class="fld">客戶</label>
+            <select id="txqnCust" style="width:100%"><option value="">— 請選擇客戶 —</option></select>
+            <div class="row2" style="margin-top:8px">
+              <div><label class="fld">棧板別</label><select id="txqnType" style="width:100%"></select></div>
+              <div><label class="fld">數量</label><input type="number" id="txqnQty" min="1" step="1" value="1" style="width:100%"></div>
+            </div>
+            <label class="fld">備註</label>
+            <input type="text" id="txqnNote" placeholder="（可空白）" style="width:100%">
+            <label class="fld">簽收單（可選）</label>
+            <label class="btnG" style="display:block;text-align:center;padding:14px">
+              拍照 / 選擇簽收單<input type="file" id="txqnPhoto" accept="image/*" capture="environment" class="hide">
+            </label>
+            <div id="txqnPhotoPv" class="hide" style="margin-top:8px"></div>
+            <div id="txqnWhenConfirm" style="margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:var(--brand-soft);color:var(--brand-d);font-weight:700;text-align:center"></div>
+            <button type="button" class="btnG" id="txqAddBtn" style="margin-top:4px;width:100%">確認補登</button>
+          </div>
+        </details>
       </section>
 
       <!-- 月結算 -->
@@ -1419,7 +1458,68 @@ function txqOpen(){
     if($("#txqBack")) $("#txqBack").onclick=function(ev){ ev.preventDefault(); txqBackToSales(); };
   }
   if($("#txqBack")) $("#txqBack").classList.toggle("hide", ME.role!=="業務");
+  // 管理員：載入補登／編輯所需的客戶與場別資料
+  if(ME.role==="管理員"){
+    if($("#txqAddWrap")) $("#txqAddWrap").classList.remove("hide");
+    txqAddInit();
+  } else if($("#txqAddWrap")) $("#txqAddWrap").classList.add("hide");
   loadTxq();
+}
+var txqAddInited=false;
+function txqAddInit(){
+  if(!custCache.length) loadCustomers();
+  if(!peopleSites.length) loadPeople();
+  txqFillAddSelectors();
+  if(!txqAddInited){
+    txqAddInited=true;
+    if($("#txqAddBtn")) $("#txqAddBtn").onclick=addTxqRow;
+    if($("#txqnPhoto")) $("#txqnPhoto").onchange=txqnOnPhoto;
+    if($("#txqnWhen")) $("#txqnWhen").oninput=txqnWhenConfirm;
+  }
+}
+function txqFillAddSelectors(){
+  if($("#txqnSite")) $("#txqnSite").innerHTML=selOpts(peopleSites,"","（不分場）");
+  if($("#txqnAct"))  $("#txqnAct").innerHTML=selOpts(TXACTS,"歸還");
+  if($("#txqnType")) $("#txqnType").innerHTML=selOpts(["大","小"],"大");
+  if($("#txqnCust")) $("#txqnCust").innerHTML=txCustOptions("");
+  if($("#txqnWhen")&&!$("#txqnWhen").value) $("#txqnWhen").value=fmtNowLocal();
+  txqnWhenConfirm();
+}
+function txqnWhenConfirm(){
+  var box=$("#txqnWhenConfirm"); if(!box) return;
+  var v=$("#txqnWhen")?$("#txqnWhen").value:"";
+  if(!v){ box.textContent="尚未選擇日期時間"; return; }
+  var pretty=v.replace("T","　").slice(0,16);
+  var todayStr=fmtNowLocal().slice(0,10);
+  box.textContent="這筆將補登於："+pretty+(v.slice(0,10)===todayStr?"（今天）":"");
+}
+var txqnPhotoData="";
+function txqnOnPhoto(e){
+  var f=e.target.files[0]; if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){ txqnPhotoData=rd.result;
+    $("#txqnPhotoPv").classList.remove("hide");
+    $("#txqnPhotoPv").innerHTML='<img src="'+rd.result+'" style="max-width:100%;border-radius:10px;border:1px solid var(--line)">';
+  };
+  rd.readAsDataURL(f);
+}
+async function addTxqRow(){
+  var m=$("#txqMsg");
+  var act=$("#txqnAct").value, dept=(act==="報廢"||act==="新購"||act==="無流通");
+  var cust=$("#txqnCust").value;
+  if(!dept && !cust){ if(m){ m.className="msg err"; m.textContent="送出／歸還請選客戶"; } return; }
+  var btn=$("#txqAddBtn"); if(btn){ btn.disabled=true; btn.textContent="補登中…"; }
+  var r=await post({action:"txAnyAdd", uid:ME.uid,
+    時間:$("#txqnWhen").value, 場:$("#txqnSite").value, 動作:act,
+    客戶編號:cust, 棧板別:$("#txqnType").value, 數量:$("#txqnQty").value, 備註:$("#txqnNote").value, 照片:txqnPhotoData});
+  if(btn){ btn.disabled=false; btn.textContent="確認補登"; }
+  if(r.ok){
+    if(m){ m.className="msg ok"; m.textContent="已補登一筆"; }
+    $("#txqnQty").value="1"; $("#txqnNote").value=""; $("#txqnWhen").value=fmtNowLocal();
+    txqnPhotoData=""; if($("#txqnPhoto")) $("#txqnPhoto").value=""; if($("#txqnPhotoPv")){ $("#txqnPhotoPv").classList.add("hide"); $("#txqnPhotoPv").innerHTML=""; }
+    txqnWhenConfirm();
+    loadTxq();
+  }else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 async function loadTxq(){
   var m=$("#txqMsg");
@@ -1449,7 +1549,7 @@ function groupTx(raw){
     if(!g){
       g=map[key]={ 時間:x.時間, 客戶:x.客戶, 客戶編號:x.客戶編號, 場:x.場||"",
         act:{ 送出:{大:0,小:0}, 歸還:{大:0,小:0}, 報廢:{大:0,小:0}, 新購:{大:0,小:0}, 調整:{大:0,小:0} },
-        無流通:false, 附件:"", 備註:[] };
+        無流通:false, 附件:"", 備註:[], rows:[] };
       order.push(g);
     }
     if(!g.場 && x.場) g.場=x.場;
@@ -1457,6 +1557,7 @@ function groupTx(raw){
     else if(g.act[x.動作] && (x.棧板別==="大"||x.棧板別==="小")) g.act[x.動作][x.棧板別]+=(Number(x.數量)||0);
     if(x.附件 && !g.附件) g.附件=x.附件;
     if(x.備註 && g.備註.indexOf(x.備註)<0) g.備註.push(x.備註);
+    if(x.row){ g.rows.push(x); txRowCache[x.row]=x; }
   });
   return order;
 }
@@ -1484,13 +1585,29 @@ function txqCard(g){
     ? '<a class="lnk" href="'+esc(g.附件)+'" target="_blank" rel="noopener">查看簽收單</a>'
     : '<span class="csub">無簽收單</span>';
   return '<div class="txqrow">'+
-    '<div>'+
+    '<div style="min-width:0;flex:1">'+
       '<div class="txqcust">'+esc(g.客戶||g.客戶編號||"—")+'</div>'+
       lines.join("")+
       (note?'<div class="txqmeta" style="color:var(--mut)">'+note+'</div>':'')+
+      (ME.role==="管理員"?txqManage(g):"")+
     '</div>'+
     '<div class="txqside"><div class="txqtime">'+esc(g.時間)+'</div>'+sign+'</div>'+
   '</div>';
+}
+// 管理員：每筆下方可展開逐列修改／刪除
+function txqManage(g){
+  var rows=(g.rows||[]).filter(function(x){ return x.動作!=="無流通"; });
+  if(!rows.length) return "";
+  var items=rows.map(function(x){
+    var lbl=esc(x.動作)+' '+esc(x.棧板別)+'×'+(Number(x.數量)||0)+(x.備註?'　'+esc(x.備註):"");
+    var canEdit=(x.動作!=="調整");   // 調整列只允許刪除，避免動作被改成送出歸還
+    var btns=(canEdit?'<button type="button" class="btnMini" onclick="editTxRow('+x.row+')">修改</button>':'<span class="csub" style="font-size:11.5px">校正列僅可刪除</span>')+
+      '<button type="button" class="btnMini btnDel" onclick="delTxRow('+x.row+')">刪除</button>';
+    return '<div class="editbox" id="txrow-'+x.row+'" style="margin:8px 0 0;padding:10px 12px">'+
+      '<div class="txmrow"><span class="txmlbl">'+lbl+'</span><span class="txmbtns">'+btns+'</span></div>'+
+    '</div>';
+  }).join("");
+  return '<details class="txqadm"><summary>管理（修改／刪除這筆）</summary>'+items+'</details>';
 }
 function txqBackToSales(){
   $("#app").classList.add("hide");
@@ -1581,6 +1698,10 @@ function txCard(x){
     '</div></div>';
 }
 var txRowCache={};
+// 進出明細頁與棧板明細管理頁共用編輯邏輯：依目前所在頁刷新與顯示訊息
+function txqActive(){ var s=$("#txq"); return !!(s && !s.classList.contains("hide")); }
+function txRefreshActive(){ if(txqActive()) loadTxq(); else loadTxList(); }
+function txMsgBox(){ return txqActive()? $("#txqMsg") : $("#txMsg"); }
 function editTxRow(row){
   var box=$("#txrow-"+row); if(!box) return;
   var x=txRowCache[row]; if(!x){ loadTxList(); return; }
@@ -1605,7 +1726,7 @@ function editTxRow(row){
     '<div id="txe-photopv-'+row+'" class="hide" style="margin-top:8px"></div>'+
     '<div style="display:flex;gap:8px;margin-top:10px">'+
       '<button type="button" class="btnG" style="flex:1;background:var(--brand);color:#fff" onclick="saveTxRow('+row+')">儲存修改</button>'+
-      '<button type="button" class="btnG" style="flex:1" onclick="loadTxList()">取消</button>'+
+      '<button type="button" class="btnG" style="flex:1" onclick="txRefreshActive()">取消</button>'+
     '</div>';
   txEditPhotoData="";
   box.scrollIntoView({block:"nearest"});
@@ -1621,20 +1742,20 @@ function txEditOnPhoto(row){
   rd.readAsDataURL(f);
 }
 async function saveTxRow(row){
-  var m=$("#txMsg");
+  var m=txMsgBox();
   var when=gid("txe-when-"+row)?gid("txe-when-"+row).value:"";
   var r=await post({action:"txAnyUpdate", uid:ME.uid, row:row,
     時間:when, 場:gid("txe-site-"+row).value, 動作:gid("txe-act-"+row).value,
     客戶編號:gid("txe-cust-"+row).value, 棧板別:gid("txe-type-"+row).value,
     數量:gid("txe-qty-"+row).value, 備註:gid("txe-note-"+row).value, 照片:txEditPhotoData});
-  if(r.ok){ txEditPhotoData=""; if(m){ m.className="msg ok"; m.textContent="已更新"; } loadTxList(); }
+  if(r.ok){ txEditPhotoData=""; if(m){ m.className="msg ok"; m.textContent="已更新"; } txRefreshActive(); }
   else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 async function delTxRow(row){
   if(!confirm("確定刪除這筆紀錄？刪除後無法復原。")) return;
-  var m=$("#txMsg");
+  var m=txMsgBox();
   var r=await post({action:"txAnyDelete", uid:ME.uid, row:row});
-  if(r.ok){ if(m){ m.className="msg ok"; m.textContent="已刪除"; } loadTxList(); }
+  if(r.ok){ if(m){ m.className="msg ok"; m.textContent="已刪除"; } txRefreshActive(); }
   else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 var txnPhotoData="";
