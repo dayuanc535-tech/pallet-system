@@ -185,6 +185,23 @@
   .badge.dep{background:#f3ede1;color:var(--wood)}
 
   /* ---- 現場回報（大字） ---- */
+  .chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px;
+    max-height:200px;overflow:auto;padding:4px;border:1px solid var(--line);border-radius:10px;background:var(--sunken)}
+  .chk{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--line2);
+    border-radius:10px;background:var(--surface);font-size:14px;cursor:pointer;font-weight:600;color:var(--ink2)}
+  .chk.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-d)}
+  .chk input{width:17px;height:17px;accent-color:var(--brand);margin:0}
+  .brow{border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-top:12px;background:var(--surface)}
+  .brow .bh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .brow .bnm{font-size:15px;font-weight:800;color:var(--ink)}
+  .badge2{font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px}
+  .badge2.rcv{background:var(--red-soft);color:var(--red)}
+  .badge2.reb{background:var(--brand-soft);color:var(--brand-d)}
+  .badge2.zero{background:var(--sunken);color:var(--mut)}
+  .invrow{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .invrow label{font-size:12.5px;color:var(--mut);font-weight:700}
+  .invrow input[type=date]{width:auto;padding:8px 10px;font-size:14px;flex:1;min-width:140px}
+  .invrow button{margin-top:0;width:auto;padding:9px 16px;font-size:14px}
   .custgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:10px}
   .custgrid button{padding:16px 10px;border:1.5px solid var(--line2);background:var(--surface);
     border-radius:14px;font-size:16px;font-weight:800;color:var(--ink);cursor:pointer;transition:.15s;line-height:1.3}
@@ -339,6 +356,26 @@
           <h2 class="ctitle" style="margin-bottom:4px">月結算</h2>
           <p class="csub">每客戶該月各場進出、計價、折讓／應收，並可產出 Excel。</p>
           <button type="button" class="btnP" id="dGoSet" style="margin-top:0">📅 開啟月結計算</button>
+        </section>
+
+        <section class="card">
+          <h2 class="ctitle">月結對帳（批次）</h2>
+          <p class="csub">複選客戶 × 複選月份，產生對帳明細並合併輸出 PDF；需收款者可登記發票開立日期。</p>
+
+          <label class="fld" style="display:flex;justify-content:space-between;align-items:center">
+            <span>客戶</span><a class="lnk" id="bCustAll" style="font-size:12px">全選／全不選</a></label>
+          <div id="bCusts" class="chkgrid"></div>
+
+          <label class="fld" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+            <span>月份</span><a class="lnk" id="bMonAll" style="font-size:12px">全選／全不選</a></label>
+          <div id="bMonths" class="chkgrid"></div>
+
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button type="button" class="btnP" id="bGen" style="margin-top:0;flex:1">📊 產生明細</button>
+            <button type="button" class="btnP" id="bPdf" style="margin-top:0;flex:1;background:var(--wood)">📄 輸出 PDF</button>
+          </div>
+          <div id="bMsg" class="msg hide"></div>
+          <div id="bResult"></div>
         </section>
       </div>
 
@@ -760,8 +797,90 @@ function bindUI(){
     $("#dScrapCard").onclick=function(){ toggleDrawer("dScrap"); };
     $("#dCustSel").onchange=loadLoan;
     $("#dGoSet").onclick=function(){ switchTab("set"); };
+    if($("#bGen")){
+      buildBatchPickers();
+      $("#bGen").onclick=batchGen;
+      $("#bPdf").onclick=batchPdf;
+      $("#bCustAll").onclick=function(){ toggleAll("#bCusts"); };
+      $("#bMonAll").onclick=function(){ toggleAll("#bMonths"); };
+    }
   }
   toggleCust();
+}
+
+/* ---- 月結對帳（批次） ---- */
+function buildBatchPickers(){
+  var cg=$("#bCusts"); if(!cg) return;
+  cg.innerHTML=(ME.customers||[]).map(function(c){
+    return '<label class="chk" data-v="'+esc(c.編號)+'"><input type="checkbox"><span>'+esc(c.名稱)+'</span></label>';
+  }).join("")||'<span class="csub">無客戶資料</span>';
+  var mg=$("#bMonths"), now=new Date(), opts=[];
+  for(var i=0;i<12;i++){
+    var d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+    var m=d.getFullYear()+"-"+pad2(d.getMonth()+1);
+    opts.push('<label class="chk" data-v="'+m+'"><input type="checkbox"'+(i===0?" checked":"")+'><span>'+m+'</span></label>');
+  }
+  mg.innerHTML=opts.join("");
+  document.querySelectorAll("#bCusts .chk,#bMonths .chk").forEach(function(l){
+    syncChk(l);
+    l.querySelector("input").onchange=function(){ syncChk(l); };
+  });
+}
+function syncChk(l){ l.classList.toggle("on", l.querySelector("input").checked); }
+function toggleAll(sel){
+  var ls=document.querySelectorAll(sel+" .chk");
+  var allOn=Array.prototype.every.call(ls,function(l){return l.querySelector("input").checked;});
+  ls.forEach(function(l){ l.querySelector("input").checked=!allOn; syncChk(l); });
+}
+function pickedVals(sel){
+  return Array.prototype.filter.call(document.querySelectorAll(sel+" .chk"),function(l){
+    return l.querySelector("input").checked;
+  }).map(function(l){ return l.dataset.v; });
+}
+function bMsg(t,err){ var m=$("#bMsg"); m.className="msg "+(err?"err":"ok"); m.textContent=t; }
+async function batchGen(){
+  var custs=pickedVals("#bCusts"), months=pickedVals("#bMonths");
+  if(!custs.length||!months.length){ bMsg("請至少選一個客戶與一個月份",1); return; }
+  bMsg("計算中…");
+  var r=await api({action:"batchStatement",uid:ME.uid,custs:custs.join(","),months:months.join(",")});
+  if(!r||!r.ok){ bMsg((r&&r.error)||"產生失敗",1); return; }
+  renderBatch(r.items);
+  bMsg("共 "+r.items.length+" 筆對帳結果");
+}
+function renderBatch(items){
+  var box=$("#bResult");
+  if(!items.length){ box.innerHTML='<p class="csub" style="margin-top:14px">查無資料</p>'; return; }
+  box.innerHTML=items.map(function(it){
+    var cls=it.類別==="應收款"?"rcv":(it.類別==="折讓"?"reb":"zero");
+    var z=it.byZone, line=function(zn){ var x=z[zn];
+      return zn+"：送 大"+x.送.大+"/小"+x.送.小+"，還 大"+x.還.大+"/小"+x.還.小; };
+    var inv="";
+    if(it.需收款){
+      inv='<div class="invrow"><label>發票開立日期</label>'+
+        '<input type="date" id="inv_'+esc(it.客戶編號)+'_'+it.month+'" value="'+esc(it.發票開立日期||"")+'">'+
+        '<button class="btnP" onclick="saveInv(\''+esc(it.客戶編號)+'\',\''+it.month+'\')">儲存</button>'+
+        (it.發票開立日期?'<span class="badge2 reb">已登記 '+esc(it.發票開立日期)+'</span>':'<span class="badge2 rcv">未登記</span>')+'</div>';
+    }
+    return '<div class="brow"><div class="bh">'+
+      '<span class="bnm">'+esc(it.客戶)+'　<span style="color:var(--mut);font-weight:600">'+it.month+'</span></span>'+
+      '<span class="badge2 '+cls+'">'+it.類別+' $'+it.金額+'</span></div>'+
+      '<div class="csub" style="margin:8px 0 0">'+line("民雄")+'<br>'+line("義竹")+'</div>'+inv+'</div>';
+  }).join("");
+}
+async function saveInv(cust,month){
+  var el=gid("inv_"+cust+"_"+month); if(!el) return;
+  var r=await post({action:"invoiceSave",uid:ME.uid,cust:cust,month:month,date:el.value});
+  if(r&&r.ok) bMsg("已登記發票開立日期："+r.客戶+" "+month+" → "+(r.發票開立日期||"（清空）"));
+  else bMsg((r&&r.error)||"登記失敗",1);
+  batchGen();
+}
+async function batchPdf(){
+  var custs=pickedVals("#bCusts"), months=pickedVals("#bMonths");
+  if(!custs.length||!months.length){ bMsg("請至少選一個客戶與一個月份",1); return; }
+  bMsg("產生 PDF 中（稍候）…");
+  var r=await post({action:"batchPdf",uid:ME.uid,custs:custs.join(","),months:months.join(",")});
+  if(r&&r.ok){ bMsg("✅ PDF 已產生"); window.open(r.url,"_blank"); }
+  else bMsg((r&&r.error)||"PDF 產生失敗",1);
 }
 
 /* ---- 本次清單 ---- */
