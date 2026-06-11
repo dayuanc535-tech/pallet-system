@@ -301,6 +301,13 @@
     border-radius:999px;font-size:13px;line-height:1;cursor:pointer;display:flex;
     align-items:center;justify-content:center;padding:0;transition:.15s}
   .sitechip button:hover{background:rgba(180,30,30,.16);color:#b41e1e}
+  .editbox{margin-top:12px;border:1px solid var(--line2);border-radius:var(--r-in);
+    padding:14px;background:var(--card2,rgba(0,0,0,.015))}
+  .editbox.hide{display:none}
+  .editbox .erow{display:flex;justify-content:space-between;align-items:center;
+    padding:5px 0;font-size:13.5px}
+  .editbox .erow+.erow{border-top:1px dashed var(--line)}
+  .editbox .elab{color:var(--ink2);font-weight:600}
   .drawer{margin-top:14px;border-top:1px dashed var(--line2);padding-top:12px}
   .ed input,.ed select{padding:7px 8px;font-size:14px}
   .lnk{color:var(--brand-d);font-weight:700;cursor:pointer;text-decoration:none}
@@ -408,13 +415,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7zM14 3v4h4M9.5 13h5M9.5 17h5"/></svg>
         <span>月結算及明細查詢</span>
       </button>
-      <button data-tab="cust" class="hide">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        <span>客戶</span>
-      </button>
       <button data-tab="people" class="hide">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2.2"/><path d="M5.5 16.5a3.5 3.5 0 0 1 7 0M15 9h4M15 13h4"/></svg>
-        <span>人員</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>客戶／人員</span>
       </button>
     </nav>
 
@@ -681,34 +684,13 @@
         <div id="reportList" class="big">—</div>
       </section>
 
-      <!-- 客戶主檔（管理員） -->
-      <section id="custmgr" class="card hide">
-        <h2 class="ctitle">客戶主檔</h2>
-        <p class="csub">全部客戶（含 0 結餘與停用），可新增與編輯。編號為主鍵不可改。</p>
-
-        <div class="big" style="margin:4px 0 8px;font-weight:700">➕ 新增客戶</div>
-        <div class="row2">
-          <input type="text" id="ncode" placeholder="客戶編號">
-          <input type="text" id="nname" placeholder="客戶名稱">
-        </div>
-        <button type="button" class="btnG" id="addCust" style="margin-top:10px;width:100%">新增</button>
-        <div class="msg" id="custMsg"></div>
-
-        <div style="overflow-x:auto;margin-top:18px">
-          <table>
-            <thead><tr><th>編號</th><th>名稱</th><th>未還<br>大/小</th><th>狀態</th><th></th></tr></thead>
-            <tbody id="custBody"></tbody>
-          </table>
-        </div>
-        <button type="button" class="btnG" id="custRefresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
-      </section>
-
-      <!-- 人員帳號（管理員） -->
+      <!-- 客戶及操作人員設定（管理員） -->
       <section id="peoplemgr" class="card hide">
-        <h2 class="ctitle">人員帳號</h2>
-        <p class="csub">新增或編輯可登入系統的人員。登入代碼為主鍵不可改，等同個人專屬密碼，請勿外流。</p>
+        <h2 class="ctitle">客戶及操作人員設定</h2>
+        <p class="csub">管理場名、客戶主檔與可登入人員。客戶與人員皆以下拉選單挑選後編輯。</p>
 
-        <div class="big" style="margin:4px 0 10px;font-weight:700">📍 場名管理</div>
+        <!-- 場名管理 -->
+        <div class="big" style="margin:4px 0 8px;font-weight:700">📍 場名管理</div>
         <p class="csub" style="margin-top:-6px">回報與報表會用到的「場」。新增後，回報表單與人員的場別選單立即可選。</p>
         <div id="siteChips" class="chips"></div>
         <div class="row2" style="margin-top:10px">
@@ -716,9 +698,29 @@
           <button type="button" class="btnG" id="addSite" style="white-space:nowrap">新增場</button>
         </div>
         <div class="msg" id="siteMsg"></div>
-        <hr style="border:none;border-top:1px solid var(--line);margin:20px 0">
 
-        <div class="big" style="margin:4px 0 8px;font-weight:700">➕ 新增人員</div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
+
+        <!-- 客戶 -->
+        <div class="big" style="margin:4px 0 8px;font-weight:700">🏷️ 客戶</div>
+        <p class="csub" style="margin-top:-6px">全部客戶（含 0 結餘與停用）。編號為主鍵不可改。</p>
+        <div class="row2">
+          <input type="text" id="ncode" placeholder="客戶編號">
+          <input type="text" id="nname" placeholder="客戶名稱">
+        </div>
+        <button type="button" class="btnG" id="addCust" style="margin-top:10px;width:100%">➕ 新增客戶</button>
+
+        <label class="fld">選擇客戶編輯</label>
+        <select id="custPick"><option value="">— 請選擇客戶 —</option></select>
+        <div class="editbox hide" id="custEdit"></div>
+        <div class="msg" id="custMsg"></div>
+        <button type="button" class="btnG" id="custRefresh" style="margin-top:14px;width:100%">🔄 重新整理客戶</button>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:22px 0">
+
+        <!-- 操作人員 -->
+        <div class="big" style="margin:4px 0 8px;font-weight:700">🧑‍💼 操作人員</div>
+        <p class="csub" style="margin-top:-6px">可登入系統的人員。登入代碼為主鍵不可改，等同個人專屬密碼，請勿外流。</p>
         <input type="text" id="pName" placeholder="姓名" style="width:100%;margin-bottom:8px">
         <div class="row2">
           <input type="text" id="pCode" placeholder="登入代碼">
@@ -736,16 +738,13 @@
           </select>
         </div>
         <input type="text" id="pCust" placeholder="客戶編號（經銷帳號才需填）" style="width:100%;margin-top:8px">
-        <button type="button" class="btnG" id="addPerson" style="margin-top:10px;width:100%">新增</button>
-        <div class="msg" id="peopleMsg"></div>
+        <button type="button" class="btnG" id="addPerson" style="margin-top:10px;width:100%">➕ 新增人員</button>
 
-        <div style="overflow-x:auto;margin-top:18px">
-          <table>
-            <thead><tr><th>姓名／代碼</th><th>角色</th><th>場</th><th>LINE</th><th></th></tr></thead>
-            <tbody id="peopleBody"></tbody>
-          </table>
-        </div>
-        <button type="button" class="btnG" id="peopleRefresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
+        <label class="fld">選擇人員編輯</label>
+        <select id="peoplePick"><option value="">— 請選擇人員 —</option></select>
+        <div class="editbox hide" id="peopleEdit"></div>
+        <div class="msg" id="peopleMsg"></div>
+        <button type="button" class="btnG" id="peopleRefresh" style="margin-top:14px;width:100%">🔄 重新整理人員</button>
       </section>
     </div>
   </div>
@@ -989,9 +988,8 @@ function boot(){
     $("[data-tab=set]").classList.remove("hide");
     buildSetPickers();
   }
-  // 管理員：客戶主檔 + 月結算 ＋ 回報 ＋ 明細查詢
+  // 管理員：客戶及操作人員設定 + 月結算 ＋ 回報 ＋ 明細查詢
   if(ME.role==="管理員"){
-    $("[data-tab=cust]").classList.remove("hide");
     $("[data-tab=people]").classList.remove("hide");
     $("[data-tab=report]").classList.remove("hide");
     buildReport();
@@ -1035,14 +1033,12 @@ function switchTab(t){
   $("#qry").classList.toggle("hide", t!=="qry");
   $("#lookpick").classList.toggle("hide", t!=="look");
   $("#set").classList.toggle("hide", t!=="set");
-  $("#custmgr").classList.toggle("hide", t!=="cust");
   $("#peoplemgr").classList.toggle("hide", t!=="people");
   if(t==="dash") loadDashboard();
   if(t==="report") loadRepToday();
   if(t==="qry") loadBalances();
   if(t==="set"){ loadSettlement(); loadReports(); }
-  if(t==="cust") loadCustomers();
-  if(t==="people") loadPeople();
+  if(t==="people"){ loadPeople(); loadCustomers(); }
 }
 
 /* ---- UI 綁定 ---- */
@@ -1066,6 +1062,8 @@ function bindUI(){
   $("#genExcel").onclick=genReport;
   $("#addCust").onclick=addCustomer;
   $("#custRefresh").onclick=loadCustomers;
+  if($("#custPick")) $("#custPick").onchange=function(){ showCustEdit(this.value); };
+  if($("#peoplePick")) $("#peoplePick").onchange=function(){ showPeopleEdit(this.value); };
   $("#addPerson").onclick=addPerson;
   $("#addSite").onclick=addSiteNow;
   $("#newSite").onkeydown=function(e){ if(e.key==="Enter"){ e.preventDefault(); addSiteNow(); } };
@@ -1505,47 +1503,41 @@ function esc(s){
 }
 var custCache=[];
 async function loadCustomers(){
-  $("#custBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">載入中…</td></tr>';
+  var sel=$("#custPick"); if(sel) sel.innerHTML='<option value="">載入中…</option>';
   var r=await api({action:"custList", uid:ME.uid});
-  if(!r.ok){$("#custBody").innerHTML='<tr><td colspan="5">'+esc(r.error)+'</td></tr>';return;}
+  if(!r.ok){ box2("⚠ "+esc(r.error), true); if(sel) sel.innerHTML='<option value="">— 載入失敗 —</option>'; return; }
   custCache=r.customers||[];
-  renderCustomers();
+  renderCustPick();
 }
-function renderCustomers(){
+function renderCustPick(keep){
+  var sel=$("#custPick"); if(!sel) return;
+  var cur=keep!=null?keep:sel.value;
   if(!custCache.length){
-    $("#custBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">尚無客戶</td></tr>';return;}
-  $("#custBody").innerHTML=custCache.map(function(c){
-    var stopped=c.狀態==="停用";
-    var tag=stopped
-      ? '<span style="color:#c0392b;font-weight:700">停用</span>'
-      : '<span style="color:#256e3d">啟用</span>';
-    return '<tr'+(stopped?' style="opacity:.55"':'')+'>'+
-      '<td style="color:#6b766f;font-variant-numeric:tabular-nums">'+esc(c.編號)+'</td>'+
-      '<td>'+esc(c.名稱)+'</td>'+
-      '<td class="'+((c.大>0||c.小>0)?'pos':'')+'">'+c.大+'/'+c.小+'</td>'+
-      '<td>'+tag+'</td>'+
-      '<td><a href="#" style="color:#256e3d;font-weight:700" onclick="editCustomer(\''+esc(c.編號)+'\');return false">編輯</a></td>'+
-      '</tr>';
-  }).join("");
-}
-function editCustomer(id){
-  var c=custCache.filter(function(x){return String(x.編號)===String(id);})[0];
-  if(!c) return;
-  var rows=$("#custBody").querySelectorAll("tr");
-  for(var i=0;i<custCache.length;i++){
-    if(String(custCache[i].編號)===String(id)){
-      rows[i].innerHTML=
-        '<td style="color:#6b766f;font-variant-numeric:tabular-nums">'+esc(c.編號)+'</td>'+
-        '<td><input type="text" id="ename" value="'+esc(c.名稱)+'" style="width:100%"></td>'+
-        '<td class="'+((c.大>0||c.小>0)?'pos':'')+'">'+c.大+'/'+c.小+'</td>'+
-        '<td><select id="estat"><option value="">啟用</option>'+
-          '<option value="停用"'+(c.狀態==="停用"?" selected":"")+'>停用</option></select></td>'+
-        '<td style="white-space:nowrap">'+
-          '<a href="#" style="color:#256e3d;font-weight:700" onclick="saveCustomer(\''+esc(c.編號)+'\');return false">存</a> '+
-          '<a href="#" style="color:#6b766f" onclick="renderCustomers();return false">取消</a></td>';
-      break;
-    }
+    sel.innerHTML='<option value="">— 尚無客戶 —</option>';
+    showCustEdit(""); return;
   }
+  sel.innerHTML='<option value="">— 請選擇客戶（共 '+custCache.length+' ）—</option>'+
+    custCache.map(function(c){
+      var stopped=c.狀態==="停用";
+      return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）'+(stopped?' ⛔停用':'')+'</option>';
+    }).join("");
+  sel.value=cur||"";
+  showCustEdit(sel.value);
+}
+function showCustEdit(id){
+  var box=$("#custEdit"); if(!box) return;
+  var c=id?custCache.filter(function(x){return String(x.編號)===String(id);})[0]:null;
+  if(!c){ box.className="editbox hide"; box.innerHTML=""; return; }
+  box.className="editbox";
+  box.innerHTML=
+    '<div class="erow"><span class="elab">客戶編號</span><b style="font-variant-numeric:tabular-nums">'+esc(c.編號)+'</b></div>'+
+    '<div class="erow"><span class="elab">未還 大／小</span><b class="'+((c.大>0||c.小>0)?'pos':'')+'">'+c.大+' / '+c.小+'</b></div>'+
+    '<label class="fld">客戶名稱</label>'+
+    '<input type="text" id="ename" value="'+esc(c.名稱)+'">'+
+    '<label class="fld">狀態</label>'+
+    '<select id="estat"><option value="">啟用</option>'+
+      '<option value="停用"'+(c.狀態==="停用"?" selected":"")+'>停用</option></select>'+
+    '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="saveCustomer(\''+esc(c.編號)+'\')">💾 儲存客戶</button>';
 }
 async function saveCustomer(id){
   var name=($("#ename")&&$("#ename").value||"").trim();
@@ -1563,7 +1555,8 @@ async function addCustomer(){
   if(r.ok){
     box2(r.mode==="insert"?"✅ 已新增 "+code:"已存在，已更新名稱 "+code, false);
     $("#ncode").value=""; $("#nname").value="";
-    loadCustomers();
+    var r2=await api({action:"custList", uid:ME.uid});
+    if(r2.ok){ custCache=r2.customers||[]; renderCustPick(code); }
   }else box2("⚠ "+(r.error||"失敗"), true);
 }
 function box2(t, err){
@@ -1573,14 +1566,14 @@ function box2(t, err){
 /* ---- 人員帳號（管理員） ---- */
 var peopleCache=[], peopleRoles=["現場","做帳","管理員","經銷"], peopleSites=["民雄","義竹"];
 async function loadPeople(){
-  $("#peopleBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">載入中…</td></tr>';
+  var sel=$("#peoplePick"); if(sel) sel.innerHTML='<option value="">載入中…</option>';
   var r=await api({action:"roleList", uid:ME.uid});
-  if(!r.ok){$("#peopleBody").innerHTML='<tr><td colspan="5">'+esc(r.error)+'</td></tr>';return;}
+  if(!r.ok){ pbox("⚠ "+esc(r.error), true); if(sel) sel.innerHTML='<option value="">— 載入失敗 —</option>'; return; }
   peopleCache=r.people||[];
   if(r.roles&&r.roles.length) peopleRoles=r.roles;
   if(r.sites&&r.sites.length){ peopleSites=r.sites; ME.sites=r.sites; }
   renderSites();
-  renderPeople();
+  renderPeoplePick();
 }
 function renderSites(){
   var box=$("#siteChips"); if(!box) return;
@@ -1625,41 +1618,40 @@ function selOpts(arr, cur, blank){
     return '<option value="'+esc(v)+'"'+(String(v)===String(cur)?" selected":"")+'>'+esc(v)+'</option>';
   }).join("");
 }
-function renderPeople(){
+function renderPeoplePick(keep){
+  var sel=$("#peoplePick"); if(!sel) return;
+  var cur=keep!=null?keep:sel.value;
   if(!peopleCache.length){
-    $("#peopleBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">尚無人員</td></tr>';return;}
-  $("#peopleBody").innerHTML=peopleCache.map(function(p){
-    var bind=p.已綁定
-      ? '<span style="color:#256e3d">✓ 已綁</span>'
-      : '<span style="color:#b9722d;font-weight:700">⚠ 未綁</span>';
-    var trStyle=p.已綁定 ? '' : ' style="background:#fbf3e6;box-shadow:inset 3px 0 0 #d98a2b"';
-    return '<tr'+trStyle+'>'+
-      '<td><b>'+esc(p.姓名)+'</b><br><span style="color:#6b766f;font-variant-numeric:tabular-nums;font-size:12px">'+esc(p.登入代碼)+'</span></td>'+
-      '<td>'+roleTag(p.角色)+'</td>'+
-      '<td>'+(esc(p.場)||'—')+'</td>'+
-      '<td>'+bind+'</td>'+
-      '<td><a href="#" style="color:#256e3d;font-weight:700" onclick="editPerson(\''+esc(p.登入代碼)+'\');return false">編輯</a></td>'+
-      '</tr>';
-  }).join("");
-}
-function editPerson(code){
-  var p=peopleCache.filter(function(x){return String(x.登入代碼)===String(code);})[0];
-  if(!p) return;
-  var rows=$("#peopleBody").querySelectorAll("tr");
-  for(var i=0;i<peopleCache.length;i++){
-    if(String(peopleCache[i].登入代碼)===String(code)){
-      rows[i].innerHTML=
-        '<td><input type="text" id="eName" value="'+esc(p.姓名)+'" style="width:100%;margin-bottom:4px">'+
-          '<span style="color:#6b766f;font-size:12px">'+esc(p.登入代碼)+'</span></td>'+
-        '<td><select id="eRole">'+selOpts(peopleRoles,p.角色)+'</select></td>'+
-        '<td><select id="eSite">'+selOpts(peopleSites,p.場,"（不分場）")+'</select></td>'+
-        '<td colspan="2" style="white-space:nowrap">'+
-          '<input type="text" id="eCust" value="'+esc(p.客戶編號)+'" placeholder="客戶編號" style="width:90px;margin-right:6px">'+
-          '<a href="#" style="color:#256e3d;font-weight:700" onclick="savePerson(\''+esc(p.登入代碼)+'\');return false">存</a> '+
-          '<a href="#" style="color:#6b766f" onclick="renderPeople();return false">取消</a></td>';
-      break;
-    }
+    sel.innerHTML='<option value="">— 尚無人員 —</option>';
+    showPeopleEdit(""); return;
   }
+  sel.innerHTML='<option value="">— 請選擇人員（共 '+peopleCache.length+' ）—</option>'+
+    peopleCache.map(function(p){
+      return '<option value="'+esc(p.登入代碼)+'">'+esc(p.姓名)+'｜'+esc(p.角色)+(p.場?'｜'+esc(p.場):'')+(p.已綁定?'':' ⚠未綁')+'</option>';
+    }).join("");
+  sel.value=cur||"";
+  showPeopleEdit(sel.value);
+}
+function showPeopleEdit(code){
+  var box=$("#peopleEdit"); if(!box) return;
+  var p=code?peopleCache.filter(function(x){return String(x.登入代碼)===String(code);})[0]:null;
+  if(!p){ box.className="editbox hide"; box.innerHTML=""; return; }
+  box.className="editbox";
+  var bind=p.已綁定
+    ? '<span style="color:#256e3d;font-weight:700">✓ 已綁定 LINE</span>'
+    : '<span style="color:#b9722d;font-weight:700">⚠ 尚未綁定 LINE</span>';
+  box.innerHTML=
+    '<div class="erow"><span class="elab">登入代碼</span><b style="font-variant-numeric:tabular-nums">'+esc(p.登入代碼)+'</b></div>'+
+    '<div class="erow"><span class="elab">LINE 綁定</span>'+bind+'</div>'+
+    '<label class="fld">姓名</label>'+
+    '<input type="text" id="eName" value="'+esc(p.姓名)+'">'+
+    '<label class="fld">角色</label>'+
+    '<select id="eRole">'+selOpts(peopleRoles,p.角色)+'</select>'+
+    '<label class="fld">場</label>'+
+    '<select id="eSite">'+selOpts(peopleSites,p.場,"（不分場）")+'</select>'+
+    '<label class="fld">客戶編號（經銷帳號才需填）</label>'+
+    '<input type="text" id="eCust" value="'+esc(p.客戶編號)+'" placeholder="客戶編號">'+
+    '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="savePerson(\''+esc(p.登入代碼)+'\')">💾 儲存人員</button>';
 }
 async function savePerson(code){
   var name=($("#eName")&&$("#eName").value||"").trim();
@@ -1668,8 +1660,11 @@ async function savePerson(code){
   var cust=($("#eCust")&&$("#eCust").value||"").trim();
   if(!name){ pbox("姓名不可空白", true); return; }
   var r=await post({action:"roleSave", uid:ME.uid, 登入代碼:code, 姓名:name, 角色:role, 場:site, 客戶編號:cust});
-  if(r.ok){ pbox("✅ 已更新 "+name, false); loadPeople(); }
-  else pbox("⚠ "+(r.error||"失敗"), true);
+  if(r.ok){
+    pbox("✅ 已更新 "+name, false);
+    var r2=await api({action:"roleList", uid:ME.uid});
+    if(r2.ok){ peopleCache=r2.people||[]; renderPeoplePick(code); }
+  }else pbox("⚠ "+(r.error||"失敗"), true);
 }
 async function addPerson(){
   var name=($("#pName").value||"").trim();
@@ -1682,7 +1677,8 @@ async function addPerson(){
   if(r.ok){
     pbox(r.mode==="insert"?"✅ 已新增 "+name:"已存在，已更新 "+name, false);
     $("#pName").value=""; $("#pCode").value=""; $("#pCust").value="";
-    loadPeople();
+    var r2=await api({action:"roleList", uid:ME.uid});
+    if(r2.ok){ peopleCache=r2.people||[]; renderPeoplePick(code); }
   }else pbox("⚠ "+(r.error||"失敗"), true);
 }
 function genCode(){
