@@ -1280,11 +1280,28 @@ function editTxRow(row){
       '<div><label class="fld">數量</label><input type="number" id="txe-qty-'+row+'" min="0" step="1" value="'+(Number(x.數量)||0)+'" style="width:100%"></div>'+
     '</div>'+
     '<label class="fld">備註</label><input type="text" id="txe-note-'+row+'" value="'+esc(x.備註||"")+'" style="width:100%">'+
+    '<label class="fld">簽收單</label>'+
+    (x.附件?'<div style="margin-bottom:8px"><a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">📷 檢視目前簽收單</a></div>':'<div class="csub" style="margin-bottom:8px">目前無簽收單</div>')+
+    '<label class="btnG" style="display:block;text-align:center;padding:14px">'+
+      '📷 拍照 / 選擇'+(x.附件?'新':'')+'簽收單<input type="file" id="txe-photo-'+row+'" accept="image/*" capture="environment" class="hide" onchange="txEditOnPhoto('+row+')">'+
+    '</label>'+
+    '<div id="txe-photopv-'+row+'" class="hide" style="margin-top:8px"></div>'+
     '<div style="display:flex;gap:8px;margin-top:10px">'+
       '<button type="button" class="btnG" style="flex:1;background:var(--brand);color:#fff" onclick="saveTxRow('+row+')">💾 儲存修改</button>'+
       '<button type="button" class="btnG" style="flex:1" onclick="loadTxList()">取消</button>'+
     '</div>';
+  txEditPhotoData="";
   box.scrollIntoView({block:"nearest"});
+}
+var txEditPhotoData="";
+function txEditOnPhoto(row){
+  var inp=gid("txe-photo-"+row); var f=inp&&inp.files[0]; if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){ txEditPhotoData=rd.result;
+    var pv=gid("txe-photopv-"+row); if(pv){ pv.classList.remove("hide");
+      pv.innerHTML='<img src="'+rd.result+'" style="max-width:100%;border-radius:10px;border:1px solid var(--line)"><div class="csub" style="margin-top:4px">儲存後將更換為這張</div>'; }
+  };
+  rd.readAsDataURL(f);
 }
 async function saveTxRow(row){
   var m=$("#txMsg");
@@ -1292,8 +1309,8 @@ async function saveTxRow(row){
   var r=await post({action:"txAnyUpdate", uid:ME.uid, row:row,
     時間:when, 場:gid("txe-site-"+row).value, 動作:gid("txe-act-"+row).value,
     客戶編號:gid("txe-cust-"+row).value, 棧板別:gid("txe-type-"+row).value,
-    數量:gid("txe-qty-"+row).value, 備註:gid("txe-note-"+row).value});
-  if(r.ok){ if(m){ m.className="msg ok"; m.textContent="✅ 已更新"; } loadTxList(); }
+    數量:gid("txe-qty-"+row).value, 備註:gid("txe-note-"+row).value, 照片:txEditPhotoData});
+  if(r.ok){ txEditPhotoData=""; if(m){ m.className="msg ok"; m.textContent="✅ 已更新"; } loadTxList(); }
   else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
 }
 async function delTxRow(row){
