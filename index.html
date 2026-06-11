@@ -1076,6 +1076,13 @@ function boot(){
     if(pendingView==="set" && (ME.role==="做帳" || ME.role==="管理員")) switchTab("set");
     pendingView="";
   }
+  // 依圖文選單入口（?mode=）導到對應分頁；該角色無權限就維持預設
+  var em = getMode();
+  var want = em==="staff" ? "report" : em==="acct" ? "set" : em==="admin" ? "people" : "";
+  if(want){
+    var tb = $("[data-tab="+want+"]");
+    if(tb && !tb.classList.contains("hide")) switchTab(want);
+  }
 }
 
 /* ---- 分頁 ---- */
