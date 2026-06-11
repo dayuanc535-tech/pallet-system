@@ -617,13 +617,18 @@
           <select id="repSite"></select>
         </div>
 
+        <label class="fld">日期時間</label>
+        <div style="display:flex;gap:8px;align-items:stretch">
+          <input type="datetime-local" id="repWhen" style="flex:1;min-width:0">
+          <button type="button" class="btnG" id="repNow" style="white-space:nowrap;padding:0 16px">🕒 現在</button>
+        </div>
+        <p class="csub" style="margin:6px 0 0">預設為現在時間，可改成實際發生的時間（例如補登昨天）。</p>
+
         <label class="fld">選擇客戶</label>
         <div id="repCusts" class="custgrid"></div>
 
         <div id="repForm" class="hide">
           <div class="repname" id="repName">—</div>
-          <label class="fld">日期時間（預設現在，可改成實際發生時間）</label>
-          <input type="datetime-local" id="repWhen" style="width:100%">
           <div class="qgrid">
             <div class="qbox out">
               <div class="qh">出貨給客戶（送出）</div>
@@ -1164,7 +1169,7 @@ function switchTab(t){
   $("#set").classList.toggle("hide", t!=="set");
   $("#peoplemgr").classList.toggle("hide", t!=="people");
   if(t==="dash") loadDashboard();
-  if(t==="report") loadRepToday();
+  if(t==="report"){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); loadRepToday(); }
   if(t==="qry") loadBalances();
   if(t==="set"){ loadSettlement(); }
   if(t==="people"){ loadPeople(); loadCustomers(); switchMgr($("#mgrPick")?$("#mgrPick").value:"site"); }
@@ -2142,6 +2147,7 @@ function buildReport(){
   $("#repPhoto").onchange=repOnPhoto;
   $("#repSubmit").onclick=repSubmit;
   $("#repNoFlow").onclick=repNoFlow;
+  if($("#repNow")) $("#repNow").onclick=function(){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); };
 }
 function buildRepSite(){
   var cur=$("#repSite").value;
@@ -2211,7 +2217,7 @@ function repReset(){
   ["out大","out小","in大","in小"].forEach(function(k){ gid("q_"+k).value="0"; });
   document.querySelectorAll("#repCusts button").forEach(function(b){b.classList.remove("on");});
   $("#repForm").classList.add("hide");
-  if($("#repWhen")) $("#repWhen").value="";
+  if($("#repWhen")) $("#repWhen").value=fmtNowLocal();
   $("#repPhoto").value=""; $("#repPhotoPv").classList.add("hide"); $("#repPhotoPv").innerHTML="";
 }
 async function repSubmit(){
