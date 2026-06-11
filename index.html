@@ -831,7 +831,8 @@
               </div>
               <label class="fld">備註</label>
               <input type="text" id="txnNote" placeholder="（可空白）" style="width:100%">
-              <button type="button" class="btnG" id="txAddBtn" style="margin-top:12px;width:100%">確認補登</button>
+              <div id="txnWhenConfirm" style="margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:var(--brand-soft);color:var(--brand-d);font-weight:700;text-align:center"></div>
+              <button type="button" class="btnG" id="txAddBtn" style="margin-top:4px;width:100%">確認補登</button>
             </div>
           </details>
         </div>
@@ -1219,6 +1220,17 @@ function txFillSelectors(){
   if($("#txnType")) $("#txnType").innerHTML=selOpts(["大","小"],"大");
   if($("#txnCust")) $("#txnCust").innerHTML=txCustOptions("");
   if($("#txnWhen")&&!$("#txnWhen").value) $("#txnWhen").value=fmtNowLocal();
+  txnWhenConfirm();
+  if($("#txnWhen")) $("#txnWhen").oninput=txnWhenConfirm;
+}
+function txnWhenConfirm(){
+  var box=$("#txnWhenConfirm"); if(!box) return;
+  var v=$("#txnWhen")?$("#txnWhen").value:"";
+  if(!v){ box.textContent="⚠ 尚未選擇日期時間"; return; }
+  var pretty=v.replace("T","　").slice(0,16);
+  var todayStr=fmtNowLocal().slice(0,10);
+  var tag=v.slice(0,10)===todayStr?"（今天）":"";
+  box.textContent="🕒 這筆將補登於："+pretty+tag;
 }
 async function loadTxList(){
   var box=$("#txList"), m=$("#txMsg");
@@ -1296,6 +1308,7 @@ async function addTxRow(){
   if(r.ok){
     if(m){ m.className="msg ok"; m.textContent="✅ 已補登一筆"; }
     $("#txnQty").value="1"; $("#txnNote").value=""; $("#txnWhen").value=fmtNowLocal();
+    txnWhenConfirm();
     loadTxList();
   }else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
 }
