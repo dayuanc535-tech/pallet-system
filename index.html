@@ -140,7 +140,7 @@
   .btnMini:active{transform:translateY(1px);box-shadow:none}
   .btnMini:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
   /* ---- 月結算 表格放大 ---- */
-  #setTable{font-size:16.5px}
+  #setTable{font-size:16px}
   #setTable th,#setTable td{padding:15px 11px}
   #setTable td:not(:first-child){font-variant-numeric:tabular-nums;font-weight:600}
   /* ---- 月結算 每日明細 ---- */
@@ -148,13 +148,13 @@
   .sdhead{background:var(--sunken);padding:13px 16px;font-weight:800;font-size:16px;color:var(--ink);
     border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .sdhead .sub{font-size:13px;font-weight:700;color:var(--mut)}
-  .sdday{padding:6px 16px;background:#f4efe6;font-size:13.5px;font-weight:800;color:#a96612;
+  .sdday{padding:6px 16px;background:#f4efe6;font-size:13px;font-weight:800;color:#a96612;
     border-bottom:1px solid var(--line)}
   .sdrow{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line)}
   .sdrow:last-child{border-bottom:none}
-  .sdact{min-width:52px;font-weight:800;font-size:15.5px}
+  .sdact{min-width:52px;font-weight:800;font-size:16px}
   .sdact.out{color:var(--red)} .sdact.in{color:var(--brand-d)}
-  .sdinfo{font-weight:700;font-size:15.5px;color:var(--ink)}
+  .sdinfo{font-weight:700;font-size:16px;color:var(--ink)}
   .sdtime{margin-left:auto;color:var(--mut);font-size:13px;white-space:nowrap}
   .sdthumb{width:46px;height:46px;border-radius:9px;object-fit:cover;border:1px solid var(--line2);
     cursor:pointer;box-shadow:var(--sh);transition:transform .12s}
@@ -182,7 +182,7 @@
   .tot .b:nth-child(2n+1){--ac:#2f74c0;--acs:#eef5fc}
   .tot .b:nth-child(2n+2){--ac:#d98a2b;--acs:#fcf3e6}
   .tot .b .n{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ac,var(--ink))}
-  .tot .b .l{font-size:12px;color:var(--mut);margin-top:3px;line-height:1.4;font-weight:700}
+  .tot .b .l{font-size:13px;color:var(--mut);margin-top:3px;line-height:1.4;font-weight:700}
   .pos{color:var(--red);font-weight:700}
 
   /* ---- 訊息 ---- */
@@ -1273,12 +1273,18 @@ async function loadSettlement(){
   $("#setTable").classList.remove("hide");
   var r=await api({action:"settlement", month:m});
   if(!r.ok){$("#setBody").innerHTML='<tr><td colspan="7">'+r.error+'</td></tr>';return;}
-  var t=r.totals;
-  $("#setSummary").innerHTML=
-    box("本月應開發票","$"+t.應開,"送出未還")+
-    box("本月折讓","$"+t.折讓,"已歸還");
   var pick=$("#setCust")?$("#setCust").value:"";
   var rows=pick ? r.rows.filter(function(c){return String(c.編號)===pick;}) : r.rows;
+  // 上方統計＝下方表格實際顯示列的加總（依當月、依篩選），確保上下一致
+  var sumOpen=0,sumReb=0;
+  rows.forEach(function(c){
+    if(c.類別==="應開發票") sumOpen+=Number(c.金額)||0;
+    else if(c.類別==="折讓") sumReb+=Number(c.金額)||0;
+  });
+  var scope=pick?(rows[0]?esc(rows[0].名稱):"此客戶"):"全部客戶";
+  $("#setSummary").innerHTML=
+    box("本月應開發票","$"+sumOpen,scope)+
+    box("本月折讓","$"+sumReb,scope);
   if(!rows.length){
     $("#setBody").innerHTML='<tr><td colspan="7" style="color:#6b766f">'+(pick?"此客戶本月無紀錄":"本月無紀錄")+'</td></tr>';return;}
   $("#setBody").innerHTML=rows.map(function(c){
