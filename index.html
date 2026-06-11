@@ -809,7 +809,7 @@ function showGate(mode){
         '<div class="gs">請選擇登入身分</div>'+
         '<div class="gentry" data-k="staff">'+
           '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.4 3.1-5.5 7-5.5s7 2.1 7 5.5"/></svg></div>'+
-          '<div class="get"><div class="geh">員工登入</div><div class="ged">現場 / 做帳人員用代碼登入</div></div>'+
+          '<div class="get"><div class="geh">現場人員回報</div><div class="ged">現場人員用代碼登入回報</div></div>'+
           '<div class="gea">›</div>'+
         '</div>'+
         '<div class="gentry" data-k="admin">'+
@@ -819,14 +819,14 @@ function showGate(mode){
         '</div>'+
         '<div class="gentry" data-k="acct">'+
           '<div class="gei"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8.5 7h7M8.5 11h7M8.5 15h4"/></svg></div>'+
-          '<div class="get"><div class="geh">帳務中心</div><div class="ged">月結算 / 對帳</div></div>'+
+          '<div class="get"><div class="geh">帳務中心</div><div class="ged">做帳 / 管理員　月結算 / 對帳</div></div>'+
           '<div class="gea">›</div>'+
         '</div>'+
         '<div class="gswitch" id="toLook">我要查詢客戶棧板 →</div>'+
       '</div>'+
       '<div id="gStaff" class="hide">'+
-        '<div class="gt" id="gStaffTitle">員工登入</div>'+
-        '<div class="gs" id="gStaffSub">輸入管理員給你的代碼<br>（現場 / 做帳 / 管理者）</div>'+
+        '<div class="gt" id="gStaffTitle">現場人員回報</div>'+
+        '<div class="gs" id="gStaffSub">輸入管理員給你的代碼<br>登入後即可回報送出 / 歸還</div>'+
         '<input id="gCode" type="text" placeholder="例如 mh-7k2、adm-xxxxxx" autocomplete="off" autocapitalize="off">'+
         '<button class="btnP" id="gLogin">登入</button>'+
         '<div class="gswitch" id="backMenu">← 返回</div>'+
@@ -853,11 +853,11 @@ function showGate(mode){
 }
 function openLogin(kind){
   loginTarget = kind;
-  var titles = {staff:"員工登入", admin:"管理員權限", acct:"帳務中心"};
+  var titles = {staff:"現場人員回報", admin:"管理員權限", acct:"帳務中心"};
   var subs = {
-    staff:"輸入管理員給你的代碼<br>（現場 / 做帳 / 管理者）",
+    staff:"輸入管理員給你的代碼<br>登入後即可回報送出 / 歸還",
     admin:"輸入管理員密碼登入<br>可管理客戶、人員與全場資料",
-    acct:"輸入管理員密碼登入<br>進入月結算 / 對帳"
+    acct:"輸入做帳 / 管理員代碼登入<br>進入月結算 / 對帳"
   };
   $("#gStaffTitle").innerHTML = titles[kind] || titles.staff;
   $("#gStaffSub").innerHTML = subs[kind] || subs.staff;
