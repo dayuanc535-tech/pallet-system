@@ -314,7 +314,10 @@
   .stepper button{width:44px;height:44px;border:1px solid var(--line2);background:var(--surface);
     border-radius:11px;font-size:24px;font-weight:700;color:var(--brand);cursor:pointer}
   .stepper button:hover{background:var(--brand-soft)}
-  .stepper b{min-width:34px;text-align:center;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+  .stepper .qval{width:60px;height:44px;text-align:center;font-size:22px;font-weight:800;
+    font-variant-numeric:tabular-nums;border:1px solid var(--line2);border-radius:10px;
+    background:var(--surface);color:var(--ink);padding:0}
+  .stepper .qval:focus{outline:none;border-color:var(--brand);background:var(--brand-soft)}
   .hide{display:none!important}
 </style>
 </head>
@@ -551,13 +554,13 @@
           <div class="qgrid">
             <div class="qbox out">
               <div class="qh">出貨給客戶（送出）</div>
-              <div class="qline"><span>大棧板</span><div class="stepper"><button type="button" data-k="out大" data-d="-1">−</button><b id="q_out大">0</b><button type="button" data-k="out大" data-d="1">＋</button></div></div>
-              <div class="qline"><span>小棧板</span><div class="stepper"><button type="button" data-k="out小" data-d="-1">−</button><b id="q_out小">0</b><button type="button" data-k="out小" data-d="1">＋</button></div></div>
+              <div class="qline"><span>大棧板</span><div class="stepper"><button type="button" data-k="out大" data-d="-1">−</button><input type="text" inputmode="numeric" id="q_out大" value="0" class="qval"><button type="button" data-k="out大" data-d="1">＋</button></div></div>
+              <div class="qline"><span>小棧板</span><div class="stepper"><button type="button" data-k="out小" data-d="-1">−</button><input type="text" inputmode="numeric" id="q_out小" value="0" class="qval"><button type="button" data-k="out小" data-d="1">＋</button></div></div>
             </div>
             <div class="qbox in">
               <div class="qh">客戶歸還（進）</div>
-              <div class="qline"><span>大棧板</span><div class="stepper"><button type="button" data-k="in大" data-d="-1">−</button><b id="q_in大">0</b><button type="button" data-k="in大" data-d="1">＋</button></div></div>
-              <div class="qline"><span>小棧板</span><div class="stepper"><button type="button" data-k="in小" data-d="-1">−</button><b id="q_in小">0</b><button type="button" data-k="in小" data-d="1">＋</button></div></div>
+              <div class="qline"><span>大棧板</span><div class="stepper"><button type="button" data-k="in大" data-d="-1">−</button><input type="text" inputmode="numeric" id="q_in大" value="0" class="qval"><button type="button" data-k="in大" data-d="1">＋</button></div></div>
+              <div class="qline"><span>小棧板</span><div class="stepper"><button type="button" data-k="in小" data-d="-1">−</button><input type="text" inputmode="numeric" id="q_in小" value="0" class="qval"><button type="button" data-k="in小" data-d="1">＋</button></div></div>
             </div>
           </div>
 
@@ -1696,6 +1699,14 @@ function buildReport(){
     b.onclick=function(){ pickRepCust(b.dataset.id, b.textContent); };});
   document.querySelectorAll("#report .stepper button").forEach(function(b){
     b.onclick=function(){ repStep(b.dataset.k, parseInt(b.dataset.d,10)); };});
+  ["out大","out小","in大","in小"].forEach(function(k){
+    var el=gid("q_"+k);
+    el.oninput=function(){
+      var v=parseInt(el.value.replace(/[^0-9]/g,""),10);
+      REP.q[k]=isNaN(v)?0:v;
+    };
+    el.onblur=function(){ el.value=REP.q[k]||0; };
+  });
   $("#repPhoto").onchange=repOnPhoto;
   $("#repSubmit").onclick=repSubmit;
   $("#repNoFlow").onclick=repNoFlow;
@@ -1709,7 +1720,7 @@ function pickRepCust(id,name){
 }
 function repStep(k,d){
   REP.q[k]=Math.max(0,(REP.q[k]||0)+d);
-  gid("q_"+k).textContent=REP.q[k];
+  gid("q_"+k).value=REP.q[k];
 }
 function repOnPhoto(e){
   var f=e.target.files[0]; if(!f)return;
@@ -1722,7 +1733,7 @@ function repOnPhoto(e){
 }
 function repReset(){
   REP={cust:"",name:"",q:{out大:0,out小:0,in大:0,in小:0},photo:""};
-  ["out大","out小","in大","in小"].forEach(function(k){ gid("q_"+k).textContent="0"; });
+  ["out大","out小","in大","in小"].forEach(function(k){ gid("q_"+k).value="0"; });
   document.querySelectorAll("#repCusts button").forEach(function(b){b.classList.remove("on");});
   $("#repForm").classList.add("hide");
   $("#repPhoto").value=""; $("#repPhotoPv").classList.add("hide"); $("#repPhotoPv").innerHTML="";
