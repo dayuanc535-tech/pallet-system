@@ -225,6 +225,11 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;cursor:zoom-out}
   .imgbox img{max-width:94vw;max-height:84vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
   .imgbox-x{color:#fff;font-weight:700;font-size:14px;opacity:.85}
+  /* 月結算頁：每客戶每月明細區段標題 */
+  .setdhead{margin:24px 0 11px;font-weight:800;font-size:16px;color:var(--ink);
+    display:flex;align-items:baseline;gap:10px;padding-left:11px;border-left:4px solid var(--brand);line-height:1.3}
+  .setdhead .sub{font-size:13px;font-weight:700;color:var(--mut)}
+  .setdempty{color:var(--mut);font-size:13.5px;padding:2px 0 6px 11px}
 
   /* ---- 表格 ---- */
   table{width:100%;border-collapse:collapse;font-size:15.5px;font-variant-numeric:tabular-nums}
@@ -775,40 +780,12 @@
         <select id="txqCust"><option value="">全部客戶</option></select>
         <div class="msg" id="txqMsg" style="margin-top:12px"></div>
         <div id="txqList" style="margin-top:12px"></div>
-
-        <!-- 補登一筆（管理員）-->
-        <details id="txqAddWrap" class="hide" style="margin-top:18px;border-top:1px solid var(--line);padding-top:6px">
-          <summary style="cursor:pointer;font-weight:700;padding:8px 0">＋ 補登一筆紀錄</summary>
-          <div style="margin-top:10px">
-            <label class="fld">日期時間</label>
-            <input type="datetime-local" id="txqnWhen" style="width:100%">
-            <div class="row2" style="margin-top:8px">
-              <div><label class="fld">場</label><select id="txqnSite" style="width:100%"></select></div>
-              <div><label class="fld">動作</label><select id="txqnAct" style="width:100%"></select></div>
-            </div>
-            <label class="fld">客戶</label>
-            <select id="txqnCust" style="width:100%"><option value="">— 請選擇客戶 —</option></select>
-            <div class="row2" style="margin-top:8px">
-              <div><label class="fld">棧板別</label><select id="txqnType" style="width:100%"></select></div>
-              <div><label class="fld">數量</label><input type="number" id="txqnQty" min="1" step="1" value="1" style="width:100%"></div>
-            </div>
-            <label class="fld">備註</label>
-            <input type="text" id="txqnNote" placeholder="（可空白）" style="width:100%">
-            <label class="fld">簽收單（可選）</label>
-            <label class="btnG" style="display:block;text-align:center;padding:14px">
-              拍照 / 選擇簽收單<input type="file" id="txqnPhoto" accept="image/*" capture="environment" class="hide">
-            </label>
-            <div id="txqnPhotoPv" class="hide" style="margin-top:8px"></div>
-            <div id="txqnWhenConfirm" style="margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:var(--brand-soft);color:var(--brand-d);font-weight:700;text-align:center"></div>
-            <button type="button" class="btnG" id="txqAddBtn" style="margin-top:4px;width:100%">確認補登</button>
-          </div>
-        </details>
       </section>
 
-      <!-- 月結算 -->
+      <!-- 月結算及明細查詢（已整合進出明細）-->
       <section id="set" class="card hide">
-        <h2 class="ctitle">月結算</h2>
-        <p class="csub">月份與客戶都可複選。按「查詢明細」列出所選範圍，按該列「PDF」產出該客戶該月報表，或產出整月 Excel。檔案產生後會跳出，可自行選擇分享到 LINE／郵件／檔案或下載。</p>
+        <h2 class="ctitle">月結算及明細查詢</h2>
+        <p class="csub">月份與客戶都可複選。上方為月結算（應開發票／折讓），可按「PDF」產該客戶該月報表或產整月 Excel；下方逐筆列出每個客戶每月的進出明細與簽收單。管理員可對每一筆紀錄修改／刪除，並可在最下方「補登一筆紀錄」。</p>
 
         <label class="fld">結算月份（可複選）</label>
         <div class="multidd" id="ddMonths">
@@ -851,7 +828,35 @@
 
         <div id="setDetail"></div>
 
-        <button class="btnP" id="genExcel">產生 Excel</button>
+        <!-- 補登一筆（管理員）-->
+        <details id="txqAddWrap" class="hide" style="margin-top:18px;border-top:1px solid var(--line);padding-top:6px">
+          <summary style="cursor:pointer;font-weight:700;padding:8px 0">＋ 補登一筆紀錄</summary>
+          <div style="margin-top:10px">
+            <label class="fld">日期時間</label>
+            <input type="datetime-local" id="txqnWhen" style="width:100%">
+            <div class="row2" style="margin-top:8px">
+              <div><label class="fld">場</label><select id="txqnSite" style="width:100%"></select></div>
+              <div><label class="fld">動作</label><select id="txqnAct" style="width:100%"></select></div>
+            </div>
+            <label class="fld">客戶</label>
+            <select id="txqnCust" style="width:100%"><option value="">— 請選擇客戶 —</option></select>
+            <div class="row2" style="margin-top:8px">
+              <div><label class="fld">棧板別</label><select id="txqnType" style="width:100%"></select></div>
+              <div><label class="fld">數量</label><input type="number" id="txqnQty" min="1" step="1" value="1" style="width:100%"></div>
+            </div>
+            <label class="fld">備註</label>
+            <input type="text" id="txqnNote" placeholder="（可空白）" style="width:100%">
+            <label class="fld">簽收單（可選）</label>
+            <label class="btnG" style="display:block;text-align:center;padding:14px">
+              拍照 / 選擇簽收單<input type="file" id="txqnPhoto" accept="image/*" capture="environment" class="hide">
+            </label>
+            <div id="txqnPhotoPv" class="hide" style="margin-top:8px"></div>
+            <div id="txqnWhenConfirm" style="margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:var(--brand-soft);color:var(--brand-d);font-weight:700;text-align:center"></div>
+            <button type="button" class="btnG" id="txqAddBtn" style="margin-top:4px;width:100%">確認補登</button>
+          </div>
+        </details>
+
+        <button class="btnP" id="genExcel" style="margin-top:16px">產生 Excel</button>
         <div class="msg" id="setMsg"></div>
       </section>
 
@@ -1276,10 +1281,9 @@ function boot(){
   $("#pact").innerHTML = acts.map(function(a,i){
     return '<button data-v="'+a+'"'+(i===0?' class="on"':'')+'>'+a+'</button>';}).join("");
 
-  // 做帳/管理員 可看月結算＋進出明細
+  // 做帳/管理員 看「月結算及明細查詢」（已整合進出明細）
   if(ME.role==="做帳" || ME.role==="管理員"){
     $("[data-tab=set]").classList.remove("hide");
-    $("[data-tab=tx]").classList.remove("hide");
     buildSetPickers();
   }
   // 管理員：客戶及操作人員設定 + 月結算 ＋ 回報 ＋ 明細查詢
@@ -1340,7 +1344,7 @@ function switchTab(t){
   if(t==="report"){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); loadRepToday(); }
   if(t==="qry") loadBalances();
   if(t==="tx") txqOpen();
-  if(t==="set"){ loadSettlement(); }
+  if(t==="set"){ setupSetAdd(); loadSettlement(); }
   if(t==="people"){ loadPeople(); loadCustomers(); switchMgr($("#mgrPick")?$("#mgrPick").value:"site"); }
 }
 function switchMgr(v){
@@ -1476,12 +1480,14 @@ function txqOpen(){
     if($("#txqBack")) $("#txqBack").onclick=function(ev){ ev.preventDefault(); txqBackToSales(); };
   }
   if($("#txqBack")) $("#txqBack").classList.toggle("hide", ME.role!=="業務");
-  // 管理員：載入補登／編輯所需的客戶與場別資料
-  if(ME.role==="管理員"){
-    if($("#txqAddWrap")) $("#txqAddWrap").classList.remove("hide");
-    txqAddInit();
-  } else if($("#txqAddWrap")) $("#txqAddWrap").classList.add("hide");
   loadTxq();
+}
+// 月結算頁：管理員可見「補登一筆」表單，非管理員隱藏
+function setupSetAdd(){
+  var w=$("#txqAddWrap");
+  if(!w) return;
+  if(ME.role==="管理員"){ w.classList.remove("hide"); txqAddInit(); }
+  else w.classList.add("hide");
 }
 var txqAddInited=false;
 function txqAddInit(){
@@ -1522,7 +1528,7 @@ function txqnOnPhoto(e){
   rd.readAsDataURL(f);
 }
 async function addTxqRow(){
-  var m=$("#txqMsg");
+  var m=txMsgBox();
   var act=$("#txqnAct").value, dept=(act==="報廢"||act==="新購"||act==="無流通");
   var cust=$("#txqnCust").value;
   if(!dept && !cust){ if(m){ m.className="msg err"; m.textContent="送出／歸還請選客戶"; } return; }
@@ -1536,7 +1542,7 @@ async function addTxqRow(){
     $("#txqnQty").value="1"; $("#txqnNote").value=""; $("#txqnWhen").value=fmtNowLocal();
     txqnPhotoData=""; if($("#txqnPhoto")) $("#txqnPhoto").value=""; if($("#txqnPhotoPv")){ $("#txqnPhotoPv").classList.add("hide"); $("#txqnPhotoPv").innerHTML=""; }
     txqnWhenConfirm();
-    loadTxq();
+    txRefreshActive();
   }else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 async function loadTxq(){
@@ -1722,11 +1728,12 @@ function txCard(x){
 var txRowCache={};
 // 進出明細頁與棧板明細管理頁共用編輯邏輯：依目前所在頁刷新與顯示訊息
 function txqActive(){ var s=$("#txq"); return !!(s && !s.classList.contains("hide")); }
-function txRefreshActive(){ if(txqActive()) loadTxq(); else loadTxList(); }
-function txMsgBox(){ return txqActive()? $("#txqMsg") : $("#txMsg"); }
+function setActive(){ var s=$("#set"); return !!(s && !s.classList.contains("hide")); }
+function txRefreshActive(){ if(setActive()) loadSettlement(); else if(txqActive()) loadTxq(); else loadTxList(); }
+function txMsgBox(){ return setActive()? $("#setMsg") : (txqActive()? $("#txqMsg") : $("#txMsg")); }
 function editTxRow(row){
   var box=$("#txrow-"+row); if(!box) return;
-  var x=txRowCache[row]; if(!x){ loadTxList(); return; }
+  var x=txRowCache[row]; if(!x){ txRefreshActive(); return; }
   var whenLocal=(x.時間||"").replace(" ","T").slice(0,16);
   box.innerHTML=
     '<label class="fld">時間</label><input type="datetime-local" id="txe-when-'+row+'" value="'+esc(whenLocal)+'" style="width:100%">'+
@@ -1770,14 +1777,14 @@ async function saveTxRow(row){
     時間:when, 場:gid("txe-site-"+row).value, 動作:gid("txe-act-"+row).value,
     客戶編號:gid("txe-cust-"+row).value, 棧板別:gid("txe-type-"+row).value,
     數量:gid("txe-qty-"+row).value, 備註:gid("txe-note-"+row).value, 照片:txEditPhotoData});
-  if(r.ok){ txEditPhotoData=""; if(m){ m.className="msg ok"; m.textContent="已更新"; } txRefreshActive(); }
+  if(r.ok){ txEditPhotoData=""; txRefreshActive(); if(m){ m.className="msg ok"; m.textContent="已更新"; } }
   else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 async function delTxRow(row){
   if(!confirm("確定刪除這筆紀錄？刪除後無法復原。")) return;
   var m=txMsgBox();
   var r=await post({action:"txAnyDelete", uid:ME.uid, row:row});
-  if(r.ok){ if(m){ m.className="msg ok"; m.textContent="已刪除"; } txRefreshActive(); }
+  if(r.ok){ txRefreshActive(); if(m){ m.className="msg ok"; m.textContent="已刪除"; } }
   else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 var txnPhotoData="";
@@ -2179,58 +2186,38 @@ async function loadSettlement(){
       '<td><span class="plt">大</span>'+Math.max(0,c.期末.大)+'　<span class="plt">小</span>'+Math.max(0,c.期末.小)+'</td>'+
       '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\',\''+c.__month+'\')">PDF</button></td></tr>';
   }).join("");
-  // 所選範圍：逐一列出每個客戶每個月的每日明細
-  if(all.length){ loadAllDetails(all); } else $("#setDetail").innerHTML="";
+  // 所選範圍：逐筆列出每個客戶每月的進出明細（管理員可改／刪／補登）
+  loadAllDetails(months, custFilter);
 }
-// 依序抓取並呈現所選範圍內每個客戶每個月的每日明細
-async function loadAllDetails(list){
-  var box=$("#setDetail");
-  box.innerHTML='<div class="sdwrap sdload"><div class="sdhead">每日明細<span class="sub">載入中… 0/'+list.length+'</span></div></div>';
-  var out="";
-  for(var i=0;i<list.length;i++){
-    var c=list[i];
-    var ld=box.querySelector(".sdload .sub"); if(ld) ld.textContent="載入中… "+(i+1)+"/"+list.length+"（"+esc(c.名稱)+" "+c.__month+"）";
-    out+=await buildDetailBlock(c.編號, c.名稱, c.__month);
-    box.innerHTML=out+'<div class="sdwrap sdload"><div class="sdhead">每日明細<span class="sub">載入中… '+(i+1)+'/'+list.length+'</span></div></div>';
+// 逐月抓取所選範圍進出明細，依「客戶 · 月份」分段列出（沿用進出明細卡片，含管理員逐列管理）
+async function loadAllDetails(months, custFilter){
+  var box=$("#setDetail"); if(!box) return;
+  txRowCache={};   // 重新建立，供逐列修改／刪除查表
+  box.innerHTML='<div class="setdhead">明細<span class="sub">載入中… 0/'+months.length+'</span></div>';
+  var html="";
+  for(var i=0;i<months.length;i++){
+    var m=months[i];
+    var p=m.split("-"), last=new Date(+p[0], +p[1], 0).getDate();
+    var from=m+"-01", to=m+"-"+("0"+last).slice(-2);
+    var sub=box.querySelector(".setdhead .sub"); if(sub) sub.textContent="載入中… "+(i+1)+"/"+months.length+"（"+m+"）";
+    var r=await api({action:"txView", uid:ME.uid, from:from, to:to, cust:""});
+    var list=(r&&r.ok&&r.list)?r.list:[];
+    if(custFilter.length) list=list.filter(function(x){return custFilter.indexOf(String(x.客戶編號))>=0;});
+    var groups=groupTx(list);   // 同時間同客戶合併＋過濾無流通＋寫入 txRowCache
+    // 依客戶分桶（維持出現順序：txView 由新到舊）
+    var buckets={}, order=[];
+    groups.forEach(function(g){
+      var k=String(g.客戶編號||g.客戶||"—");
+      if(!buckets[k]){ buckets[k]={名稱:g.客戶||g.客戶編號||"—", list:[]}; order.push(k); }
+      buckets[k].list.push(g);
+    });
+    order.forEach(function(k){
+      var b=buckets[k];
+      html+='<div class="setdhead">'+esc(b.名稱)+' · '+m+'<span class="sub">共 '+b.list.length+' 筆</span></div>'+
+        b.list.map(txqCard).join("");
+    });
   }
-  box.innerHTML=out;
-}
-// 回傳單一客戶單一月份的每日明細區塊 HTML
-async function buildDetailBlock(cust, name, m){
-  var r=await api({action:"statement", cust:cust, month:m});
-  var label=esc(name||"")+' · '+m+' 每日明細';
-  if(!r.ok){ return '<div class="sdwrap"><div class="sdhead">'+label+'<span class="sub">'+esc(r.error)+'</span></div></div>'; }
-  var det=(r.detail||[]).slice().sort(function(a,b){return String(a.時間)<String(b.時間)?-1:1;}); // 由早到晚
-  // 同一時間（同客戶）視為一筆：合併送出大小、歸還大小
-  var groups={}, order=[];
-  det.forEach(function(x){
-    var key=String(x.時間||"");
-    var g=groups[key];
-    if(!g){ g=groups[key]={時間:key, 場:x.場||"", 送出:{大:0,小:0}, 歸還:{大:0,小:0}, 報廢:{大:0,小:0}, 新購:{大:0,小:0}, photos:[]}; order.push(g); }
-    if(!g.場 && x.場) g.場=x.場;
-    if(g[x.動作] && (x.棧板別==="大"||x.棧板別==="小")) g[x.動作][x.棧板別]+=Number(x.數量)||0;
-    String(x.附件||"").split(/\s+/).forEach(function(u){ if(/^https?:/.test(u) && g.photos.indexOf(u)<0) g.photos.push(u); });
-  });
-  var head='<div class="sdhead">'+esc(name||r.客戶||"")+' · '+m+' 每日明細'+
-    '<span class="sub">共 '+order.length+' 筆，點照片可放大檢視</span></div>';
-  if(!order.length){ return '<div class="sdwrap">'+head+'<div class="sdrow"><span style="color:var(--mut)">本月無進出紀錄</span></div></div>'; }
-  function szs(o){ var p=[]; if(o.大)p.push('大×'+o.大); if(o.小)p.push('小×'+o.小); return p.join('　'); }
-  var lastDay="", html="";
-  order.forEach(function(g){
-    var s=g.時間, day=s.slice(0,5), tm=s.slice(6,11);   // 格式 "MM-dd HH:mm"
-    if(day!==lastDay){ html+='<div class="sdday">'+esc(day)+'</div>'; lastDay=day; }
-    var thumb=g.photos.length
-      ? g.photos.map(function(u){return '<img class="sdthumb" src="'+esc(driveImg(u,240))+'" loading="lazy" onclick="viewImg(event,\''+esc(driveImg(u,1600))+'\')" alt="簽收單" onerror="this.replaceWith(Object.assign(document.createElement(\'a\'),{href:\''+esc(u)+'\',target:\'_blank\',className:\'lnk\',textContent:\'簽收單\'}))">';}).join("")
-      : '<span class="sdnoimg">無照片</span>';
-    var lines="";
-    function ln(act,cls){ var t=szs(g[act]); if(t) lines+='<div class="sdgline"><span class="sdact '+cls+'">'+act+'</span><b>'+t+'</b></div>'; }
-    ln('送出','out'); ln('歸還','in'); ln('報廢','in'); ln('新購','out');
-    if(!lines) lines='<div class="sdgline"><span style="color:var(--mut)">無流通</span></div>';
-    html+='<div class="sdrow">'+
-      '<div class="sdgroup">'+lines+(g.場?'<div class="sdsite">'+esc(g.場)+'</div>':'')+'</div>'+
-      '<span class="sdtime">'+esc(tm)+'</span>'+thumb+'</div>';
-  });
-  return '<div class="sdwrap">'+head+html+'</div>';
+  box.innerHTML = html || '<div class="setdempty">所選範圍無進出紀錄。</div>';
 }
 function driveImg(url, w){
   var m=String(url).match(/\/d\/([-\w]{20,})/)||String(url).match(/[?&]id=([-\w]{20,})/);
