@@ -968,7 +968,12 @@ function getMode(){
   try{
     var urlCode = getCode();
     var mode = getMode();
-    var code = urlCode || localStorage.getItem("pallet_code") || "";
+    // 不記憶身分：只接受網址帶入的 ?k=代碼 作「本次」辨識，讀完即從網址移除，
+    // 之後離開或重新整理都會回到登入畫面、必須重新登入。
+    if(urlCode && history.replaceState){
+      history.replaceState(null, "", location.origin + location.pathname + (mode?("?mode="+encodeURIComponent(mode)):""));
+    }
+    var code = urlCode || "";
     if(!code){
       showGate("staff");
       if(mode==="staff"||mode==="admin"||mode==="acct"||mode==="look") openLogin(mode);
@@ -976,8 +981,7 @@ function getMode(){
     }
     ME = await api({action:"me", uid:code});
     ME.uid = code;
-    if(!ME.known){ localStorage.removeItem("pallet_code"); showGate("staff"); return; }
-    localStorage.setItem("pallet_code", code);
+    if(!ME.known){ showGate("staff"); return; }
     boot();
   }catch(err){
     $("#gate").innerHTML = "啟動失敗：" + err;
@@ -986,7 +990,6 @@ function getMode(){
 
 function logout(e){
   if(e) e.preventDefault();
-  localStorage.removeItem("pallet_code");
   location.href = location.origin + location.pathname;
 }
 
@@ -1063,7 +1066,6 @@ async function doLogin(){
     ME = await api({action:"me", uid:code}); ME.uid = code;
     if(!ME.known){ m.className="msg err"; m.textContent="查無此代碼，請洽管理員"; return; }
     pendingView = (loginTarget==="acct") ? "set" : "";
-    localStorage.setItem("pallet_code", code);
     $("#gate").classList.add("hide"); $("#gate").innerHTML="";
     boot();
   }catch(err){ m.className="msg err"; m.textContent="登入失敗："+err; }
