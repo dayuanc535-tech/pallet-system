@@ -282,6 +282,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>客戶</span>
       </button>
+      <button data-tab="people" class="hide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2.2"/><path d="M5.5 16.5a3.5 3.5 0 0 1 7 0M15 9h4M15 13h4"/></svg>
+        <span>人員</span>
+      </button>
     </nav>
 
     <div class="panels">
@@ -561,6 +565,43 @@
         </div>
         <button type="button" class="btnG" id="custRefresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
       </section>
+
+      <!-- 人員帳號（管理員） -->
+      <section id="peoplemgr" class="card hide">
+        <h2 class="ctitle">人員帳號</h2>
+        <p class="csub">新增或編輯可登入系統的人員。登入代碼為主鍵不可改，等同個人專屬密碼，請勿外流。</p>
+
+        <div class="big" style="margin:4px 0 8px;font-weight:700">➕ 新增人員</div>
+        <input type="text" id="pName" placeholder="姓名" style="width:100%;margin-bottom:8px">
+        <div class="row2">
+          <input type="text" id="pCode" placeholder="登入代碼">
+          <button type="button" class="btnG" id="pGen" style="white-space:nowrap">產生代碼</button>
+        </div>
+        <div class="row2" style="margin-top:8px">
+          <select id="pRole">
+            <option value="現場">現場</option>
+            <option value="做帳">做帳</option>
+            <option value="管理員">管理員</option>
+            <option value="經銷">經銷</option>
+          </select>
+          <select id="pSite">
+            <option value="">（不分場）</option>
+            <option value="民雄">民雄</option>
+            <option value="義竹">義竹</option>
+          </select>
+        </div>
+        <input type="text" id="pCust" placeholder="客戶編號（經銷帳號才需填）" style="width:100%;margin-top:8px">
+        <button type="button" class="btnG" id="addPerson" style="margin-top:10px;width:100%">新增</button>
+        <div class="msg" id="peopleMsg"></div>
+
+        <div style="overflow-x:auto;margin-top:18px">
+          <table>
+            <thead><tr><th>姓名／代碼</th><th>角色</th><th>場</th><th>LINE</th><th></th></tr></thead>
+            <tbody id="peopleBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btnG" id="peopleRefresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
+      </section>
     </div>
   </div>
 
@@ -758,6 +799,7 @@ function boot(){
   // 管理員：客戶主檔 + 儀表板（並以儀表板為首頁）＋ 回報 ＋ 明細查詢
   if(ME.role==="管理員"){
     $("[data-tab=cust]").classList.remove("hide");
+    $("[data-tab=people]").classList.remove("hide");
     $("[data-tab=dash]").classList.remove("hide");
     $("[data-tab=report]").classList.remove("hide");
     $("[data-tab=look]").classList.remove("hide");
@@ -800,11 +842,13 @@ function switchTab(t){
   $("#lookpick").classList.toggle("hide", t!=="look");
   $("#set").classList.toggle("hide", t!=="set");
   $("#custmgr").classList.toggle("hide", t!=="cust");
+  $("#peoplemgr").classList.toggle("hide", t!=="people");
   if(t==="dash") loadDashboard();
   if(t==="report") loadRepToday();
   if(t==="qry") loadBalances();
   if(t==="set"){ loadSettlement(); loadReports(); }
   if(t==="cust") loadCustomers();
+  if(t==="people") loadPeople();
 }
 
 /* ---- UI 綁定 ---- */
@@ -826,6 +870,9 @@ function bindUI(){
   $("#genExcel").onclick=genReport;
   $("#addCust").onclick=addCustomer;
   $("#custRefresh").onclick=loadCustomers;
+  $("#addPerson").onclick=addPerson;
+  $("#peopleRefresh").onclick=loadPeople;
+  $("#pGen").onclick=genCode;
   // 儀表板
   if($("#dApply")){
     $("#dApply").onclick=loadDashboard;
@@ -1222,6 +1269,95 @@ async function addCustomer(){
 }
 function box2(t, err){
   var m=$("#custMsg"); m.className="msg "+(err?"err":"ok"); m.textContent=t;
+}
+
+/* ---- 人員帳號（管理員） ---- */
+var peopleCache=[], peopleRoles=["現場","做帳","管理員","經銷"], peopleSites=["民雄","義竹"];
+async function loadPeople(){
+  $("#peopleBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">載入中…</td></tr>';
+  var r=await api({action:"roleList", uid:ME.uid});
+  if(!r.ok){$("#peopleBody").innerHTML='<tr><td colspan="5">'+esc(r.error)+'</td></tr>';return;}
+  peopleCache=r.people||[];
+  if(r.roles&&r.roles.length) peopleRoles=r.roles;
+  if(r.sites&&r.sites.length) peopleSites=r.sites;
+  renderPeople();
+}
+function roleTag(role){
+  var col=role==="管理員"?"#b9722d":(role==="做帳"?"#2e7d4f":(role==="經銷"?"#6b766f":"#256e3d"));
+  return '<span style="color:'+col+';font-weight:700">'+esc(role)+'</span>';
+}
+function selOpts(arr, cur, blank){
+  var o = (blank!=null) ? '<option value="">'+esc(blank)+'</option>' : '';
+  return o+arr.map(function(v){
+    return '<option value="'+esc(v)+'"'+(String(v)===String(cur)?" selected":"")+'>'+esc(v)+'</option>';
+  }).join("");
+}
+function renderPeople(){
+  if(!peopleCache.length){
+    $("#peopleBody").innerHTML='<tr><td colspan="5" style="color:#6b766f">尚無人員</td></tr>';return;}
+  $("#peopleBody").innerHTML=peopleCache.map(function(p){
+    var bind=p.已綁定
+      ? '<span style="color:#256e3d">已綁</span>'
+      : '<span style="color:#b9722d">未綁</span>';
+    return '<tr>'+
+      '<td><b>'+esc(p.姓名)+'</b><br><span style="color:#6b766f;font-variant-numeric:tabular-nums;font-size:12px">'+esc(p.登入代碼)+'</span></td>'+
+      '<td>'+roleTag(p.角色)+'</td>'+
+      '<td>'+(esc(p.場)||'—')+'</td>'+
+      '<td>'+bind+'</td>'+
+      '<td><a href="#" style="color:#256e3d;font-weight:700" onclick="editPerson(\''+esc(p.登入代碼)+'\');return false">編輯</a></td>'+
+      '</tr>';
+  }).join("");
+}
+function editPerson(code){
+  var p=peopleCache.filter(function(x){return String(x.登入代碼)===String(code);})[0];
+  if(!p) return;
+  var rows=$("#peopleBody").querySelectorAll("tr");
+  for(var i=0;i<peopleCache.length;i++){
+    if(String(peopleCache[i].登入代碼)===String(code)){
+      rows[i].innerHTML=
+        '<td><input type="text" id="eName" value="'+esc(p.姓名)+'" style="width:100%;margin-bottom:4px">'+
+          '<span style="color:#6b766f;font-size:12px">'+esc(p.登入代碼)+'</span></td>'+
+        '<td><select id="eRole">'+selOpts(peopleRoles,p.角色)+'</select></td>'+
+        '<td><select id="eSite">'+selOpts(peopleSites,p.場,"（不分場）")+'</select></td>'+
+        '<td colspan="2" style="white-space:nowrap">'+
+          '<input type="text" id="eCust" value="'+esc(p.客戶編號)+'" placeholder="客戶編號" style="width:90px;margin-right:6px">'+
+          '<a href="#" style="color:#256e3d;font-weight:700" onclick="savePerson(\''+esc(p.登入代碼)+'\');return false">存</a> '+
+          '<a href="#" style="color:#6b766f" onclick="renderPeople();return false">取消</a></td>';
+      break;
+    }
+  }
+}
+async function savePerson(code){
+  var name=($("#eName")&&$("#eName").value||"").trim();
+  var role=$("#eRole")?$("#eRole").value:"";
+  var site=$("#eSite")?$("#eSite").value:"";
+  var cust=($("#eCust")&&$("#eCust").value||"").trim();
+  if(!name){ pbox("姓名不可空白", true); return; }
+  var r=await post({action:"roleSave", uid:ME.uid, 登入代碼:code, 姓名:name, 角色:role, 場:site, 客戶編號:cust});
+  if(r.ok){ pbox("✅ 已更新 "+name, false); loadPeople(); }
+  else pbox("⚠ "+(r.error||"失敗"), true);
+}
+async function addPerson(){
+  var name=($("#pName").value||"").trim();
+  var code=($("#pCode").value||"").trim();
+  var role=$("#pRole")?$("#pRole").value:"";
+  var site=$("#pSite")?$("#pSite").value:"";
+  var cust=($("#pCust").value||"").trim();
+  if(!name||!code){ pbox("請填姓名與登入代碼", true); return; }
+  var r=await post({action:"roleSave", uid:ME.uid, 登入代碼:code, 姓名:name, 角色:role, 場:site, 客戶編號:cust});
+  if(r.ok){
+    pbox(r.mode==="insert"?"✅ 已新增 "+name:"已存在，已更新 "+name, false);
+    $("#pName").value=""; $("#pCode").value=""; $("#pCust").value="";
+    loadPeople();
+  }else pbox("⚠ "+(r.error||"失敗"), true);
+}
+function genCode(){
+  var s="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", out="";
+  for(var i=0;i<8;i++) out+=s[Math.floor(Math.random()*s.length)];
+  $("#pCode").value=out;
+}
+function pbox(t, err){
+  var m=$("#peopleMsg"); m.className="msg "+(err?"err":"ok"); m.textContent=t;
 }
 
 /* ---- 儀表板（管理員） ---- */
