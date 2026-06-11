@@ -647,16 +647,17 @@
       <!-- 月結算 -->
       <section id="set" class="card hide">
         <h2 class="ctitle">月結算</h2>
-        <p class="csub">選擇月份後查詢明細。可篩選單一客戶、按該列「📄 PDF」產出該客戶月報表，或產出整月 Excel 存到雲端硬碟。</p>
+        <p class="csub">月份與客戶都可複選。按「查詢明細」列出所選範圍，按該列「📄 PDF」產出該客戶該月報表，或產出整月 Excel 存到雲端硬碟。</p>
 
-        <label class="fld">結算月份</label>
-        <div class="row2">
-          <input type="month" id="setMonth">
-          <button type="button" class="btnG" id="setQuery">查詢明細</button>
-        </div>
+        <label class="fld" style="display:flex;justify-content:space-between;align-items:center">
+          <span>結算月份（可複選）</span><a class="lnk" id="setMonAll" style="font-size:12px">全選／全不選</a></label>
+        <div id="setMonths" class="chkgrid"></div>
 
-        <label class="fld" style="margin-top:14px">篩選客戶</label>
-        <select id="setCust"><option value="">全部客戶</option></select>
+        <label class="fld" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+          <span>篩選客戶（可複選，不選＝全部）</span><a class="lnk" id="setCustAll" style="font-size:12px">全選／全不選</a></label>
+        <div id="setCusts" class="chkgrid"></div>
+
+        <button type="button" class="btnP" id="setQuery" style="margin-top:16px;width:100%">🔍 查詢明細</button>
 
         <div id="setSummary" class="tot" style="margin-top:16px"></div>
 
@@ -664,8 +665,8 @@
         <div class="settle-scroll">
           <table id="setTable" class="hide">
             <thead><tr>
-              <th>客戶</th><th>本月送出<br>大/小</th><th>本月歸還<br>大/小</th>
-              <th>本月金額</th><th>類別</th><th>累計未還<br>大/小</th><th>月報表</th>
+              <th>月份</th><th>客戶</th><th>當月送出<br>大/小</th><th>當月歸還<br>大/小</th>
+              <th>當月金額</th><th>類別</th><th>累計未還<br>大/小</th><th>月報表</th>
             </tr></thead>
             <tbody id="setBody"></tbody>
           </table>
@@ -986,9 +987,7 @@ function boot(){
   // 做帳/管理員 可看月結算
   if(ME.role==="做帳" || ME.role==="管理員"){
     $("[data-tab=set]").classList.remove("hide");
-    var d=new Date(); $("#setMonth").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2);
-    $("#setCust").innerHTML='<option value="">全部客戶</option>'+ME.customers.map(function(c){
-      return '<option value="'+c.編號+'">'+esc(c.名稱)+'</option>';}).join("");
+    buildSetPickers();
   }
   // 管理員：客戶主檔 + 月結算 ＋ 回報 ＋ 明細查詢
   if(ME.role==="管理員"){
@@ -1062,7 +1061,8 @@ function bindUI(){
   $("#submit").onclick=submit;
   $("#refresh").onclick=loadBalances;
   $("#setQuery").onclick=loadSettlement;
-  $("#setCust").onchange=loadSettlement;
+  if($("#setMonAll")) $("#setMonAll").onclick=function(){ toggleAll("#setMonths"); };
+  if($("#setCustAll")) $("#setCustAll").onclick=function(){ toggleAll("#setCusts"); };
   $("#genExcel").onclick=genReport;
   $("#addCust").onclick=addCustomer;
   $("#custRefresh").onclick=loadCustomers;
@@ -1323,39 +1323,71 @@ function box(l,n,sub){
 }
 
 /* ---- 月結算 ---- */
-function curMonth(){ return $("#setMonth").value || ""; }
+function buildSetPickers(){
+  var cg=$("#setCusts"); if(!cg) return;
+  cg.innerHTML=(ME.customers||[]).map(function(c){
+    return '<label class="chk" data-v="'+esc(c.編號)+'"><input type="checkbox"><span>'+esc(c.名稱)+'</span></label>';
+  }).join("")||'<span class="csub">無客戶資料</span>';
+  var mg=$("#setMonths"), now=new Date(), opts=[];
+  for(var i=0;i<12;i++){
+    var d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+    var m=d.getFullYear()+"-"+pad2(d.getMonth()+1);
+    opts.push('<label class="chk" data-v="'+m+'"><input type="checkbox"'+(i===0?" checked":"")+'><span>'+m+'</span></label>');
+  }
+  mg.innerHTML=opts.join("");
+  document.querySelectorAll("#setCusts .chk,#setMonths .chk").forEach(function(l){
+    syncChk(l);
+    l.querySelector("input").onchange=function(){ syncChk(l); };
+  });
+}
+function curMonth(){ return pickedVals("#setMonths").sort()[0] || ""; }
 async function loadSettlement(){
-  var m=curMonth(); if(!m) return;
-  $("#setBody").innerHTML='<tr><td colspan="7" style="color:#6b766f">載入中…</td></tr>';
+  var months=pickedVals("#setMonths").sort();
+  var msg=$("#setMsg");
+  if(!months.length){
+    $("#setTable").classList.add("hide"); $("#setBody").innerHTML=""; $("#setSummary").innerHTML=""; $("#setDetail").innerHTML="";
+    msg.className="msg err"; msg.textContent="請至少勾選一個結算月份"; return;
+  }
+  msg.className="msg"; msg.textContent="";
+  var custFilter=pickedVals("#setCusts");   // 空＝全部
+  $("#setBody").innerHTML='<tr><td colspan="8" style="color:#6b766f">載入中…</td></tr>';
   $("#setTable").classList.remove("hide");
-  var r=await api({action:"settlement", month:m});
-  if(!r.ok){$("#setBody").innerHTML='<tr><td colspan="7">'+r.error+'</td></tr>';return;}
-  var pick=$("#setCust")?$("#setCust").value:"";
-  var rows=pick ? r.rows.filter(function(c){return String(c.編號)===pick;}) : r.rows;
-  // 上方統計＝下方表格實際顯示列的加總（依當月、依篩選），確保上下一致
+  var all=[];
+  for(var i=0;i<months.length;i++){
+    var m=months[i];
+    var r=await api({action:"settlement", month:m});
+    if(!r||!r.ok) continue;
+    var rows=custFilter.length ? r.rows.filter(function(c){return custFilter.indexOf(String(c.編號))>=0;}) : r.rows;
+    rows.forEach(function(c){ c.__month=m; all.push(c); });
+  }
+  // 上方統計＝下方表格實際顯示列的加總，確保上下一致
   var sumOpen=0,sumReb=0;
-  rows.forEach(function(c){
+  all.forEach(function(c){
     if(c.類別==="應開發票") sumOpen+=Number(c.金額)||0;
     else if(c.類別==="折讓") sumReb+=Number(c.金額)||0;
   });
-  var scope=pick?(rows[0]?esc(rows[0].名稱):"此客戶"):"全部客戶";
+  var cScope=custFilter.length?("已選 "+custFilter.length+" 家"):"全部客戶";
+  var mScope=months.length>1?(months.length+" 個月合計"):months[0];
   $("#setSummary").innerHTML=
-    box("本月應開發票","$"+sumOpen,scope)+
-    box("本月折讓","$"+sumReb,scope);
-  if(!rows.length){
-    $("#setBody").innerHTML='<tr><td colspan="7" style="color:#6b766f">'+(pick?"此客戶本月無紀錄":"本月無紀錄")+'</td></tr>';return;}
-  $("#setBody").innerHTML=rows.map(function(c){
+    box("應開發票","$"+sumOpen,cScope+" · "+mScope)+
+    box("折讓","$"+sumReb,cScope+" · "+mScope);
+  if(!all.length){
+    $("#setBody").innerHTML='<tr><td colspan="8" style="color:#6b766f">所選範圍無紀錄</td></tr>'; $("#setDetail").innerHTML=""; return; }
+  all.sort(function(a,b){ return a.__month<b.__month?-1:(a.__month>b.__month?1:String(a.編號).localeCompare(String(b.編號))); });
+  $("#setBody").innerHTML=all.map(function(c){
     var cls=c.類別==="應開發票"?"pos":"";
-    return '<tr><td>'+esc(c.名稱)+'</td>'+
+    return '<tr><td>'+c.__month+'</td><td>'+esc(c.名稱)+'</td>'+
       '<td>'+c.送出.大+'/'+c.送出.小+'</td>'+
       '<td>'+c.歸還.大+'/'+c.歸還.小+'</td>'+
       '<td class="'+cls+'">$'+c.金額+'</td>'+
       '<td>'+c.類別+'</td>'+
       '<td><span class="plt">大</span>'+Math.max(0,c.期末.大)+'　<span class="plt">小</span>'+Math.max(0,c.期末.小)+'</td>'+
-      '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\')">📄 PDF</button></td></tr>';
+      '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\',\''+c.__month+'\')">📄 PDF</button></td></tr>';
   }).join("");
-  if(pick) loadSetDetail(pick, rows[0]?rows[0].名稱:"", m);
-  else $("#setDetail").innerHTML="";
+  // 單月＋單客戶時，附上每日明細
+  if(months.length===1 && custFilter.length===1 && all.length){
+    loadSetDetail(all[0].編號, all[0].名稱, months[0]);
+  } else $("#setDetail").innerHTML="";
 }
 async function loadSetDetail(cust, name, m){
   var box=$("#setDetail");
@@ -1394,8 +1426,8 @@ function viewImg(e, url){
   $("#imgBox").classList.remove("hide");
 }
 function closeImg(){ $("#imgBox").classList.add("hide"); $("#imgBoxImg").src=""; }
-async function setCustPdf(btn, cust, name){
-  var m=curMonth(); if(!m) return;
+async function setCustPdf(btn, cust, name, m){
+  if(!m) m=curMonth(); if(!m) return;
   var msg=$("#setMsg"); msg.className="msg";
   btn.disabled=true; var orig=btn.textContent; btn.textContent="產生中…";
   try{
@@ -1407,17 +1439,23 @@ async function setCustPdf(btn, cust, name){
   btn.disabled=false; btn.textContent=orig;
 }
 async function genReport(){
-  var m=curMonth(), btn=$("#genExcel"), msg=$("#setMsg");
-  if(!m){msg.className="msg err";msg.textContent="請先選月份";return;}
-  msg.className="msg"; btn.disabled=true; btn.textContent="產生中…（約 10 秒）";
+  var months=pickedVals("#setMonths").sort(), btn=$("#genExcel"), msg=$("#setMsg");
+  if(!months.length){msg.className="msg err";msg.textContent="請先勾選至少一個月份";return;}
+  msg.className="msg"; btn.disabled=true;
+  var links=[], fails=[];
   try{
-    var r=await post({action:"genReport", uid:ME.uid, month:m});
-    if(r.ok){
+    for(var i=0;i<months.length;i++){
+      btn.textContent="產生中… "+(i+1)+"/"+months.length+"（約 10 秒/份）";
+      var r=await post({action:"genReport", uid:ME.uid, month:months[i]});
+      if(r&&r.ok) links.push('<a href="'+r.url+'" target="_blank" rel="noopener" style="color:#256e3d;font-weight:700">📄 '+r.檔名+'</a>');
+      else fails.push(months[i]+"："+((r&&r.error)||"失敗"));
+    }
+    if(links.length){
       msg.className="msg ok";
-      msg.innerHTML="✅ 已存到雲端硬碟："+
-        '<a href="'+r.url+'" target="_blank" rel="noopener" style="color:#256e3d;font-weight:700">開啟 '+r.檔名+'</a>';
+      msg.innerHTML="✅ 已存到雲端硬碟（"+links.length+" 份）：<br>"+links.join("<br>")+
+        (fails.length?'<br><span style="color:#b41e1e">未產生：'+esc(fails.join("；"))+'</span>':"");
       loadReports();
-    }else{ msg.className="msg err"; msg.textContent="⚠ "+r.error; }
+    }else{ msg.className="msg err"; msg.textContent="⚠ "+(fails.join("；")||"產生失敗"); }
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
   btn.disabled=false; btn.textContent="📄 產生 Excel 存到雲端硬碟";
 }
