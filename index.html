@@ -144,6 +144,7 @@
   #setTable th,#setTable td{padding:16px 12px}
   #setTable th{font-size:16px}
   #setTable td:not(:first-child){font-variant-numeric:tabular-nums;font-weight:600}
+  #setTable .plt{font-size:13px;font-weight:700;color:var(--mut);margin-right:1px}
   /* ---- 月結算 每日明細 ---- */
   .sdwrap{margin-top:18px;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--sh-md),var(--sh-in)}
   .sdhead{background:var(--sunken);padding:13px 16px;font-weight:800;font-size:17px;color:var(--ink);
@@ -1295,7 +1296,7 @@ async function loadSettlement(){
       '<td>'+c.歸還.大+'/'+c.歸還.小+'</td>'+
       '<td class="'+cls+'">$'+c.金額+'</td>'+
       '<td>'+c.類別+'</td>'+
-      '<td>'+c.期末.大+'/'+c.期末.小+'</td>'+
+      '<td><span class="plt">大</span>'+Math.max(0,c.期末.大)+'　<span class="plt">小</span>'+Math.max(0,c.期末.小)+'</td>'+
       '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\')">📄 PDF</button></td></tr>';
   }).join("");
   if(pick) loadSetDetail(pick, rows[0]?rows[0].名稱:"", m);
