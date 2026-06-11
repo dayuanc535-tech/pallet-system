@@ -459,10 +459,10 @@
           <h2 class="ctitle">棧板總覽</h2>
           <p class="csub">部門持有（新購 − 報廢）對應各場；新增／報廢可依日期篩選、點開可編輯。</p>
           <div class="dgrid" style="margin-bottom:14px">
-            <div class="dcard"><div class="dl">📦 大棧板總數</div>
+            <div class="dcard"><div class="dl">大棧板總數</div>
               <div class="dn" id="dTotBig">—</div>
               <div class="dz">民雄 <b id="dZBig1">0</b>　義竹 <b id="dZBig2">0</b></div></div>
-            <div class="dcard"><div class="dl">📦 小棧板總數</div>
+            <div class="dcard"><div class="dl">小棧板總數</div>
               <div class="dn" id="dTotSml">—</div>
               <div class="dz">民雄 <b id="dZSml1">0</b>　義竹 <b id="dZSml2">0</b></div></div>
           </div>
@@ -477,22 +477,22 @@
           </div>
 
           <div class="dgrid">
-            <div class="dcard click" id="dAddCard"><div class="dl">🟢 新增購置</div>
+            <div class="dcard click" id="dAddCard"><div class="dl">新增購置</div>
               <div class="dn" id="dAddN">0 <small>筆</small></div>
               <div class="dz">大 <b id="dAddBig">0</b>　小 <b id="dAddSml">0</b>　<span style="color:var(--mut)">點開明細</span></div></div>
-            <div class="dcard click" id="dScrapCard"><div class="dl">🔴 報廢</div>
+            <div class="dcard click" id="dScrapCard"><div class="dl">報廢</div>
               <div class="dn" id="dScrapN">0 <small>筆</small></div>
               <div class="dz">大 <b id="dScrapBig">0</b>　小 <b id="dScrapSml">0</b>　<span style="color:var(--mut)">點開明細</span></div></div>
           </div>
 
           <div id="dAddDrawer" class="drawer hide">
-            <div class="big" style="font-weight:700;margin-bottom:6px">🟢 新增購置明細</div>
+            <div class="big" style="font-weight:700;margin-bottom:6px">新增購置明細</div>
             <div style="overflow-x:auto"><table>
               <thead><tr><th>時間</th><th>場</th><th>別</th><th>數量</th><th>備註</th><th></th></tr></thead>
               <tbody id="dAddBody"></tbody></table></div>
           </div>
           <div id="dScrapDrawer" class="drawer hide">
-            <div class="big" style="font-weight:700;margin-bottom:6px">🔴 報廢明細（含原因）</div>
+            <div class="big" style="font-weight:700;margin-bottom:6px">報廢明細（含原因）</div>
             <div style="overflow-x:auto"><table>
               <thead><tr><th>時間</th><th>場</th><th>別</th><th>數量</th><th>原因</th><th></th></tr></thead>
               <tbody id="dScrapBody"></tbody></table></div>
@@ -503,10 +503,10 @@
           <h2 class="ctitle">在外流動棧板</h2>
           <p class="csub">目前在客戶手上未歸還（送出 − 歸還），依出貨場別歸戶。</p>
           <div class="dgrid">
-            <div class="dcard"><div class="dl">🚚 民雄場 在外</div>
+            <div class="dcard"><div class="dl">民雄場 在外</div>
               <div class="dn" id="dOut1">—</div>
               <div class="dz">大 <b id="dOut1Big">0</b>　小 <b id="dOut1Sml">0</b></div></div>
-            <div class="dcard"><div class="dl">🚚 義竹場 在外</div>
+            <div class="dcard"><div class="dl">義竹場 在外</div>
               <div class="dn" id="dOut2">—</div>
               <div class="dz">大 <b id="dOut2Big">0</b>　小 <b id="dOut2Sml">0</b></div></div>
           </div>
@@ -534,7 +534,7 @@
         <section class="card" style="text-align:center">
           <h2 class="ctitle" style="margin-bottom:4px">月結算</h2>
           <p class="csub">每客戶該月各場進出、計價、折讓／應收，並可產出 Excel。</p>
-          <button type="button" class="btnP" id="dGoSet" style="margin-top:0">📅 開啟月結計算</button>
+          <button type="button" class="btnP" id="dGoSet" style="margin-top:0">開啟月結計算</button>
         </section>
 
         <section class="card">
@@ -550,8 +550,8 @@
           <div id="bMonths" class="chkgrid"></div>
 
           <div style="display:flex;gap:8px;margin-top:16px">
-            <button type="button" class="btnP" id="bGen" style="margin-top:0;flex:1">📊 產生明細</button>
-            <button type="button" class="btnP" id="bPdf" style="margin-top:0;flex:1;background:var(--wood)">📄 輸出 PDF</button>
+            <button type="button" class="btnP" id="bGen" style="margin-top:0;flex:1">產生明細</button>
+            <button type="button" class="btnP" id="bPdf" style="margin-top:0;flex:1;background:var(--wood)">輸出 PDF</button>
           </div>
           <div id="bMsg" class="msg hide"></div>
           <div id="bResult"></div>
@@ -595,7 +595,7 @@
         <div class="row2" style="margin-top:8px">
           <button type="button" class="btnG" id="clearSign">清除簽名</button>
           <label class="btnG">
-            📷 拍/選單據<input type="file" id="photo" accept="image/*" capture="environment" class="hide">
+            拍/選單據<input type="file" id="photo" accept="image/*" capture="environment" class="hide">
           </label>
         </div>
         <div class="sub" id="photoName"></div>
@@ -620,7 +620,7 @@
         <label class="fld">日期時間</label>
         <div style="display:flex;gap:8px;align-items:stretch">
           <input type="datetime-local" id="repWhen" style="flex:1;min-width:0">
-          <button type="button" class="btnG" id="repNow" style="white-space:nowrap;padding:0 16px">🕒 現在</button>
+          <button type="button" class="btnG" id="repNow" style="white-space:nowrap;padding:0 16px">現在</button>
         </div>
         <p class="csub" style="margin:6px 0 0">預設為現在時間，可改成實際發生的時間（例如補登昨天）。</p>
 
@@ -644,16 +644,16 @@
 
           <label class="fld">拍 / 上傳簽收單</label>
           <label class="btnG" style="display:block;text-align:center;padding:14px">
-            📷 拍照 / 選擇簽收單<input type="file" id="repPhoto" accept="image/*" capture="environment" class="hide">
+            拍照 / 選擇簽收單<input type="file" id="repPhoto" accept="image/*" capture="environment" class="hide">
           </label>
           <div id="repPhotoPv" class="hide" style="margin-top:8px"></div>
 
           <div id="repWhenConfirm" style="margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:var(--brand-soft);color:var(--brand-d);font-weight:700;text-align:center"></div>
-          <button class="btnP" id="repSubmit">✅ 送出回報</button>
+          <button class="btnP" id="repSubmit">送出回報</button>
           <div class="msg" id="repMsg"></div>
         </div>
 
-        <button type="button" class="btnG" id="repNoFlow" style="margin-top:18px;width:100%;padding:14px;font-size:15px">📭 今日無棧板流通</button>
+        <button type="button" class="btnG" id="repNoFlow" style="margin-top:18px;width:100%;padding:14px;font-size:15px">今日無棧板流通</button>
 
         <div class="big" style="margin:24px 0 8px;font-weight:700">今日已回報</div>
         <div id="repToday" class="big">—</div>
@@ -669,7 +669,7 @@
           <thead><tr><th>編號</th><th>客戶</th><th>大棧板</th><th>小棧板</th></tr></thead>
           <tbody id="balBody"></tbody>
         </table>
-        <button type="button" class="btnG" id="refresh" style="margin-top:16px;width:100%">🔄 重新整理</button>
+        <button type="button" class="btnG" id="refresh" style="margin-top:16px;width:100%">重新整理</button>
       </section>
 
       <!-- 明細查詢（依客戶＋月份） -->
@@ -678,13 +678,13 @@
         <p class="csub">選客戶查該月各場進出、折讓／應收，並可輸出對帳單 PDF。</p>
         <label class="fld">客戶</label>
         <select id="lkCustSel"></select>
-        <button type="button" class="btnP" id="lkGo" style="margin-top:14px">🔍 查詢明細</button>
+        <button type="button" class="btnP" id="lkGo" style="margin-top:14px">查詢明細</button>
       </section>
 
       <!-- 月結算 -->
       <section id="set" class="card hide">
         <h2 class="ctitle">月結算</h2>
-        <p class="csub">月份與客戶都可複選。按「查詢明細」列出所選範圍，按該列「📄 PDF」產出該客戶該月報表，或產出整月 Excel。檔案產生後會跳出，可自行選擇分享到 LINE／郵件／檔案或下載。</p>
+        <p class="csub">月份與客戶都可複選。按「查詢明細」列出所選範圍，按該列「PDF」產出該客戶該月報表，或產出整月 Excel。檔案產生後會跳出，可自行選擇分享到 LINE／郵件／檔案或下載。</p>
 
         <label class="fld">結算月份（可複選）</label>
         <div class="multidd" id="ddMonths">
@@ -710,7 +710,7 @@
           </div>
         </div>
 
-        <button type="button" class="btnP" id="setQuery" style="margin-top:16px;width:100%">🔍 查詢明細</button>
+        <button type="button" class="btnP" id="setQuery" style="margin-top:16px;width:100%">查詢明細</button>
 
         <div id="setSummary" class="tot" style="margin-top:16px"></div>
 
@@ -727,7 +727,7 @@
 
         <div id="setDetail"></div>
 
-        <button class="btnP" id="genExcel">📄 產生 Excel</button>
+        <button class="btnP" id="genExcel">產生 Excel</button>
         <div class="msg" id="setMsg"></div>
       </section>
 
@@ -738,10 +738,10 @@
 
         <label class="fld">管理項目</label>
         <select id="mgrPick">
-          <option value="site">📍 場名管理</option>
-          <option value="cust">🏷️ 客戶編輯</option>
-          <option value="people">🧑‍💼 操作人員編輯</option>
-          <option value="tx">📦 棧板明細管理</option>
+          <option value="site">場名管理</option>
+          <option value="cust">客戶編輯</option>
+          <option value="people">操作人員編輯</option>
+          <option value="tx">棧板明細管理</option>
         </select>
 
         <!-- 場名管理 -->
@@ -762,13 +762,13 @@
             <input type="text" id="ncode" placeholder="客戶編號">
             <input type="text" id="nname" placeholder="客戶名稱">
           </div>
-          <button type="button" class="btnG" id="addCust" style="margin-top:10px;width:100%">➕ 新增客戶</button>
+          <button type="button" class="btnG" id="addCust" style="margin-top:10px;width:100%">新增客戶</button>
 
           <label class="fld">選擇客戶編輯</label>
           <select id="custPick"><option value="">— 請選擇客戶 —</option></select>
           <div class="editbox hide" id="custEdit"></div>
           <div class="msg" id="custMsg"></div>
-          <button type="button" class="btnG" id="custRefresh" style="margin-top:14px;width:100%">🔄 重新整理客戶</button>
+          <button type="button" class="btnG" id="custRefresh" style="margin-top:14px;width:100%">重新整理客戶</button>
         </div>
 
         <!-- 操作人員 -->
@@ -792,13 +792,13 @@
             </select>
           </div>
           <input type="text" id="pCust" placeholder="客戶編號（經銷帳號才需填）" style="width:100%;margin-top:8px">
-          <button type="button" class="btnG" id="addPerson" style="margin-top:10px;width:100%">➕ 新增人員</button>
+          <button type="button" class="btnG" id="addPerson" style="margin-top:10px;width:100%">新增人員</button>
 
           <label class="fld">選擇人員編輯</label>
           <select id="peoplePick"><option value="">— 請選擇人員 —</option></select>
           <div class="editbox hide" id="peopleEdit"></div>
           <div class="msg" id="peopleMsg"></div>
-          <button type="button" class="btnG" id="peopleRefresh" style="margin-top:14px;width:100%">🔄 重新整理人員</button>
+          <button type="button" class="btnG" id="peopleRefresh" style="margin-top:14px;width:100%">重新整理人員</button>
         </div>
 
         <!-- 棧板明細管理 -->
@@ -810,12 +810,12 @@
           </div>
           <label class="fld">客戶（可不選＝全部）</label>
           <select id="txCust" style="width:100%"><option value="">— 全部客戶 —</option></select>
-          <button type="button" class="btnG" id="txQuery" style="margin-top:12px;width:100%">🔍 查詢明細</button>
+          <button type="button" class="btnG" id="txQuery" style="margin-top:12px;width:100%">查詢明細</button>
           <div class="msg" id="txMsg"></div>
           <div id="txList" style="margin-top:12px"></div>
 
           <details style="margin-top:18px">
-            <summary style="cursor:pointer;font-weight:700;padding:8px 0">➕ 補登一筆紀錄</summary>
+            <summary style="cursor:pointer;font-weight:700;padding:8px 0">補登一筆紀錄</summary>
             <div style="margin-top:10px">
               <label class="fld">日期時間</label>
               <input type="datetime-local" id="txnWhen" style="width:100%">
@@ -833,7 +833,7 @@
               <input type="text" id="txnNote" placeholder="（可空白）" style="width:100%">
               <label class="fld">簽收單（可選）</label>
               <label class="btnG" style="display:block;text-align:center;padding:14px">
-                📷 拍照 / 選擇簽收單<input type="file" id="txnPhoto" accept="image/*" capture="environment" class="hide">
+                拍照 / 選擇簽收單<input type="file" id="txnPhoto" accept="image/*" capture="environment" class="hide">
               </label>
               <div id="txnPhotoPv" class="hide" style="margin-top:8px"></div>
               <div id="txnWhenConfirm" style="margin:14px 0 4px;padding:10px 12px;border-radius:10px;background:var(--brand-soft);color:var(--brand-d);font-weight:700;text-align:center"></div>
@@ -856,9 +856,9 @@
       <div class="big" id="mineAmt" style="margin-top:6px"></div>
     </div>
     <div class="card">
-      <div class="big" style="margin-bottom:10px;font-weight:700">📋 進出明細（新到舊）</div>
+      <div class="big" style="margin-bottom:10px;font-weight:700">進出明細（新到舊）</div>
       <div id="mineHist" class="big">載入中…</div>
-      <button type="button" class="btnG" id="mineRefresh" style="margin-top:14px;width:100%">🔄 重新整理</button>
+      <button type="button" class="btnG" id="mineRefresh" style="margin-top:14px;width:100%">重新整理</button>
     </div>
   </div>
 
@@ -883,13 +883,13 @@
         <button type="button" class="btnG" id="lookQuery">查詢</button>
       </div>
       <div class="dgrid" style="margin-top:14px">
-        <div class="dcard"><div class="dl">🚚 民雄場（本月）</div>
+        <div class="dcard"><div class="dl">民雄場（本月）</div>
           <div class="dz">送出 大<b id="lk1s大">0</b>/小<b id="lk1s小">0</b><br>歸還 大<b id="lk1r大">0</b>/小<b id="lk1r小">0</b></div></div>
-        <div class="dcard"><div class="dl">🚚 義竹場（本月）</div>
+        <div class="dcard"><div class="dl">義竹場（本月）</div>
           <div class="dz">送出 大<b id="lk2s大">0</b>/小<b id="lk2s小">0</b><br>歸還 大<b id="lk2r大">0</b>/小<b id="lk2r小">0</b></div></div>
       </div>
       <div class="tot" id="lookAmt" style="margin-top:14px"></div>
-      <button class="btnP" id="lookPdf">📄 輸出對帳單 PDF</button>
+      <button class="btnP" id="lookPdf">輸出對帳單 PDF</button>
       <div class="msg" id="lookMsg"></div>
     </div>
     <div class="card">
@@ -1232,17 +1232,17 @@ function txFillSelectors(){
 function txnWhenConfirm(){
   var box=$("#txnWhenConfirm"); if(!box) return;
   var v=$("#txnWhen")?$("#txnWhen").value:"";
-  if(!v){ box.textContent="⚠ 尚未選擇日期時間"; return; }
+  if(!v){ box.textContent="尚未選擇日期時間"; return; }
   var pretty=v.replace("T","　").slice(0,16);
   var todayStr=fmtNowLocal().slice(0,10);
   var tag=v.slice(0,10)===todayStr?"（今天）":"";
-  box.textContent="🕒 這筆將補登於："+pretty+tag;
+  box.textContent="這筆將補登於："+pretty+tag;
 }
 async function loadTxList(){
   var box=$("#txList"), m=$("#txMsg");
   if(m){ m.className="msg"; m.textContent="查詢中…"; }
   var r=await api({action:"txAll", uid:ME.uid, from:$("#txFrom").value, to:$("#txTo").value, cust:$("#txCust").value});
-  if(!r.ok){ if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); } return; }
+  if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); } return; }
   if(m){ m.className="msg ok"; m.textContent="共 "+r.list.length+" 筆"; }
   if(!r.list.length){ box.innerHTML='<p class="csub">此區間無紀錄。</p>'; return; }
   txRowCache={};
@@ -1257,10 +1257,10 @@ function txCard(x){
     '<div class="erow"><span class="elab">場 / 動作</span>'+
       '<b style="color:'+color+'">'+esc(x.場||"—")+'　'+esc(x.動作)+' '+esc(x.棧板別)+'×'+x.數量+'</b></div>'+
     (x.備註?'<div class="erow"><span class="elab">備註</span><b>'+esc(x.備註)+'</b></div>':'')+
-    (x.附件?'<div class="erow"><span class="elab">簽收單</span><a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">📷 檢視</a></div>':'')+
+    (x.附件?'<div class="erow"><span class="elab">簽收單</span><a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">檢視</a></div>':'')+
     '<div style="display:flex;gap:8px;margin-top:8px">'+
-      '<button type="button" class="btnG" style="flex:1" onclick="editTxRow('+x.row+')">✏️ 修改</button>'+
-      '<button type="button" class="btnG" style="flex:1" onclick="delTxRow('+x.row+')">🗑️ 刪除</button>'+
+      '<button type="button" class="btnG" style="flex:1" onclick="editTxRow('+x.row+')">修改</button>'+
+      '<button type="button" class="btnG" style="flex:1" onclick="delTxRow('+x.row+')">刪除</button>'+
     '</div></div>';
 }
 var txRowCache={};
@@ -1281,13 +1281,13 @@ function editTxRow(row){
     '</div>'+
     '<label class="fld">備註</label><input type="text" id="txe-note-'+row+'" value="'+esc(x.備註||"")+'" style="width:100%">'+
     '<label class="fld">簽收單</label>'+
-    (x.附件?'<div style="margin-bottom:8px"><a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">📷 檢視目前簽收單</a></div>':'<div class="csub" style="margin-bottom:8px">目前無簽收單</div>')+
+    (x.附件?'<div style="margin-bottom:8px"><a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">檢視目前簽收單</a></div>':'<div class="csub" style="margin-bottom:8px">目前無簽收單</div>')+
     '<label class="btnG" style="display:block;text-align:center;padding:14px">'+
-      '📷 拍照 / 選擇'+(x.附件?'新':'')+'簽收單<input type="file" id="txe-photo-'+row+'" accept="image/*" capture="environment" class="hide" onchange="txEditOnPhoto('+row+')">'+
+      '拍照 / 選擇'+(x.附件?'新':'')+'簽收單<input type="file" id="txe-photo-'+row+'" accept="image/*" capture="environment" class="hide" onchange="txEditOnPhoto('+row+')">'+
     '</label>'+
     '<div id="txe-photopv-'+row+'" class="hide" style="margin-top:8px"></div>'+
     '<div style="display:flex;gap:8px;margin-top:10px">'+
-      '<button type="button" class="btnG" style="flex:1;background:var(--brand);color:#fff" onclick="saveTxRow('+row+')">💾 儲存修改</button>'+
+      '<button type="button" class="btnG" style="flex:1;background:var(--brand);color:#fff" onclick="saveTxRow('+row+')">儲存修改</button>'+
       '<button type="button" class="btnG" style="flex:1" onclick="loadTxList()">取消</button>'+
     '</div>';
   txEditPhotoData="";
@@ -1310,15 +1310,15 @@ async function saveTxRow(row){
     時間:when, 場:gid("txe-site-"+row).value, 動作:gid("txe-act-"+row).value,
     客戶編號:gid("txe-cust-"+row).value, 棧板別:gid("txe-type-"+row).value,
     數量:gid("txe-qty-"+row).value, 備註:gid("txe-note-"+row).value, 照片:txEditPhotoData});
-  if(r.ok){ txEditPhotoData=""; if(m){ m.className="msg ok"; m.textContent="✅ 已更新"; } loadTxList(); }
-  else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+  if(r.ok){ txEditPhotoData=""; if(m){ m.className="msg ok"; m.textContent="已更新"; } loadTxList(); }
+  else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 async function delTxRow(row){
   if(!confirm("確定刪除這筆紀錄？刪除後無法復原。")) return;
   var m=$("#txMsg");
   var r=await post({action:"txAnyDelete", uid:ME.uid, row:row});
-  if(r.ok){ if(m){ m.className="msg ok"; m.textContent="✅ 已刪除"; } loadTxList(); }
-  else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+  if(r.ok){ if(m){ m.className="msg ok"; m.textContent="已刪除"; } loadTxList(); }
+  else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 var txnPhotoData="";
 function txnOnPhoto(e){
@@ -1335,19 +1335,19 @@ async function addTxRow(){
   var act=$("#txnAct").value;
   var dept=(act==="報廢"||act==="新購"||act==="無流通");
   var cust=$("#txnCust").value;
-  if(!dept && !cust){ if(m){ m.className="msg err"; m.textContent="⚠ 請選擇客戶"; } return; }
+  if(!dept && !cust){ if(m){ m.className="msg err"; m.textContent="請選擇客戶"; } return; }
   var btn=$("#txAddBtn"); if(btn){ btn.disabled=true; btn.textContent="補登中…"; }
   var r=await post({action:"txAnyAdd", uid:ME.uid,
     時間:$("#txnWhen").value, 場:$("#txnSite").value, 動作:act,
     客戶編號:cust, 棧板別:$("#txnType").value, 數量:$("#txnQty").value, 備註:$("#txnNote").value, 照片:txnPhotoData});
   if(btn){ btn.disabled=false; btn.textContent="確認補登"; }
   if(r.ok){
-    if(m){ m.className="msg ok"; m.textContent="✅ 已補登一筆"; }
+    if(m){ m.className="msg ok"; m.textContent="已補登一筆"; }
     $("#txnQty").value="1"; $("#txnNote").value=""; $("#txnWhen").value=fmtNowLocal();
     txnPhotoData=""; $("#txnPhoto").value=""; $("#txnPhotoPv").classList.add("hide"); $("#txnPhotoPv").innerHTML="";
     txnWhenConfirm();
     loadTxList();
-  }else if(m){ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+  }else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 
 /* ---- UI 綁定 ---- */
@@ -1488,7 +1488,7 @@ async function batchPdf(){
   if(!custs.length||!months.length){ bMsg("請至少選一個客戶與一個月份",1); return; }
   bMsg("產生 PDF 中（稍候）…");
   var r=await post({action:"batchPdf",uid:ME.uid,custs:custs.join(","),months:months.join(",")});
-  if(r&&r.ok){ bMsg("✅ PDF 已產生"); window.open(r.url,"_blank"); }
+  if(r&&r.ok){ bMsg("PDF 已產生"); window.open(r.url,"_blank"); }
   else bMsg((r&&r.error)||"PDF 產生失敗",1);
 }
 
@@ -1572,7 +1572,7 @@ function onPhoto(e){
     c.width=img.width*s; c.height=img.height*s;
     c.getContext("2d").drawImage(img,0,0,c.width,c.height);
     photoData=c.toDataURL("image/jpeg",0.8);
-    $("#photoName").textContent="✓ 已附單據照片";
+    $("#photoName").textContent="已附單據照片";
   };
   rd.readAsDataURL(f);
 }
@@ -1601,11 +1601,11 @@ async function submit(){
     var r=await post(payload);
     if(r.ok){
       msg.className="msg ok";
-      msg.textContent="✅ 已記錄 "+(r.筆數||1)+" 筆（單號 "+r.單號+"）";
+      msg.textContent="已記錄 "+(r.筆數||1)+" 筆（單號 "+r.單號+"）";
       items=[]; renderItems();
       $("#qty").value=1; clearSign(); photoData=""; $("#photoName").textContent="";
       $("#note").value=""; toggleCust();
-    }else{ msg.className="msg err"; msg.textContent="⚠ "+r.error; }
+    }else{ msg.className="msg err"; msg.textContent=""+r.error; }
   }catch(err){ msg.className="msg err"; msg.textContent="送出失敗："+err; }
   btn.disabled=false; btn.textContent="送出記錄";
 }
@@ -1717,7 +1717,7 @@ async function loadSettlement(){
       '<td class="'+cls+'">$'+c.金額+'</td>'+
       '<td>'+c.類別+'</td>'+
       '<td><span class="plt">大</span>'+Math.max(0,c.期末.大)+'　<span class="plt">小</span>'+Math.max(0,c.期末.小)+'</td>'+
-      '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\',\''+c.__month+'\')">📄 PDF</button></td></tr>';
+      '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\',\''+c.__month+'\')">PDF</button></td></tr>';
   }).join("");
   // 單月＋單客戶時，附上每日明細
   if(months.length===1 && custFilter.length===1 && all.length){
@@ -1730,7 +1730,7 @@ async function loadSetDetail(cust, name, m){
   var r=await api({action:"statement", cust:cust, month:m});
   if(!r.ok){ box.innerHTML='<div class="sdwrap"><div class="sdhead">本月每日明細<span class="sub">'+esc(r.error)+'</span></div></div>'; return; }
   var det=r.detail||[];
-  var head='<div class="sdhead">📅 '+esc(name||r.客戶||"")+' · '+m+' 每日明細'+
+  var head='<div class="sdhead">'+esc(name||r.客戶||"")+' · '+m+' 每日明細'+
     '<span class="sub">共 '+det.length+' 筆，點照片可放大檢視</span></div>';
   if(!det.length){ box.innerHTML='<div class="sdwrap">'+head+'<div class="sdrow"><span style="color:var(--mut)">本月無進出紀錄</span></div></div>'; return; }
   det=det.slice().sort(function(a,b){return String(a.時間)<String(b.時間)?-1:1;}); // 由早到晚
@@ -1742,7 +1742,7 @@ async function loadSetDetail(cust, name, m){
     var isOut=x.動作==="送出";
     var photos=String(x.附件||"").split(/\s+/).filter(function(u){return /^https?:/.test(u);});
     var thumb=photos.length
-      ? photos.map(function(u){return '<img class="sdthumb" src="'+esc(driveImg(u,240))+'" loading="lazy" onclick="viewImg(event,\''+esc(driveImg(u,1600))+'\')" alt="簽收單" onerror="this.replaceWith(Object.assign(document.createElement(\'a\'),{href:\''+esc(u)+'\',target:\'_blank\',className:\'lnk\',textContent:\'📷 簽收單\'}))">';}).join("")
+      ? photos.map(function(u){return '<img class="sdthumb" src="'+esc(driveImg(u,240))+'" loading="lazy" onclick="viewImg(event,\''+esc(driveImg(u,1600))+'\')" alt="簽收單" onerror="this.replaceWith(Object.assign(document.createElement(\'a\'),{href:\''+esc(u)+'\',target:\'_blank\',className:\'lnk\',textContent:\'簽收單\'}))">';}).join("")
       : '<span class="sdnoimg">無照片</span>';
     html+='<div class="sdrow">'+
       '<span class="sdact '+(isOut?'out':'in')+'">'+esc(x.動作)+'</span>'+
@@ -1793,9 +1793,9 @@ async function setCustPdf(btn, cust, name, m){
     if(r.ok){
       var how=await deliverFile(r.b64, r.檔名, r.mime);
       msg.className="msg ok";
-      msg.textContent=(how==="cancel"?"已取消分享":"✅ "+esc(name)+" "+m+" 月報表已產生："+r.檔名+"（請選擇分享或開啟）");
+      msg.textContent=(how==="cancel"?"已取消分享":""+esc(name)+" "+m+" 月報表已產生："+r.檔名+"（請選擇分享或開啟）");
     }
-    else { msg.className="msg err"; msg.textContent="⚠ "+r.error; }
+    else { msg.className="msg err"; msg.textContent=""+r.error; }
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
   btn.disabled=false; btn.textContent=orig;
 }
@@ -1813,11 +1813,11 @@ async function genReport(){
     }
     if(done.length){
       msg.className="msg ok";
-      msg.innerHTML="✅ 已產生 "+done.length+" 份（請選擇分享或開啟）：<br>"+esc(done.join("、"))+
+      msg.innerHTML="已產生 "+done.length+" 份（請選擇分享或開啟）：<br>"+esc(done.join("、"))+
         (fails.length?'<br><span style="color:#b41e1e">未產生：'+esc(fails.join("；"))+'</span>':"");
-    }else{ msg.className="msg err"; msg.textContent="⚠ "+(fails.join("；")||"產生失敗"); }
+    }else{ msg.className="msg err"; msg.textContent=""+(fails.join("；")||"產生失敗"); }
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
-  btn.disabled=false; btn.textContent="📄 產生 Excel";
+  btn.disabled=false; btn.textContent="產生 Excel";
 }
 
 /* ---- 經銷客戶自助 / 客戶代號查詢 共用 ---- */
@@ -1833,7 +1833,7 @@ function fillMine(r){
   $("#mineSmall").textContent=r.結餘.小;
   $("#mineAmt").innerHTML=r.未還金額>0
     ? '未歸還估計金額 <b style="color:#c0392b">$'+r.未還金額+'</b>（月底未還將計價）'
-    : '✅ 目前無未歸還';
+    : '目前無未歸還';
   var h=$("#mineHist");
   if(!r.歷史.length){ h.textContent="（尚無進出紀錄）"; return; }
   h.innerHTML=r.歷史.map(function(x){
@@ -1857,7 +1857,7 @@ var custCache=[];
 async function loadCustomers(){
   var sel=$("#custPick"); if(sel) sel.innerHTML='<option value="">載入中…</option>';
   var r=await api({action:"custList", uid:ME.uid});
-  if(!r.ok){ box2("⚠ "+esc(r.error), true); if(sel) sel.innerHTML='<option value="">— 載入失敗 —</option>'; return; }
+  if(!r.ok){ box2(""+esc(r.error), true); if(sel) sel.innerHTML='<option value="">— 載入失敗 —</option>'; return; }
   custCache=r.customers||[];
   renderCustPick();
 }
@@ -1871,7 +1871,7 @@ function renderCustPick(keep){
   sel.innerHTML='<option value="">— 請選擇客戶（共 '+custCache.length+' ）—</option>'+
     custCache.map(function(c){
       var stopped=c.狀態==="停用";
-      return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）'+(stopped?' ⛔停用':'')+'</option>';
+      return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）'+(stopped?' 停用':'')+'</option>';
     }).join("");
   sel.value=cur||"";
   showCustEdit(sel.value);
@@ -1891,7 +1891,7 @@ function showCustEdit(id){
       '<option value="停用"'+(c.狀態==="停用"?" selected":"")+'>停用</option></select>'+
     '<label class="fld">負責業務</label>'+
     '<select id="ebiz">'+bizOptions(c.業務||"")+'</select>'+
-    '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="saveCustomer(\''+esc(c.編號)+'\')">💾 儲存客戶</button>';
+    '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="saveCustomer(\''+esc(c.編號)+'\')">儲存客戶</button>';
 }
 // 業務下拉選項（來源＝角色清單裡 role==業務 的人員，value＝登入代碼）
 function bizOptions(cur){
@@ -1912,8 +1912,8 @@ async function saveCustomer(id){
   var biz=$("#ebiz")?$("#ebiz").value:"";
   if(!name){ box2("名稱不可空白", true); return; }
   var r=await post({action:"custSave", uid:ME.uid, 客戶編號:id, 客戶名稱:name, 狀態:stat, 業務:biz});
-  if(r.ok){ box2("✅ 已更新 "+id, false); loadCustomers(); }
-  else box2("⚠ "+(r.error||"失敗"), true);
+  if(r.ok){ box2("已更新 "+id, false); loadCustomers(); }
+  else box2(""+(r.error||"失敗"), true);
 }
 async function addCustomer(){
   var code=($("#ncode").value||"").trim();
@@ -1921,11 +1921,11 @@ async function addCustomer(){
   if(!code||!name){ box2("請填編號與名稱", true); return; }
   var r=await post({action:"custSave", uid:ME.uid, 客戶編號:code, 客戶名稱:name, 狀態:""});
   if(r.ok){
-    box2(r.mode==="insert"?"✅ 已新增 "+code:"已存在，已更新名稱 "+code, false);
+    box2(r.mode==="insert"?"已新增 "+code:"已存在，已更新名稱 "+code, false);
     $("#ncode").value=""; $("#nname").value="";
     var r2=await api({action:"custList", uid:ME.uid});
     if(r2.ok){ custCache=r2.customers||[]; renderCustPick(code); }
-  }else box2("⚠ "+(r.error||"失敗"), true);
+  }else box2(""+(r.error||"失敗"), true);
 }
 function box2(t, err){
   var m=$("#custMsg"); m.className="msg "+(err?"err":"ok"); m.textContent=t;
@@ -1936,7 +1936,7 @@ var peopleCache=[], peopleRoles=["現場","做帳","管理員","經銷"], people
 async function loadPeople(){
   var sel=$("#peoplePick"); if(sel) sel.innerHTML='<option value="">載入中…</option>';
   var r=await api({action:"roleList", uid:ME.uid});
-  if(!r.ok){ pbox("⚠ "+esc(r.error), true); if(sel) sel.innerHTML='<option value="">— 載入失敗 —</option>'; return; }
+  if(!r.ok){ pbox(""+esc(r.error), true); if(sel) sel.innerHTML='<option value="">— 載入失敗 —</option>'; return; }
   peopleCache=r.people||[];
   if(r.roles&&r.roles.length) peopleRoles=r.roles;
   if(r.sites&&r.sites.length){ peopleSites=r.sites; ME.sites=r.sites; }
@@ -1963,18 +1963,18 @@ async function saveSites(list){
     // 同步現場回報表單與記錄表單的場別選單
     if($("#repSite")) $("#repSite").innerHTML=peopleSites.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");
     if($("#site")&&!(ME.role==="現場"&&ME.site)) $("#site").innerHTML=peopleSites.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");
-    m.className="msg ok"; m.textContent="✅ 已更新場名";
-  }else{ m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+    m.className="msg ok"; m.textContent="已更新場名";
+  }else{ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 function addSiteNow(){
   var inp=$("#newSite"); var v=(inp.value||"").trim();
   if(!v){ inp.focus(); return; }
-  if(peopleSites.indexOf(v)>=0){ var m=$("#siteMsg"); m.className="msg err"; m.textContent="⚠ 「"+v+"」已存在"; return; }
+  if(peopleSites.indexOf(v)>=0){ var m=$("#siteMsg"); m.className="msg err"; m.textContent="「"+v+"」已存在"; return; }
   inp.value="";
   saveSites(peopleSites.concat([v]));
 }
 async function removeSite(s){
-  if(peopleSites.length<=1){ var m=$("#siteMsg"); m.className="msg err"; m.textContent="⚠ 至少要保留一個場"; return; }
+  if(peopleSites.length<=1){ var m=$("#siteMsg"); m.className="msg err"; m.textContent="至少要保留一個場"; return; }
   if(!confirm("刪除場「"+s+"」？\n已記錄的舊資料不會被刪，但報表會把該場歸入「其他」。")) return;
   saveSites(peopleSites.filter(function(x){return x!==s;}));
 }
@@ -1997,7 +1997,7 @@ function renderPeoplePick(keep){
   }
   sel.innerHTML='<option value="">— 請選擇人員（共 '+peopleCache.length+' ）—</option>'+
     peopleCache.map(function(p){
-      return '<option value="'+esc(p.登入代碼)+'">'+esc(p.姓名)+'｜'+esc(p.角色)+(p.場?'｜'+esc(p.場):'')+(p.已綁定?'':' ⚠未綁')+'</option>';
+      return '<option value="'+esc(p.登入代碼)+'">'+esc(p.姓名)+'｜'+esc(p.角色)+(p.場?'｜'+esc(p.場):'')+(p.已綁定?'':' 未綁')+'</option>';
     }).join("");
   sel.value=cur||"";
   showPeopleEdit(sel.value);
@@ -2008,8 +2008,8 @@ function showPeopleEdit(code){
   if(!p){ box.className="editbox hide"; box.innerHTML=""; return; }
   box.className="editbox";
   var bind=p.已綁定
-    ? '<span style="color:#256e3d;font-weight:700">✓ 已綁定 LINE</span>'
-    : '<span style="color:#b9722d;font-weight:700">⚠ 尚未綁定 LINE</span>';
+    ? '<span style="color:#256e3d;font-weight:700">已綁定 LINE</span>'
+    : '<span style="color:#b9722d;font-weight:700">尚未綁定 LINE</span>';
   box.innerHTML=
     '<div class="erow"><span class="elab">登入代碼</span><b style="font-variant-numeric:tabular-nums">'+esc(p.登入代碼)+'</b></div>'+
     '<div class="erow"><span class="elab">LINE 綁定</span>'+bind+'</div>'+
@@ -2021,7 +2021,7 @@ function showPeopleEdit(code){
     '<select id="eSite">'+selOpts(peopleSites,p.場,"（不分場）")+'</select>'+
     '<label class="fld">客戶編號（經銷帳號才需填）</label>'+
     '<input type="text" id="eCust" value="'+esc(p.客戶編號)+'" placeholder="客戶編號">'+
-    '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="savePerson(\''+esc(p.登入代碼)+'\')">💾 儲存人員</button>';
+    '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="savePerson(\''+esc(p.登入代碼)+'\')">儲存人員</button>';
 }
 async function savePerson(code){
   var name=($("#eName")&&$("#eName").value||"").trim();
@@ -2031,10 +2031,10 @@ async function savePerson(code){
   if(!name){ pbox("姓名不可空白", true); return; }
   var r=await post({action:"roleSave", uid:ME.uid, 登入代碼:code, 姓名:name, 角色:role, 場:site, 客戶編號:cust});
   if(r.ok){
-    pbox("✅ 已更新 "+name, false);
+    pbox("已更新 "+name, false);
     var r2=await api({action:"roleList", uid:ME.uid});
     if(r2.ok){ peopleCache=r2.people||[]; renderPeoplePick(code); }
-  }else pbox("⚠ "+(r.error||"失敗"), true);
+  }else pbox(""+(r.error||"失敗"), true);
 }
 async function addPerson(){
   var name=($("#pName").value||"").trim();
@@ -2045,11 +2045,11 @@ async function addPerson(){
   if(!name||!code){ pbox("請填姓名與登入代碼", true); return; }
   var r=await post({action:"roleSave", uid:ME.uid, 登入代碼:code, 姓名:name, 角色:role, 場:site, 客戶編號:cust});
   if(r.ok){
-    pbox(r.mode==="insert"?"✅ 已新增 "+name:"已存在，已更新 "+name, false);
+    pbox(r.mode==="insert"?"已新增 "+name:"已存在，已更新 "+name, false);
     $("#pName").value=""; $("#pCode").value=""; $("#pCust").value="";
     var r2=await api({action:"roleList", uid:ME.uid});
     if(r2.ok){ peopleCache=r2.people||[]; renderPeoplePick(code); }
-  }else pbox("⚠ "+(r.error||"失敗"), true);
+  }else pbox(""+(r.error||"失敗"), true);
 }
 function genCode(){
   var s="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", out="";
@@ -2085,7 +2085,7 @@ async function loadInvAlert(){
   var card=$("#invAlert"); if(!card) return;
   var r=await api({action:"invoicePending", uid:ME.uid});
   if(!r||!r.ok||!r.count){ card.classList.add("hide"); return; }
-  $("#invAlertTxt").textContent="⚠ "+r.month+" 有 "+r.count+" 筆應收款尚未開發票（合計 $"+r.total+"）";
+  $("#invAlertTxt").textContent=""+r.month+" 有 "+r.count+" 筆應收款尚未開發票（合計 $"+r.total+"）";
   $("#invAlertList").innerHTML=r.list.map(function(x){
     return '<span class="ipill">'+esc(x.客戶)+' $'+x.金額+'</span>';}).join("");
   card.classList.remove("hide");
@@ -2223,11 +2223,11 @@ function fmtNowLocal(){
 function repWhenConfirm(){
   var box=$("#repWhenConfirm"); if(!box) return;
   var v=$("#repWhen")?$("#repWhen").value:"";
-  if(!v){ box.textContent="⚠ 尚未選擇日期時間"; return; }
+  if(!v){ box.textContent="尚未選擇日期時間"; return; }
   var pretty=v.replace("T","　").slice(0,16);
   var todayStr=fmtNowLocal().slice(0,10);
   var tag=v.slice(0,10)===todayStr?"（今天）":"";
-  box.textContent="🕒 這筆將記錄於："+pretty+tag;
+  box.textContent="這筆將記錄於："+pretty+tag;
 }
 function pickRepCust(id,name){
   REP.cust=id; REP.name=name;
@@ -2243,7 +2243,7 @@ async function repAddSite(){
   if(v==null) return; v=v.trim(); if(!v) return;
   if((ME.sites||[]).indexOf(v)>=0){ alert("「"+v+"」已存在"); $("#repSite").value=v; return; }
   var r=await post({action:"siteSave", uid:ME.uid, sites:(ME.sites||[]).concat([v])});
-  if(!r.ok){ alert("⚠ "+(r.error||"新增失敗")); return; }
+  if(!r.ok){ alert(""+(r.error||"新增失敗")); return; }
   ME.sites=r.sites; if(typeof peopleSites!=="undefined") peopleSites=r.sites;
   buildRepSite(); $("#repSite").value=v;
   if($("#site")&&!(ME.role==="現場"&&ME.site)) $("#site").innerHTML=ME.sites.map(function(s){return '<option>'+esc(s)+'</option>';}).join("");
@@ -2256,7 +2256,7 @@ async function repAddCust(){
   if(!code){ alert("必須輸入客戶編號"); return; }
   if(ME.customers.some(function(c){return String(c.編號)===code;})){ alert("編號「"+code+"」已存在"); return; }
   var r=await post({action:"custSave", uid:ME.uid, 客戶編號:code, 客戶名稱:name, 狀態:""});
-  if(!r.ok){ alert("⚠ "+(r.error||"新增失敗")); return; }
+  if(!r.ok){ alert(""+(r.error||"新增失敗")); return; }
   ME.customers.push({編號:code, 名稱:name});
   buildRepCusts();
   pickRepCust(code,name);
@@ -2296,18 +2296,18 @@ async function repSubmit(){
   try{
     var when=$("#repWhen")?$("#repWhen").value:"";
     var r=await post({action:"record",uid:ME.uid,客戶編號:REP.cust,items:items,照片:REP.photo,場:site,時間:when});
-    if(r.ok){ m.className="msg ok"; m.textContent="✅ 已回報 "+REP.name+"（這趟視為 1 筆）"; repReset(); loadRepToday(); }
-    else { m.className="msg err"; m.textContent="⚠ "+r.error; }
+    if(r.ok){ m.className="msg ok"; m.textContent="已回報 "+REP.name+"（這趟視為 1 筆）"; repReset(); loadRepToday(); }
+    else { m.className="msg err"; m.textContent=""+r.error; }
   }catch(err){ m.className="msg err"; m.textContent="送出失敗："+err; }
-  btn.disabled=false; btn.textContent="✅ 送出回報";
+  btn.disabled=false; btn.textContent="送出回報";
 }
 async function repNoFlow(){
   if(!confirm("確定回報「今日無棧板流通」？")) return;
   var m=$("#repMsg");
   var site=(ME.role==="管理員" && $("#repSite"))?$("#repSite").value:undefined;
   var r=await post({action:"noFlow",uid:ME.uid,場:site});
-  if(r.ok){ m.className="msg ok"; m.textContent="✅ 已記錄今日無流通"; loadRepToday(); }
-  else { m.className="msg err"; m.textContent="⚠ "+(r.error||"失敗"); }
+  if(r.ok){ m.className="msg ok"; m.textContent="已記錄今日無流通"; loadRepToday(); }
+  else { m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 async function loadRepToday(){
   var box=$("#repToday"); if(!box)return;
@@ -2386,10 +2386,10 @@ async function exportPdf(){
     var r=await post(salesMode?{action:"salesStatementPdf",uid:ME.uid,cust:LOOK,month:$("#lookMonth").value}
                               :{action:"statementPdf",cust:LOOK,month:$("#lookMonth").value});
     if(r.ok){ var how=await deliverFile(r.b64, r.檔名, r.mime);
-      m.className="msg ok"; m.textContent=(how==="cancel"?"已取消分享":"✅ 已產生 "+r.檔名+"（請選擇分享或開啟）"); }
-    else { m.className="msg err"; m.textContent="⚠ "+r.error; }
+      m.className="msg ok"; m.textContent=(how==="cancel"?"已取消分享":"已產生 "+r.檔名+"（請選擇分享或開啟）"); }
+    else { m.className="msg err"; m.textContent=""+r.error; }
   }catch(err){ m.className="msg err"; m.textContent="產生失敗："+err; }
-  btn.disabled=false; btn.textContent="📄 輸出對帳單 PDF";
+  btn.disabled=false; btn.textContent="輸出對帳單 PDF";
 }
 </script>
 </body>
