@@ -1240,7 +1240,7 @@ async function loadTxq(){
   if(m){ m.className="msg"; m.style.display="block"; m.textContent="查詢中…"; }
   var r=await api({action:"txView", uid:ME.uid, from:$("#txqFrom").value, to:$("#txqTo").value, cust:""});
   if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"查詢失敗"); } txqAll=[]; if($("#txqList")) $("#txqList").innerHTML=""; return; }
-  txqAll=r.list||[];
+  txqAll=groupTx(r.list||[]);   // 同一時間＋同一客戶合併成一筆
   var seen={}, opts='<option value="">全部客戶（'+txqAll.length+' 筆）</option>';
   txqAll.forEach(function(x){ var k=x.客戶編號||x.客戶; if(k&&!seen[k]){ seen[k]=1; opts+='<option value="'+esc(k)+'">'+esc(x.客戶||x.客戶編號)+'</option>'; } });
   if($("#txqCust")){ var cur=$("#txqCust").value; $("#txqCust").innerHTML=opts; $("#txqCust").value=cur; }
@@ -1254,18 +1254,50 @@ function txqRender(){
   if(!rows.length){ box.innerHTML='<p class="csub">此區間無紀錄。</p>'; return; }
   box.innerHTML=rows.map(txqCard).join("");
 }
-function txqCard(x){
-  var color=x.動作==="送出"?"var(--red)":(x.動作==="歸還"?"var(--brand-d)":"var(--mut)");
-  var sign=x.附件
-    ? '<a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">查看簽收單</a>'
+// 同一時間＋同一客戶 → 合併為一筆（上送出大小、下歸還大小）
+function groupTx(raw){
+  var map={}, order=[];
+  raw.forEach(function(x){
+    var key=x.時間+"|"+(x.客戶編號||x.客戶);
+    var g=map[key];
+    if(!g){
+      g=map[key]={ 時間:x.時間, 客戶:x.客戶, 客戶編號:x.客戶編號, 場:x.場||"",
+        act:{ 送出:{大:0,小:0}, 歸還:{大:0,小:0}, 報廢:{大:0,小:0}, 新購:{大:0,小:0} },
+        無流通:false, 附件:"", 備註:[] };
+      order.push(g);
+    }
+    if(!g.場 && x.場) g.場=x.場;
+    if(x.動作==="無流通") g.無流通=true;
+    else if(g.act[x.動作] && (x.棧板別==="大"||x.棧板別==="小")) g.act[x.動作][x.棧板別]+=(Number(x.數量)||0);
+    if(x.附件 && !g.附件) g.附件=x.附件;
+    if(x.備註 && g.備註.indexOf(x.備註)<0) g.備註.push(x.備註);
+  });
+  return order;
+}
+function txqCard(g){
+  var lines=[];
+  function add(act,color){
+    var o=g.act[act], parts=[];
+    if(o.大) parts.push('大×'+o.大);
+    if(o.小) parts.push('小×'+o.小);
+    if(parts.length) lines.push('<div class="txqmeta"><span style="color:'+color+';font-weight:800">'+act+'　'+parts.join('　')+'</span></div>');
+  }
+  add('送出','var(--red)');
+  add('歸還','var(--brand-d)');
+  add('報廢','var(--mut)');
+  add('新購','var(--mut)');
+  if(!lines.length && g.無流通) lines.push('<div class="txqmeta" style="color:var(--mut)">當日無流通</div>');
+  var note=(g.場?esc(g.場):"")+(g.備註.length?'　'+esc(g.備註.join('／')):'');
+  var sign=g.附件
+    ? '<a class="lnk" href="'+esc(g.附件)+'" target="_blank" rel="noopener">查看簽收單</a>'
     : '<span class="csub">無簽收單</span>';
   return '<div class="txqrow">'+
     '<div>'+
-      '<div class="txqcust">'+esc(x.客戶||x.客戶編號||"—")+'</div>'+
-      '<div class="txqmeta"><span style="color:'+color+';font-weight:800">'+esc(x.動作)+' '+esc(x.棧板別)+'×'+x.數量+'</span>　'+
-        esc(x.場||"—")+(x.備註?'　'+esc(x.備註):'')+'</div>'+
+      '<div class="txqcust">'+esc(g.客戶||g.客戶編號||"—")+'</div>'+
+      lines.join("")+
+      (note?'<div class="txqmeta" style="color:var(--mut)">'+note+'</div>':'')+
     '</div>'+
-    '<div class="txqside"><div class="txqtime">'+esc(x.時間)+'</div>'+sign+'</div>'+
+    '<div class="txqside"><div class="txqtime">'+esc(g.時間)+'</div>'+sign+'</div>'+
   '</div>';
 }
 function txqBackToSales(){
