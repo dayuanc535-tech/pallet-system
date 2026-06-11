@@ -207,7 +207,7 @@
   .badge2.zero{background:var(--sunken);color:var(--mut)}
   .invrow{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
   .invrow label{font-size:12.5px;color:var(--mut);font-weight:700}
-  .invrow input[type=date]{width:auto;padding:8px 10px;font-size:14px;flex:1;min-width:140px}
+  .invrow input[type=date],.invrow input[type=month]{width:auto;padding:8px 10px;font-size:14px;flex:1;min-width:140px}
   .invrow button{margin-top:0;width:auto;padding:9px 16px;font-size:14px}
   .custgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:10px}
   .custgrid button{padding:16px 10px;border:1.5px solid var(--line2);background:var(--surface);
@@ -875,6 +875,11 @@ function renderBatch(items){
         '<input type="date" id="inv_'+esc(it.客戶編號)+'_'+it.month+'" value="'+esc(it.發票開立日期||"")+'">'+
         '<button class="btnP" onclick="saveInv(\''+esc(it.客戶編號)+'\',\''+it.month+'\')">儲存</button>'+
         (it.發票開立日期?'<span class="badge2 reb">已登記 '+esc(it.發票開立日期)+'</span>':'<span class="badge2 rcv">未登記</span>')+'</div>';
+    }else if(it.需折讓){
+      inv='<div class="invrow"><label>折讓月份</label>'+
+        '<input type="month" id="reb_'+esc(it.客戶編號)+'_'+it.month+'" value="'+esc(it.折讓月份||it.month)+'">'+
+        '<button class="btnP" onclick="saveReb(\''+esc(it.客戶編號)+'\',\''+it.month+'\')">儲存</button>'+
+        '<span class="badge2 reb">折讓月份 '+esc(it.折讓月份||it.month)+'</span></div>';
     }
     return '<div class="brow"><div class="bh">'+
       '<span class="bnm">'+esc(it.客戶)+'　<span style="color:var(--mut);font-weight:600">'+it.month+'</span></span>'+
@@ -886,6 +891,13 @@ async function saveInv(cust,month){
   var el=gid("inv_"+cust+"_"+month); if(!el) return;
   var r=await post({action:"invoiceSave",uid:ME.uid,cust:cust,month:month,date:el.value});
   if(r&&r.ok) bMsg("已登記發票開立日期："+r.客戶+" "+month+" → "+(r.發票開立日期||"（清空）"));
+  else bMsg((r&&r.error)||"登記失敗",1);
+  batchGen();
+}
+async function saveReb(cust,month){
+  var el=gid("reb_"+cust+"_"+month); if(!el) return;
+  var r=await post({action:"rebateSave",uid:ME.uid,cust:cust,month:month,rebMonth:el.value});
+  if(r&&r.ok) bMsg("已登記折讓月份："+r.客戶+" "+month+" → "+(r.折讓月份||"（清空）"));
   else bMsg((r&&r.error)||"登記失敗",1);
   batchGen();
 }
