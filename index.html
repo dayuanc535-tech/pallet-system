@@ -287,6 +287,17 @@
   .dcard.on{border-color:var(--ac,var(--brand));background:var(--acs,var(--brand-soft))}
   .daterow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
   .daterow input[type=date]{width:auto;flex:1;min-width:130px}
+  /* ---- 進出明細列 ---- */
+  .txqrow{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+    padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    margin-bottom:9px;box-shadow:var(--sh)}
+  .txqrow .txqcust{font-weight:800;font-size:16px;color:var(--ink)}
+  .txqrow .txqmeta{font-size:14px;color:var(--ink2);margin-top:4px;line-height:1.55}
+  .txqrow .txqside{text-align:right;white-space:nowrap;flex:0 0 auto;
+    display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+  .txqrow .txqtime{font-size:12.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+  .txqrow .txqside .lnk{font-size:13.5px}
+  .txqrow .txqside .csub{margin:0}
   .chip{border:1px solid var(--line2);background:var(--surface);color:var(--ink2);border-radius:999px;
     padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s}
   .chip:hover{background:var(--sunken)}
@@ -426,6 +437,10 @@
       <button data-tab="look" class="hide">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <span>明細查詢</span>
+      </button>
+      <button data-tab="tx" class="hide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        <span>進出明細</span>
       </button>
       <button data-tab="set" class="hide">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7zM14 3v4h4M9.5 13h5M9.5 17h5"/></svg>
@@ -671,6 +686,23 @@
         <button type="button" class="btnP" id="lkGo" style="margin-top:14px">查詢明細</button>
       </section>
 
+      <!-- 進出明細（唯讀：業務／帳務／管理員）-->
+      <section id="txq" class="card hide">
+        <a href="#" class="lnk hide" id="txqBack" style="display:inline-block;margin-bottom:10px">← 返回客戶查詢</a>
+        <h2 class="ctitle">棧板進出明細</h2>
+        <p class="csub">每一筆回報（一個時間、單一客戶）都列在下方，可查看當筆的簽收單。</p>
+        <div class="daterow">
+          <input type="date" id="txqFrom">
+          <span style="color:var(--mut)">至</span>
+          <input type="date" id="txqTo">
+          <button type="button" class="btnG" id="txqGo" style="white-space:nowrap;padding:11px 18px">查詢</button>
+        </div>
+        <label class="fld" style="margin-top:4px">客戶篩選</label>
+        <select id="txqCust"><option value="">全部客戶</option></select>
+        <div class="msg" id="txqMsg" style="margin-top:12px"></div>
+        <div id="txqList" style="margin-top:12px"></div>
+      </section>
+
       <!-- 月結算 -->
       <section id="set" class="card hide">
         <h2 class="ctitle">月結算</h2>
@@ -860,6 +892,7 @@
       <label class="fld">我的客戶</label>
       <select id="salesPick"><option value="">— 請選擇客戶 —</option></select>
       <div id="salesEmpty" class="big hide" style="color:var(--mut);margin-top:14px">目前沒有指派給你的客戶，請洽管理員在「客戶編輯 → 負責業務」指派。</div>
+      <button type="button" class="btnP" id="salesTxBtn" style="margin-top:16px">查全部棧板進出明細</button>
     </div>
     <div style="text-align:center;margin-top:6px"><a href="#" class="lnk" id="salesLogout">登出</a></div>
   </div>
@@ -1081,6 +1114,7 @@ function boot(){
       sp.onchange=function(){ var v=sp.value; if(v){ salesMode=true; lookReturn="sales"; openLook(v); } };
     }
     $("#salesLogout").onclick=logout;
+    if($("#salesTxBtn")) $("#salesTxBtn").onclick=salesOpenTx;
     $("#salesView").classList.remove("hide");
     return;
   }
@@ -1107,9 +1141,10 @@ function boot(){
   $("#pact").innerHTML = acts.map(function(a,i){
     return '<button data-v="'+a+'"'+(i===0?' class="on"':'')+'>'+a+'</button>';}).join("");
 
-  // 做帳/管理員 可看月結算
+  // 做帳/管理員 可看月結算＋進出明細
   if(ME.role==="做帳" || ME.role==="管理員"){
     $("[data-tab=set]").classList.remove("hide");
+    $("[data-tab=tx]").classList.remove("hide");
     buildSetPickers();
   }
   // 管理員：客戶及操作人員設定 + 月結算 ＋ 回報 ＋ 明細查詢
@@ -1163,11 +1198,13 @@ function switchTab(t){
   $("#report").classList.toggle("hide", t!=="report");
   $("#qry").classList.toggle("hide", t!=="qry");
   $("#lookpick").classList.toggle("hide", t!=="look");
+  $("#txq").classList.toggle("hide", t!=="tx");
   $("#set").classList.toggle("hide", t!=="set");
   $("#peoplemgr").classList.toggle("hide", t!=="people");
   if(t==="dash") loadDashboard();
   if(t==="report"){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); loadRepToday(); }
   if(t==="qry") loadBalances();
+  if(t==="tx") txqOpen();
   if(t==="set"){ loadSettlement(); }
   if(t==="people"){ loadPeople(); loadCustomers(); switchMgr($("#mgrPick")?$("#mgrPick").value:"site"); }
 }
@@ -1177,6 +1214,70 @@ function switchMgr(v){
   if($("#mgrPeople")) $("#mgrPeople").classList.toggle("hide", v!=="people");
   if($("#mgrTx"))     $("#mgrTx").classList.toggle("hide", v!=="tx");
   if(v==="tx") txMgrInit();
+}
+
+/* ---- 進出明細（唯讀：業務／帳務／管理員，每筆可查看簽收單）---- */
+var txqInited=false, txqAll=[];
+function txqOpen(){
+  if($("#txqFrom")&&!$("#txqFrom").value){
+    var d=new Date(), mm=("0"+(d.getMonth()+1)).slice(-2);
+    $("#txqFrom").value=d.getFullYear()+"-"+mm+"-01";
+    $("#txqTo").value=d.getFullYear()+"-"+mm+"-"+("0"+d.getDate()).slice(-2);
+  }
+  if(!txqInited){
+    txqInited=true;
+    if($("#txqGo")) $("#txqGo").onclick=loadTxq;
+    if($("#txqCust")) $("#txqCust").onchange=txqRender;
+    if($("#txqBack")) $("#txqBack").onclick=function(ev){ ev.preventDefault(); txqBackToSales(); };
+  }
+  if($("#txqBack")) $("#txqBack").classList.toggle("hide", ME.role!=="業務");
+  loadTxq();
+}
+async function loadTxq(){
+  var m=$("#txqMsg");
+  if(m){ m.className="msg"; m.style.display="block"; m.textContent="查詢中…"; }
+  var r=await api({action:"txView", uid:ME.uid, from:$("#txqFrom").value, to:$("#txqTo").value, cust:""});
+  if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"查詢失敗"); } txqAll=[]; if($("#txqList")) $("#txqList").innerHTML=""; return; }
+  txqAll=r.list||[];
+  var seen={}, opts='<option value="">全部客戶（'+txqAll.length+' 筆）</option>';
+  txqAll.forEach(function(x){ var k=x.客戶編號||x.客戶; if(k&&!seen[k]){ seen[k]=1; opts+='<option value="'+esc(k)+'">'+esc(x.客戶||x.客戶編號)+'</option>'; } });
+  if($("#txqCust")){ var cur=$("#txqCust").value; $("#txqCust").innerHTML=opts; $("#txqCust").value=cur; }
+  txqRender();
+}
+function txqRender(){
+  var m=$("#txqMsg"), box=$("#txqList"); if(!box) return;
+  var cust=$("#txqCust")?$("#txqCust").value:"";
+  var rows=cust?txqAll.filter(function(x){return String(x.客戶編號||x.客戶)===cust;}):txqAll;
+  if(m){ m.className="msg ok"; m.textContent="共 "+rows.length+" 筆"; }
+  if(!rows.length){ box.innerHTML='<p class="csub">此區間無紀錄。</p>'; return; }
+  box.innerHTML=rows.map(txqCard).join("");
+}
+function txqCard(x){
+  var color=x.動作==="送出"?"var(--red)":(x.動作==="歸還"?"var(--brand-d)":"var(--mut)");
+  var sign=x.附件
+    ? '<a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">查看簽收單</a>'
+    : '<span class="csub">無簽收單</span>';
+  return '<div class="txqrow">'+
+    '<div>'+
+      '<div class="txqcust">'+esc(x.客戶||x.客戶編號||"—")+'</div>'+
+      '<div class="txqmeta"><span style="color:'+color+';font-weight:800">'+esc(x.動作)+' '+esc(x.棧板別)+'×'+x.數量+'</span>　'+
+        esc(x.場||"—")+(x.備註?'　'+esc(x.備註):'')+'</div>'+
+    '</div>'+
+    '<div class="txqside"><div class="txqtime">'+esc(x.時間)+'</div>'+sign+'</div>'+
+  '</div>';
+}
+function txqBackToSales(){
+  $("#app").classList.add("hide");
+  if($("#salesView")) $("#salesView").classList.remove("hide");
+}
+function salesOpenTx(){
+  if($("#salesView")) $("#salesView").classList.add("hide");
+  $("#app").classList.remove("hide");
+  $("#who").innerHTML='<b>'+esc(ME.name)+'</b><br>業務人員 · <a href="#" class="logout" id="logoutSx">登出</a>';
+  var lo=$("#logoutSx"); if(lo) lo.onclick=logout;
+  document.querySelectorAll("#tabs button").forEach(function(b){ b.classList.add("hide"); });
+  var t=$("[data-tab=tx]"); if(t) t.classList.remove("hide");
+  switchTab("tx");
 }
 
 /* ---- 棧板明細管理（管理員）---- */
