@@ -288,6 +288,23 @@
   .logout{color:var(--brand-d);font-weight:700;text-decoration:none}
   .logout:hover{text-decoration:underline}
 
+  /* ---- 桌機版入口卡放大 ---- */
+  @media(min-width:760px){
+    .gate{max-width:640px;padding:72px 20px}
+    .gatecard{max-width:500px;margin:44px auto 0;padding:44px 40px;border-radius:24px}
+    .glogo{width:76px;height:76px;border-radius:21px;margin-bottom:22px}
+    .gatecard .gt{font-size:27px}
+    .gatecard .gs{font-size:15.5px;margin:9px 0 28px}
+    .gentry{padding:18px 22px;margin-top:14px;border-radius:17px;gap:15px}
+    .gentry .gei{width:48px;height:48px;border-radius:13px}
+    .gentry .gei svg{width:24px;height:24px}
+    .gentry .geh{font-size:18px}
+    .gentry .ged{font-size:13.5px;margin-top:3px}
+    .gentry .gea{font-size:24px}
+    .gatecard input{font-size:18px;padding:14px 16px}
+    .gswitch{margin-top:24px;font-size:14px}
+  }
+
   /* ---- 儀表板 ---- */
   .dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
   .dcard{--ac:var(--brand);--acs:var(--brand-soft);
