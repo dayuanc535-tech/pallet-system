@@ -659,6 +659,19 @@
   [data-theme=dark] .themebtn .ic-sun{display:none}
   [data-theme=dark] .themebtn .ic-moon{display:block}
   @media print{.themebtn{display:none}}
+  /* 觸控音效開關（與主題鈕同款，堆疊其上）*/
+  .soundbtn{position:fixed;right:18px;bottom:78px;z-index:60;width:48px;height:48px;border-radius:999px;
+    display:grid;place-items:center;cursor:pointer;border:1px solid var(--line2);
+    background:var(--raised);color:var(--ink2);box-shadow:var(--sh-lg);
+    transition:transform .15s var(--ease),background .15s,color .15s,border-color .15s}
+  .soundbtn:hover{transform:translateY(-2px) scale(1.04);color:var(--ink);border-color:var(--brand)}
+  .soundbtn:active{transform:scale(.95)}
+  .soundbtn svg{width:22px;height:22px}
+  .soundbtn .ic-off{display:none}
+  [data-sound=off] .soundbtn{color:var(--ink3,#a79a86)}
+  [data-sound=off] .soundbtn .ic-on{display:none}
+  [data-sound=off] .soundbtn .ic-off{display:block}
+  @media print{.soundbtn{display:none}}
 </style>
 <script>
   /* 早期套用主題，避免畫面閃白 */
@@ -666,6 +679,8 @@
     var t=localStorage.getItem('pallet_theme');
     if(!t){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}
     document.documentElement.setAttribute('data-theme',t);
+    var s=localStorage.getItem('pallet_sound')||'on';
+    document.documentElement.setAttribute('data-sound',s);
   }catch(e){}})();
 </script>
 </head>
@@ -702,6 +717,15 @@
     </svg>
     <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+    </svg>
+  </button>
+
+  <button type="button" class="soundbtn" id="soundBtn" aria-label="切換觸控音效" title="切換觸控音效">
+    <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/>
+    </svg>
+    <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>
     </svg>
   </button>
 
@@ -1341,6 +1365,67 @@ function toggleTheme(){
   if(typeof toast==="function") toast(cur==="dark"?"已切換為深色模式":"已切換為淺色模式","info");
 }
 (function(){var b=document.getElementById("themeBtn"); if(b) b.addEventListener("click",toggleTheme);})();
+
+/* ---- 觸控音效（Web Audio 即時合成，免音檔；每頁、每鍵、每位使用者音色都不同）---- */
+(function(){
+  var KEY="pallet_sound", ctx=null;
+  function soundOn(){ return document.documentElement.getAttribute("data-sound")!=="off"; }
+  function hash(str){ var h=2166136261; str=String(str||""); for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return (h>>>0); }
+  var PENTA=[0,2,4,7,9];                       // 五聲音階：任意組合都和諧不刺耳
+  var PAGE_ROOT={login:-5,dash:0,rec:2,report:4,qry:7,look:9,tx:5,set:-3,people:12};
+  function currentPage(){
+    var t=document.querySelector("#tabs button.on");
+    if(t&&t.dataset.tab) return t.dataset.tab;
+    var app=document.getElementById("app");
+    if(!app||app.classList.contains("hide")) return "login";
+    return "dash";
+  }
+  function voice(){                            // 依登入者衍生專屬「音色簽名」
+    var uid=(window.ME&&ME.uid)||"guest", h=hash(uid), w=["sine","triangle"];
+    return { wave:w[h%w.length], octave:(Math.floor(h/7)%3)-1, detune:(Math.floor(h/13)%21)-10,
+             decay:0.075+(Math.floor(h/17)%6)*0.012, cutoff:1600+(Math.floor(h/19)%5)*600 };
+  }
+  function freqFor(page,k,v){
+    var root=(PAGE_ROOT[page]!=null?PAGE_ROOT[page]:0);
+    var semi=root+PENTA[hash(k)%PENTA.length]+v.octave*12;   // 頁基音＋本鍵音＋使用者八度
+    return 220*Math.pow(2,semi/12);
+  }
+  function play(k){
+    if(!soundOn()) return;
+    try{
+      if(!ctx){ var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; ctx=new AC(); }
+      if(ctx.state==="suspended") ctx.resume();
+      var v=voice(), now=ctx.currentTime, f=freqFor(currentPage(),k,v);
+      var o1=ctx.createOscillator(); o1.type=v.wave; o1.frequency.value=f; o1.detune.value=v.detune;
+      var o2=ctx.createOscillator(); o2.type="sine"; o2.frequency.value=f*2;   // 泛音添質感
+      var g1=ctx.createGain(), g2=ctx.createGain(), lp=ctx.createBiquadFilter();
+      lp.type="lowpass"; lp.frequency.value=v.cutoff;
+      g1.gain.setValueAtTime(0.0001,now); g1.gain.exponentialRampToValueAtTime(0.16,now+0.004);
+      g1.gain.exponentialRampToValueAtTime(0.0001,now+v.decay);
+      g2.gain.setValueAtTime(0.0001,now); g2.gain.exponentialRampToValueAtTime(0.05,now+0.004);
+      g2.gain.exponentialRampToValueAtTime(0.0001,now+v.decay*0.7);
+      o1.connect(g1); o2.connect(g2); g1.connect(lp); g2.connect(lp); lp.connect(ctx.destination);
+      o1.start(now); o2.start(now); o1.stop(now+v.decay+0.02); o2.stop(now+v.decay+0.02);
+      if(navigator.vibrate) try{ navigator.vibrate(5); }catch(e){}
+    }catch(e){}
+  }
+  var SEL="button, a.lnk, a[role=button], [role=button], .multidd-trigger, label.chk, .chip, .seg, input[type=checkbox], input[type=radio], select";
+  document.addEventListener("pointerdown", function(e){
+    var t=e.target.closest&&e.target.closest(SEL);
+    if(!t||t.disabled) return;
+    if(t.classList&&t.classList.contains("soundbtn")) return;   // 開關鈕本身不發音
+    var k=t.id||t.getAttribute("data-tab")||(t.textContent||"").trim().slice(0,12)||t.tagName;
+    play(k);
+  }, true);
+  function setSound(s){ document.documentElement.setAttribute("data-sound",s); try{localStorage.setItem(KEY,s);}catch(e){} }
+  function toggleSound(){
+    var off=document.documentElement.getAttribute("data-sound")==="off";
+    setSound(off?"on":"off");
+    if(off) play("demo");                                       // 開啟時示範一聲
+    if(typeof toast==="function") toast(off?"已開啟觸控音效 🔊":"已關閉觸控音效 🔇","info");
+  }
+  var b=document.getElementById("soundBtn"); if(b) b.addEventListener("click",toggleSound);
+})();
 
 function api(params){
   var u = GAS_URL + "?" + Object.keys(params).map(function(k){
