@@ -2700,7 +2700,7 @@ async function loadSettlement(){
       '<td>'+c.歸還.大+'/'+c.歸還.小+'</td>'+
       '<td class="'+cls+'">$'+c.金額+'</td>'+
       '<td>'+c.類別+'</td>'+
-      '<td><span class="plt">大</span>'+Math.max(0,c.期末.大)+'　<span class="plt">小</span>'+Math.max(0,c.期末.小)+'</td>'+
+      '<td class="col-out"><span class="plt">大</span>'+Math.max(0,c.期末.大)+'　<span class="plt">小</span>'+Math.max(0,c.期末.小)+'</td>'+
       '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\',\''+c.__month+'\')">PDF</button></td></tr>';
   }).join("");
   applyInclOut();   // 依勾選顯示／隱藏「累計未還」欄
