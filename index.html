@@ -943,6 +943,8 @@
         </div>
         <p class="csub" style="margin:8px 0 0">預設為現在時間，可改成實際發生的時間（例如補登昨天）。</p>
 
+        <button type="button" class="btnG" id="repNoFlow" style="margin-top:14px;width:100%">今日無棧板流通紀錄</button>
+
         <label class="fld">選擇客戶</label>
         <div id="repCusts" class="custgrid"></div>
 
@@ -3233,6 +3235,7 @@ function buildReport(){
   $("#repPhoto").onchange=repOnPhoto;
   $("#repSubmit").onclick=repSubmit;
   if($("#repNow")) $("#repNow").onclick=function(){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); repWhenConfirm(); };
+  if($("#repNoFlow")) $("#repNoFlow").onclick=function(){ toast("已確認今日無棧板流通紀錄","ok"); };
   if($("#repWhen")) $("#repWhen").oninput=repWhenConfirm;
 }
 function buildRepSite(){
