@@ -1235,7 +1235,7 @@ function _p2(n){ return ("0"+n).slice(-2); }
 function tickClock(){
   var d=$("#clockDate"), t=$("#clockTime"); if(!d||!t) return;
   var now=new Date(), wk=["日","一","二","三","四","五","六"][now.getDay()];
-  d.textContent=now.getFullYear()+"/"+_p2(now.getMonth()+1)+"/"+_p2(now.getDate())+"（週"+wk+"）";
+  d.textContent=(now.getFullYear()-1911)+"/"+_p2(now.getMonth()+1)+"/"+_p2(now.getDate())+"（週"+wk+"）";
   t.textContent=_p2(now.getHours())+":"+_p2(now.getMinutes())+":"+_p2(now.getSeconds());
 }
 tickClock(); setInterval(tickClock, 1000);
@@ -1614,7 +1614,7 @@ async function adjLoadHist(){
         '<div class="adjhcust">'+esc(x.客戶||x.客戶編號||"—")+'　'+delta+'</div>'+
         (x.備註?'<div class="adjhnote">'+esc(x.備註)+'</div>':'')+
       '</div>'+
-      '<div class="adjhmeta"><div class="adjhtime">'+esc(x.時間)+'</div><div class="adjhby">'+esc(x.經手人||"")+'</div></div>'+
+      '<div class="adjhmeta"><div class="adjhtime">'+esc(rocDT(x.時間))+'</div><div class="adjhby">'+esc(x.經手人||"")+'</div></div>'+
     '</div>';
   }).join("");
 }
@@ -1732,7 +1732,7 @@ function txqnWhenConfirm(){
   var box=$("#txqnWhenConfirm"); if(!box) return;
   var v=$("#txqnWhen")?$("#txqnWhen").value:"";
   if(!v){ box.textContent="尚未選擇日期時間"; return; }
-  var pretty=v.replace("T","　").slice(0,16);
+  var pretty=rocDT(v);
   var todayStr=fmtNowLocal().slice(0,10);
   box.textContent="這筆將補登於："+pretty+(v.slice(0,10)===todayStr?"（今天）":"");
 }
@@ -1840,7 +1840,7 @@ function txqCard(g){
       (note?'<div class="txqmeta" style="color:var(--mut)">'+note+'</div>':'')+
       (ME.role==="管理員"?txqManage(g):"")+
     '</div>'+
-    '<div class="txqside"><div class="txqtime">'+esc(g.時間)+'</div>'+sign+'</div>'+
+    '<div class="txqside"><div class="txqtime">'+esc(rocDT(g.時間))+'</div>'+sign+'</div>'+
   '</div>';
 }
 // 管理員：每筆下方可展開逐列修改／刪除
@@ -1916,7 +1916,7 @@ function txnWhenConfirm(){
   var box=$("#txnWhenConfirm"); if(!box) return;
   var v=$("#txnWhen")?$("#txnWhen").value:"";
   if(!v){ box.textContent="尚未選擇日期時間"; return; }
-  var pretty=v.replace("T","　").slice(0,16);
+  var pretty=rocDT(v);
   var todayStr=fmtNowLocal().slice(0,10);
   var tag=v.slice(0,10)===todayStr?"（今天）":"";
   box.textContent="這筆將補登於："+pretty+tag;
@@ -1936,7 +1936,7 @@ async function loadTxList(){
 function txCard(x){
   var color=x.動作==="送出"?"var(--red)":(x.動作==="歸還"?"var(--brand-d)":"var(--mut)");
   return '<div class="editbox" id="txrow-'+x.row+'" style="margin-bottom:10px">'+
-    '<div class="erow"><span class="elab">時間</span><b>'+esc(x.時間)+'</b></div>'+
+    '<div class="erow"><span class="elab">時間</span><b>'+esc(rocDT(x.時間))+'</b></div>'+
     '<div class="erow"><span class="elab">客戶</span><b>'+esc(x.客戶||x.客戶編號)+'</b></div>'+
     '<div class="erow"><span class="elab">場 / 動作</span>'+
       '<b style="color:'+color+'">'+esc(x.場||"—")+'　'+esc(x.動作)+' '+esc(x.棧板別)+'×'+x.數量+'</b></div>'+
@@ -2105,7 +2105,7 @@ function buildBatchPickers(){
   for(var i=0;i<12;i++){
     var d=new Date(now.getFullYear(), now.getMonth()-i, 1);
     var m=d.getFullYear()+"-"+pad2(d.getMonth()+1);
-    opts.push('<label class="chk" data-v="'+m+'"><input type="checkbox"'+(i===0?" checked":"")+'><span>'+m+'</span></label>');
+    opts.push('<label class="chk" data-v="'+m+'"><input type="checkbox"'+(i===0?" checked":"")+'><span>'+rocMonth(m)+'</span></label>');
   }
   mg.innerHTML=opts.join("");
   document.querySelectorAll("#bCusts .chk,#bMonths .chk").forEach(function(l){
@@ -2146,15 +2146,15 @@ function renderBatch(items){
       inv='<div class="invrow"><label>發票開立日期</label>'+
         '<input type="date" id="inv_'+esc(it.客戶編號)+'_'+it.month+'" value="'+esc(it.發票開立日期||"")+'">'+
         '<button class="btnP" onclick="saveInv(\''+esc(it.客戶編號)+'\',\''+it.month+'\')">儲存</button>'+
-        (it.發票開立日期?'<span class="badge2 reb">已登記 '+esc(it.發票開立日期)+'</span>':'<span class="badge2 rcv">未登記</span>')+'</div>';
+        (it.發票開立日期?'<span class="badge2 reb">已登記 '+esc(rocDate(it.發票開立日期))+'</span>':'<span class="badge2 rcv">未登記</span>')+'</div>';
     }else if(it.需折讓){
       inv='<div class="invrow"><label>折讓月份</label>'+
         '<input type="month" id="reb_'+esc(it.客戶編號)+'_'+it.month+'" value="'+esc(it.折讓月份||it.month)+'">'+
         '<button class="btnP" onclick="saveReb(\''+esc(it.客戶編號)+'\',\''+it.month+'\')">儲存</button>'+
-        '<span class="badge2 reb">折讓月份 '+esc(it.折讓月份||it.month)+'</span></div>';
+        '<span class="badge2 reb">折讓月份 '+esc(rocMonth(it.折讓月份||it.month))+'</span></div>';
     }
     return '<div class="brow"><div class="bh">'+
-      '<span class="bnm">'+esc(it.客戶)+'　<span style="color:var(--mut);font-weight:600">'+it.month+'</span></span>'+
+      '<span class="bnm">'+esc(it.客戶)+'　<span style="color:var(--mut);font-weight:600">'+rocMonth(it.month)+'</span></span>'+
       '<span class="badge2 '+cls+'">'+it.類別+' $'+it.金額+'</span></div>'+
       '<div class="csub" style="margin:8px 0 0">'+line("民雄")+'<br>'+line("義竹")+'</div>'+inv+'</div>';
   }).join("");
@@ -2162,14 +2162,14 @@ function renderBatch(items){
 async function saveInv(cust,month){
   var el=gid("inv_"+cust+"_"+month); if(!el) return;
   var r=await post({action:"invoiceSave",uid:ME.uid,cust:cust,month:month,date:el.value});
-  if(r&&r.ok) bMsg("已登記發票開立日期："+r.客戶+" "+month+" → "+(r.發票開立日期||"（清空）"));
+  if(r&&r.ok) bMsg("已登記發票開立日期："+r.客戶+" "+rocMonth(month)+" → "+(r.發票開立日期?rocDate(r.發票開立日期):"（清空）"));
   else bMsg((r&&r.error)||"登記失敗",1);
   batchGen();
 }
 async function saveReb(cust,month){
   var el=gid("reb_"+cust+"_"+month); if(!el) return;
   var r=await post({action:"rebateSave",uid:ME.uid,cust:cust,month:month,rebMonth:el.value});
-  if(r&&r.ok) bMsg("已登記折讓月份："+r.客戶+" "+month+" → "+(r.折讓月份||"（清空）"));
+  if(r&&r.ok) bMsg("已登記折讓月份："+r.客戶+" "+rocMonth(month)+" → "+(r.折讓月份?rocMonth(r.折讓月份):"（清空）"));
   else bMsg((r&&r.error)||"登記失敗",1);
   batchGen();
 }
@@ -2393,7 +2393,7 @@ function buildSetPickers(){
   for(var i=0;i<12;i++){
     var d=new Date(now.getFullYear(), now.getMonth()-i, 1);
     var m=d.getFullYear()+"-"+pad2(d.getMonth()+1);
-    opts.push('<label class="chk" data-v="'+m+'"><input type="checkbox"'+(i===0?" checked":"")+'><span>'+m+'</span></label>');
+    opts.push('<label class="chk" data-v="'+m+'"><input type="checkbox"'+(i===0?" checked":"")+'><span>'+rocMonth(m)+'</span></label>');
   }
   mg.innerHTML=opts.join("");
   document.querySelectorAll("#setCusts .chk,#setMonths .chk").forEach(function(l){
@@ -2404,7 +2404,7 @@ function buildSetPickers(){
 }
 function updateSetLabels(){
   var m=pickedVals("#setMonths").sort(), ml=$("#setMonLab");
-  if(ml) ml.textContent = !m.length ? "尚未選擇月份" : (m.length===1 ? m[0] : "已選 "+m.length+" 個月份");
+  if(ml) ml.textContent = !m.length ? "尚未選擇月份" : (m.length===1 ? rocMonth(m[0]) : "已選 "+m.length+" 個月份");
   var c=pickedVals("#setCusts"), cl=$("#setCustLab");
   if(cl) cl.textContent = !c.length ? "全部客戶" : "已選 "+c.length+" 個客戶";
 }
@@ -2452,7 +2452,7 @@ async function loadSettlement(){
     else if(c.類別==="折讓") sumReb+=Number(c.金額)||0;
   });
   var cScope=custFilter.length?("已選 "+custFilter.length+" 家"):"全部客戶";
-  var mScope=months.length>1?(months.length+" 個月合計"):months[0];
+  var mScope=months.length>1?(months.length+" 個月合計"):rocMonth(months[0]);
   $("#setSummary").innerHTML=
     box("應開發票","$"+sumOpen,cScope+" · "+mScope)+
     box("折讓","$"+sumReb,cScope+" · "+mScope);
@@ -2461,7 +2461,7 @@ async function loadSettlement(){
   all.sort(function(a,b){ return a.__month<b.__month?-1:(a.__month>b.__month?1:String(a.編號).localeCompare(String(b.編號))); });
   $("#setBody").innerHTML=all.map(function(c){
     var cls=c.類別==="應開發票"?"pos":"";
-    return '<tr><td>'+c.__month+'</td><td>'+esc(c.名稱)+'</td>'+
+    return '<tr><td>'+rocMonth(c.__month)+'</td><td>'+esc(c.名稱)+'</td>'+
       '<td>'+c.送出.大+'/'+c.送出.小+'</td>'+
       '<td>'+c.歸還.大+'/'+c.歸還.小+'</td>'+
       '<td class="'+cls+'">$'+c.金額+'</td>'+
@@ -2482,7 +2482,7 @@ async function loadAllDetails(months, custFilter){
     var m=months[i];
     var p=m.split("-"), last=new Date(+p[0], +p[1], 0).getDate();
     var from=m+"-01", to=m+"-"+("0"+last).slice(-2);
-    var sub=box.querySelector(".setdhead .sub"); if(sub) sub.textContent="載入中… "+(i+1)+"/"+months.length+"（"+m+"）";
+    var sub=box.querySelector(".setdhead .sub"); if(sub) sub.textContent="載入中… "+(i+1)+"/"+months.length+"（"+rocMonth(m)+"）";
     var r=await api({action:"txView", uid:ME.uid, from:from, to:to, cust:""});
     var list=(r&&r.ok&&r.list)?r.list:[];
     if(custFilter.length) list=list.filter(function(x){return custFilter.indexOf(String(x.客戶編號))>=0;});
@@ -2496,7 +2496,7 @@ async function loadAllDetails(months, custFilter){
     });
     order.forEach(function(k){
       var b=buckets[k];
-      html+='<div class="setdhead">'+esc(b.名稱)+' · '+m+'<span class="sub">共 '+b.list.length+' 筆</span></div>'+
+      html+='<div class="setdhead">'+esc(b.名稱)+' · '+rocMonth(m)+'<span class="sub">共 '+b.list.length+' 筆</span></div>'+
         b.list.map(txqCard).join("");
     });
   }
@@ -2544,7 +2544,7 @@ async function setCustPdf(btn, cust, name, m){
     if(r.ok){
       var how=await deliverFile(r.b64, r.檔名, r.mime);
       msg.className="msg ok";
-      msg.textContent=(how==="cancel"?"已取消分享":""+esc(name)+" "+m+" 月報表已產生："+r.檔名+"（請選擇分享或開啟）");
+      msg.textContent=(how==="cancel"?"已取消分享":""+esc(name)+" "+rocMonth(m)+" 月報表已產生："+r.檔名+"（請選擇分享或開啟）");
     }
     else { msg.className="msg err"; msg.textContent=""+r.error; }
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
@@ -2595,7 +2595,7 @@ function fillMine(r){
       '<span style="color:'+color+';font-weight:700;min-width:42px">'+x.動作+'</span>'+
       '<span style="font-weight:700">'+x.棧板別+'棧板 ×'+x.數量+'</span>'+
       '<span style="color:var(--mut);font-size:12px;margin-left:auto;text-align:right">'+
-        x.時間+'<br>'+(x.場||'')+att+'</span></div>';
+        rocDT(x.時間)+'<br>'+(x.場||'')+att+'</span></div>';
   }).join("");
 }
 
@@ -2848,7 +2848,7 @@ async function loadInvAlert(){
   var card=$("#invAlert"); if(!card) return;
   var r=await api({action:"invoicePending", uid:ME.uid});
   if(!r||!r.ok||!r.count){ card.classList.add("hide"); return; }
-  $("#invAlertTxt").textContent=""+r.month+" 有 "+r.count+" 筆應收款尚未開發票（合計 $"+r.total+"）";
+  $("#invAlertTxt").textContent=""+rocMonth(r.month)+" 有 "+r.count+" 筆應收款尚未開發票（合計 $"+r.total+"）";
   $("#invAlertList").innerHTML=r.list.map(function(x){
     return '<span class="ipill">'+esc(x.客戶)+' $'+x.金額+'</span>';}).join("");
   card.classList.remove("hide");
@@ -2883,7 +2883,7 @@ function renderDetail(prefix, list){
 }
 function detailRow(prefix,x){
   return '<tr id="'+prefix+'-'+x.row+'">'+
-    '<td style="white-space:nowrap;font-size:12px;color:var(--mut)">'+esc(x.時間.slice(5,16))+'</td>'+
+    '<td style="white-space:nowrap;font-size:12px;color:var(--mut)">'+esc(rocDT(x.時間))+'</td>'+
     '<td>'+esc(x.場)+'</td><td>'+x.棧板別+'</td><td>'+x.數量+'</td>'+
     '<td>'+esc(x.備註||'')+'</td>'+
     '<td style="white-space:nowrap"><a class="lnk" onclick="editTx(\''+prefix+'\','+x.row+');return false">編輯</a> '+
@@ -2897,7 +2897,7 @@ function editTx(prefix,row){
   var tr=$("#"+prefix+"-"+row); if(!tr)return;
   tr.classList.add("ed");
   tr.innerHTML=
-    '<td style="font-size:12px;color:var(--mut)">'+esc(x.時間.slice(5,16))+'</td>'+
+    '<td style="font-size:12px;color:var(--mut)">'+esc(rocDT(x.時間))+'</td>'+
     '<td><select id="ez-'+row+'"><option'+(x.場==="民雄"?" selected":"")+'>民雄</option><option'+(x.場==="義竹"?" selected":"")+'>義竹</option></select></td>'+
     '<td><select id="et-'+row+'"><option'+(x.棧板別==="大"?" selected":"")+'>大</option><option'+(x.棧板別==="小"?" selected":"")+'>小</option></select></td>'+
     '<td><input type="number" id="eq-'+row+'" value="'+x.數量+'" min="1" style="width:64px"></td>'+
@@ -2921,7 +2921,7 @@ function renderLedger(list){
   $("#dLedBody").innerHTML=list.map(function(x){
     var cls=x.動作==="送出"?"out":(x.動作==="歸還"?"in":"dep");
     var sign=x.附件?'<a class="lnk" href="'+esc(x.附件.split(" ")[0])+'" target="_blank" rel="noopener">看</a>':'—';
-    return '<tr><td style="white-space:nowrap;font-size:12px;color:var(--mut)">'+esc(x.時間.slice(5,16))+'</td>'+
+    return '<tr><td style="white-space:nowrap;font-size:12px;color:var(--mut)">'+esc(rocDT(x.時間))+'</td>'+
       '<td>'+esc(x.場)+'</td><td>'+esc(x.客戶||'—')+'</td>'+
       '<td><span class="badge '+cls+'">'+esc(x.動作)+'</span></td>'+
       '<td>'+x.棧板別+'</td><td>'+x.數量+'</td><td>'+sign+'</td></tr>';
@@ -2982,11 +2982,30 @@ function fmtNowLocal(){
   var d=new Date(); function p(n){return ("0"+n).slice(-2);}
   return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes());
 }
+/* ---- 中華民國（民國）日期顯示輔助：只轉「顯示文字」，不動輸入框/後端的西元值 ---- */
+function rocDate(s){
+  var m=String(s==null?"":s).match(/(\d{4})\D(\d{1,2})\D(\d{1,2})/);
+  if(!m) return String(s==null?"":s);
+  return (m[1]-1911)+"/"+("0"+m[2]).slice(-2)+"/"+("0"+m[3]).slice(-2);
+}
+function rocDT(s){
+  var str=String(s==null?"":s);
+  var m=str.match(/(\d{4})\D(\d{1,2})\D(\d{1,2})(?:[ T　](\d{1,2}):(\d{2}))?/);
+  if(!m) return str;
+  var out=(m[1]-1911)+"/"+("0"+m[2]).slice(-2)+"/"+("0"+m[3]).slice(-2);
+  if(m[4]!=null) out+=" "+("0"+m[4]).slice(-2)+":"+m[5];
+  return out;
+}
+function rocMonth(s){
+  var m=String(s==null?"":s).match(/(\d{4})\D(\d{1,2})/);
+  if(!m) return String(s==null?"":s);
+  return (m[1]-1911)+"/"+("0"+m[2]).slice(-2);
+}
 function repWhenConfirm(){
   var box=$("#repWhenConfirm"); if(!box) return;
   var v=$("#repWhen")?$("#repWhen").value:"";
   if(!v){ box.textContent="尚未選擇日期時間"; return; }
-  var pretty=v.replace("T","　").slice(0,16);
+  var pretty=rocDT(v);
   var todayStr=fmtNowLocal().slice(0,10);
   var tag=v.slice(0,10)===todayStr?"（今天）":"";
   box.textContent="這筆將記錄於："+pretty+tag;
@@ -3082,7 +3101,7 @@ async function loadRepToday(){
       '<div style="display:flex;gap:8px;align-items:baseline">'+
         '<span style="font-weight:800">'+esc(g.客戶)+'</span>'+
         '<span style="color:var(--brand-d);font-weight:700">1筆</span>'+
-        '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+g.時間+att+'</span></div>'+
+        '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+rocDT(g.時間)+att+'</span></div>'+
       '<div style="margin-top:4px">'+items+'</div></div>';
   }).join("");
 }
@@ -3130,7 +3149,7 @@ async function loadStatement(){
     return '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline">'+
       '<span style="color:'+color+';font-weight:800;min-width:44px">'+esc(x.動作)+'</span>'+
       '<span style="font-weight:700">'+esc(x.場)+'　'+x.棧板別+'×'+x.數量+'</span>'+
-      '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+esc(x.時間)+att+'</span></div>';
+      '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+esc(rocDT(x.時間))+att+'</span></div>';
   }).join("");
 }
 async function exportPdf(){
