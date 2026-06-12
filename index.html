@@ -509,7 +509,62 @@
     background:var(--surface);color:var(--ink);padding:0}
   .stepper .qval:focus{outline:none;border-color:var(--brand);background:var(--brand-soft)}
   .hide{display:none!important}
+
+  /* ===== 深色模式（暖調夜間 / 核桃木質感）===== */
+  :root{color-scheme:light}
+  html{transition:background-color .3s var(--ease)}
+  [data-theme=dark]{
+    color-scheme:dark;
+    --bg:#171411; --surface:#211d18; --sunken:#1b1813; --raised:#2a251f;
+    --ink:#efe9df; --ink2:#c3b8a6; --mut:#8d8273;
+    --line:rgba(245,236,222,.11); --line2:rgba(245,236,222,.18); --line3:rgba(245,236,222,.05);
+    --brand:#46a972; --brand-d:#7cc398; --brand-soft:rgba(70,169,114,.16);
+    --wood:#d29a57;
+    --red:#e36253; --red-soft:rgba(227,98,83,.16); --ok-soft:rgba(70,169,114,.15);
+    --sh:0 1px 2px rgba(0,0,0,.40),0 1px 3px rgba(0,0,0,.30);
+    --sh-md:0 1px 2px rgba(0,0,0,.30),0 4px 10px rgba(0,0,0,.40),0 12px 26px rgba(0,0,0,.35);
+    --sh-lg:0 2px 6px rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.50),0 30px 60px rgba(0,0,0,.55);
+    --sh-in:inset 0 1px 0 rgba(255,255,255,.045);
+    --ring:0 0 0 3px rgba(70,169,114,.28);
+  }
+  [data-theme=dark] body{background:
+    radial-gradient(1200px 480px at 50% -120px,rgba(70,169,114,.10),transparent 70%),
+    linear-gradient(180deg,#1d1914 0%,var(--bg) 360px);background-attachment:fixed}
+  [data-theme=dark] .topbar{background:rgba(29,25,20,.86);
+    box-shadow:0 1px 0 rgba(255,255,255,.04),0 4px 16px rgba(0,0,0,.40)}
+  [data-theme=dark] select:focus,[data-theme=dark] input:focus,[data-theme=dark] textarea:focus{background:var(--raised)}
+  [data-theme=dark] .owner-pic{border-color:var(--raised)}
+  [data-theme=dark] .skel{background:linear-gradient(100deg,var(--sunken) 28%,#332d25 50%,var(--sunken) 72%);background-size:200% 100%}
+  [data-theme=dark] .btnMini{background:rgba(210,154,87,.16);border-color:rgba(210,154,87,.42);color:var(--wood)}
+  [data-theme=dark] .sdday{background:rgba(210,154,87,.12);color:var(--wood)}
+  [data-theme=dark] .badge.dep{background:rgba(210,154,87,.16)}
+  [data-theme=dark] .sitechip button{background:rgba(255,255,255,.08)}
+  [data-theme=dark] .sitechip button:hover{background:rgba(227,98,83,.22);color:var(--red)}
+  [data-theme=dark] .editbox{background:rgba(255,255,255,.025)}
+  /* 簽名筆跡固定為深色，故簽名板在深色模式維持紙色，確保看得見且匯出一致 */
+  [data-theme=dark] canvas.sign{background:#f3efe6;border-color:rgba(245,236,222,.22)}
+
+  /* 主題切換鈕（右下浮動） */
+  .themebtn{position:fixed;right:18px;bottom:18px;z-index:60;width:48px;height:48px;border-radius:999px;
+    display:grid;place-items:center;cursor:pointer;border:1px solid var(--line2);
+    background:var(--raised);color:var(--ink2);box-shadow:var(--sh-lg);
+    transition:transform .15s var(--ease),background .15s,color .15s,border-color .15s}
+  .themebtn:hover{transform:translateY(-2px) scale(1.04);color:var(--ink);border-color:var(--brand)}
+  .themebtn:active{transform:scale(.95)}
+  .themebtn svg{width:22px;height:22px}
+  .themebtn .ic-moon{display:none}
+  [data-theme=dark] .themebtn .ic-sun{display:none}
+  [data-theme=dark] .themebtn .ic-moon{display:block}
+  @media print{.themebtn{display:none}}
 </style>
+<script>
+  /* 早期套用主題，避免畫面閃白 */
+  (function(){try{
+    var t=localStorage.getItem('pallet_theme');
+    if(!t){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}
+    document.documentElement.setAttribute('data-theme',t);
+  }catch(e){}})();
+</script>
 </head>
 <body>
 <div class="page">
@@ -537,6 +592,15 @@
       <div class="owner-tx"><b>莊政遠</b><i>版權所有</i></div>
     </div>
   </header>
+
+  <button type="button" class="themebtn" id="themeBtn" aria-label="切換深色／淺色模式" title="切換深色／淺色模式">
+    <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+    </svg>
+    <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+    </svg>
+  </button>
 
   <div id="gate" class="gate">載入中…</div>
 
@@ -1117,6 +1181,19 @@ function tickClock(){
   t.textContent=_p2(now.getHours())+":"+_p2(now.getMinutes())+":"+_p2(now.getSeconds());
 }
 tickClock(); setInterval(tickClock, 1000);
+
+/* ---- 深色／淺色主題切換 ---- */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  try{ localStorage.setItem("pallet_theme", t); }catch(e){}
+}
+function toggleTheme(){
+  var cur=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  applyTheme(cur);
+  if(typeof toast==="function") toast(cur==="dark"?"已切換為深色模式":"已切換為淺色模式","info");
+}
+(function(){var b=document.getElementById("themeBtn"); if(b) b.addEventListener("click",toggleTheme);})();
+
 function api(params){
   var u = GAS_URL + "?" + Object.keys(params).map(function(k){
     return k+"="+encodeURIComponent(params[k]);}).join("&");
@@ -2180,7 +2257,7 @@ async function loadBalances(){
   if(!r.customers.length){
     $("#balBody").innerHTML='<tr><td colspan="4" style="padding:0">'+emptyState("目前沒有未歸還棧板","所有棧板都已結清，無待回收項目。",'<path d="M20 6 9 17l-5-5"/>')+'</td></tr>';return;}
   $("#balBody").innerHTML=r.customers.map(function(c){
-    return '<tr><td style="color:#6b766f;font-variant-numeric:tabular-nums">'+esc(c.編號)+'</td>'+
+    return '<tr><td style="color:var(--mut);font-variant-numeric:tabular-nums">'+esc(c.編號)+'</td>'+
       '<td>'+esc(c.名稱)+'</td>'+
       '<td class="'+(c.大>0?'pos':'')+'">'+c.大+'</td>'+
       '<td class="'+(c.小>0?'pos':'')+'">'+c.小+'</td></tr>';}).join("");
@@ -2371,7 +2448,7 @@ async function genReport(){
     if(done.length){
       msg.className="msg ok";
       msg.innerHTML="已產生 "+done.length+" 份（請選擇分享或開啟）：<br>"+esc(done.join("、"))+
-        (fails.length?'<br><span style="color:#b41e1e">未產生：'+esc(fails.join("；"))+'</span>':"");
+        (fails.length?'<br><span style="color:var(--red)">未產生：'+esc(fails.join("；"))+'</span>':"");
     }else{ msg.className="msg err"; msg.textContent=""+(fails.join("；")||"產生失敗"); }
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
   btn.disabled=false; btn.textContent="產生 Excel";
@@ -2385,22 +2462,22 @@ async function loadMine(){
   fillMine(r);
 }
 function fillMine(r){
-  $("#mineName").innerHTML='<b style="font-size:18px;color:#241f18">'+r.客戶+'</b>　目前手上未歸還';
+  $("#mineName").innerHTML='<b style="font-size:18px;color:var(--ink)">'+r.客戶+'</b>　目前手上未歸還';
   $("#mineBig").textContent=r.結餘.大;
   $("#mineSmall").textContent=r.結餘.小;
   $("#mineAmt").innerHTML=r.未還金額>0
-    ? '未歸還估計金額 <b style="color:#c0392b">$'+r.未還金額+'</b>（月底未還將計價）'
+    ? '未歸還估計金額 <b style="color:var(--red)">$'+r.未還金額+'</b>（月底未還將計價）'
     : '目前無未歸還';
   var h=$("#mineHist");
   if(!r.歷史.length){ h.textContent="（尚無進出紀錄）"; return; }
   h.innerHTML=r.歷史.map(function(x){
-    var color=x.動作==="送出"?"#c0392b":"#256e3d";
+    var color=x.動作==="送出"?"var(--red)":"var(--brand-d)";
     var att=x.附件URL
-      ? ' <a href="'+x.附件URL+'" target="_blank" rel="noopener" style="color:#256e3d">簽收</a>' : '';
-    return '<div style="padding:9px 0;border-bottom:1px solid #e3e7e5;display:flex;gap:8px;align-items:baseline">'+
+      ? ' <a href="'+x.附件URL+'" target="_blank" rel="noopener" style="color:var(--brand-d)">簽收</a>' : '';
+    return '<div style="padding:9px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline">'+
       '<span style="color:'+color+';font-weight:700;min-width:42px">'+x.動作+'</span>'+
       '<span style="font-weight:700">'+x.棧板別+'棧板 ×'+x.數量+'</span>'+
-      '<span style="color:#6b766f;font-size:12px;margin-left:auto;text-align:right">'+
+      '<span style="color:var(--mut);font-size:12px;margin-left:auto;text-align:right">'+
         x.時間+'<br>'+(x.場||'')+att+'</span></div>';
   }).join("");
 }
@@ -2536,7 +2613,7 @@ async function removeSite(s){
   saveSites(peopleSites.filter(function(x){return x!==s;}));
 }
 function roleTag(role){
-  var col=role==="管理員"?"#b9722d":(role==="做帳"?"#2e7d4f":(role==="經銷"?"#6b766f":"#256e3d"));
+  var col=role==="管理員"?"var(--wood)":(role==="做帳"?"var(--brand)":(role==="經銷"?"var(--mut)":"var(--brand-d)"));
   return '<span style="color:'+col+';font-weight:700">'+esc(role)+'</span>';
 }
 function selOpts(arr, cur, blank){
@@ -2565,8 +2642,8 @@ function showPeopleEdit(code){
   if(!p){ box.className="editbox hide"; box.innerHTML=""; return; }
   box.className="editbox";
   var bind=p.已綁定
-    ? '<span style="color:#256e3d;font-weight:700">已綁定 LINE</span>'
-    : '<span style="color:#b9722d;font-weight:700">尚未綁定 LINE</span>';
+    ? '<span style="color:var(--brand-d);font-weight:700">已綁定 LINE</span>'
+    : '<span style="color:var(--wood);font-weight:700">尚未綁定 LINE</span>';
   box.innerHTML=
     '<div class="erow"><span class="elab">登入代碼</span><b style="font-variant-numeric:tabular-nums">'+esc(p.登入代碼)+'</b></div>'+
     '<div class="erow"><span class="elab">LINE 綁定</span>'+bind+'</div>'+
