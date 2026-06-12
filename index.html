@@ -3235,7 +3235,7 @@ function buildReport(){
   $("#repPhoto").onchange=repOnPhoto;
   $("#repSubmit").onclick=repSubmit;
   if($("#repNow")) $("#repNow").onclick=function(){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); repWhenConfirm(); };
-  if($("#repNoFlow")) $("#repNoFlow").onclick=function(){ toast("已確認今日無棧板流通紀錄","ok"); };
+  if($("#repNoFlow")) $("#repNoFlow").onclick=repNoFlow;
   if($("#repWhen")) $("#repWhen").oninput=repWhenConfirm;
 }
 function buildRepSite(){
@@ -3395,6 +3395,19 @@ async function repDoSubmit(){
   }catch(err){ m.className="msg err"; m.textContent="送出失敗："+err; toast("回報失敗，請檢查網路","err"); }
   btn.disabled=false; btn.textContent="送出回報";
 }
+async function repNoFlow(){
+  var when=$("#repWhen")?$("#repWhen").value:"";
+  var dlabel=when?rocDT(when):"今日";
+  if(!confirm("確認登記「無棧板流通」？\n時間："+dlabel+"\n（會寫一筆 0／0 紀錄，當日就不會再被提醒未回報）")) return;
+  var btn=$("#repNoFlow"); var old=btn.textContent; btn.disabled=true; btn.textContent="登記中…";
+  try{
+    var site=(ME.role==="管理員" && $("#repSite"))?$("#repSite").value:undefined;
+    var r=await post({action:"noFlow",uid:ME.uid,場:site,時間:when});
+    if(r.ok){ toast("已登記無棧板流通，當日不再提醒","ok"); loadRepToday(); }
+    else { toast(""+(r.error||"登記失敗"),"err"); }
+  }catch(err){ toast("登記失敗，請檢查網路","err"); }
+  btn.disabled=false; btn.textContent=old;
+}
 async function loadRepToday(){
   var box=$("#repToday"); if(!box)return;
   var r=await api({action:"todayMine",uid:ME.uid});
@@ -3403,7 +3416,9 @@ async function loadRepToday(){
   var head=(r.site?esc(r.site)+'　':'')+r.筆數+' 筆';
   box.innerHTML='<div style="font-weight:800;margin-bottom:8px">今日 '+head+'</div>'+
     r.list.map(function(g){
-    if(g.無流通) return '';
+    if(g.無流通) return '<div style="padding:10px 0;border-bottom:1px solid var(--line);color:var(--mut)">'+
+      '<span style="font-weight:700">已登記「無棧板流通」</span>'+
+      '<span style="margin-left:auto;color:var(--mut);font-size:12px;float:right">'+rocDT(g.時間)+'</span></div>';
     var items=(g.items||[]).map(function(it){
       var color=it.動作==="送出"?"var(--red)":"var(--brand-d)";
       var label=it.動作==="送出"?"出":(it.動作==="歸還"?"進":it.動作);
