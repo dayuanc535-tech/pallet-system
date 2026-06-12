@@ -555,6 +555,19 @@
   .multidd-panel.hide{display:none}
   .multidd-panel .multidd-head{display:flex;justify-content:flex-end;margin-bottom:8px}
   .multidd-panel .chkgrid{max-height:240px;border:none;background:transparent;padding:0}
+  /* 棧板未還統計推播面板 */
+  .statpanel{border:1px solid var(--line);border-radius:14px;padding:16px;margin:4px 0 20px;
+    background:var(--brand-soft)}
+  .statpanel-h{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:var(--brand-d);margin-bottom:2px}
+  .statpanel-h svg{width:18px;height:18px;flex:none}
+  .statsel{width:100%;padding:12px 13px;border:1px solid var(--line2);border-radius:var(--r-in);
+    background:var(--surface);color:var(--ink);font:inherit;font-size:16px;font-weight:700;cursor:pointer;
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23857a6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat:no-repeat;background-position:right 13px center;padding-right:38px}
+  .statsel:hover{border-color:var(--brand)}
+  .statbtns{display:flex;gap:10px;margin-top:14px}
+  .statbtns .btnG,.statbtns .btnP{flex:1;text-align:center;margin-top:0}
   .brow{border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-top:12px;background:var(--surface)}
   .brow .bh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
   .brow .bnm{font-size:15px;font-weight:800;color:var(--ink)}
@@ -973,6 +986,33 @@
       <section id="set" class="card hide">
         <h2 class="ctitle">月結算及明細查詢</h2>
         <p class="csub">月份與客戶都可複選。上方為月結算（應開發票／折讓），可按「PDF」產該客戶該月報表或產整月 Excel；下方逐筆列出每個客戶每月的進出明細與簽收單。管理員可對每一筆紀錄修改／刪除，並可在最下方「補登一筆紀錄」。</p>
+
+        <!-- 棧板未還統計：PDF ＋ LINE 群組推播 -->
+        <div id="statPanel" class="statpanel">
+          <div class="statpanel-h">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="13" y="7" width="3" height="10"/></svg>
+            <span>棧板未還統計　·　PDF／LINE 推播</span>
+          </div>
+          <p class="csub" style="margin:2px 0 12px">選客戶（不選＝全部），產生「目前累計未還」統計 PDF；或以業務為表頭分組，推播 LINE 卡片到指定群組。</p>
+          <label class="fld">客戶（可複選，不選＝全部）</label>
+          <div class="multidd" id="ddStatCusts">
+            <button type="button" class="multidd-trigger" id="ddStatCustsTrig">
+              <span id="statCustLab">全部客戶</span>
+              <svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="multidd-panel hide">
+              <div class="multidd-head"><a class="lnk" id="statCustAll" style="font-size:12px">全選／全不選</a></div>
+              <div id="statCusts" class="chkgrid"></div>
+            </div>
+          </div>
+          <label class="fld" style="margin-top:12px">推播群組</label>
+          <select id="statGroup" class="statsel"><option value="">（讀取中…）</option></select>
+          <div class="statbtns">
+            <button type="button" class="btnG" id="statPdfBtn">產生統計 PDF</button>
+            <button type="button" class="btnP" id="statPushBtn" style="margin-top:0">推播到 LINE 群組</button>
+          </div>
+          <div id="statMsg" class="msg"></div>
+        </div>
 
         <label class="fld">結算月份（可複選）</label>
         <div class="multidd" id="ddMonths">
@@ -1549,6 +1589,7 @@ function boot(){
   if(ME.role==="做帳" || ME.role==="管理員"){
     $("[data-tab=set]").classList.remove("hide");
     buildSetPickers();
+    buildStatPickers();
   }
   // 管理員：客戶及操作人員設定 + 月結算 ＋ 回報 ＋ 明細查詢
   if(ME.role==="管理員"){
@@ -2426,6 +2467,65 @@ function renderTrend(tr){
     trendCard("out","送出",outVals,tr.out.cur,tr.out.prev)+
     trendCard("ret","歸還",retVals,tr.ret.cur,tr.ret.prev);
   box.classList.remove("hide");
+}
+
+/* ---- 棧板未還統計：PDF ＋ LINE 群組推播 ---- */
+function buildStatPickers(){
+  var cg=$("#statCusts"); if(!cg) return;
+  cg.innerHTML=(ME.customers||[]).map(function(c){
+    return '<label class="chk" data-v="'+esc(c.編號)+'"><input type="checkbox"><span>'+esc(c.名稱)+'</span></label>';
+  }).join("")||'<span class="csub">無客戶資料</span>';
+  document.querySelectorAll("#statCusts .chk").forEach(function(l){
+    syncChk(l);
+    l.querySelector("input").onchange=function(){ syncChk(l); updateStatLabel(); };
+  });
+  updateStatLabel();
+  bindMultiDD("#ddStatCusts","#ddStatCustsTrig");
+  var sa=$("#statCustAll"); if(sa) sa.onclick=function(){ toggleAll("#statCusts"); updateStatLabel(); };
+  var pb=$("#statPdfBtn"); if(pb) pb.onclick=statPdf;
+  var ph=$("#statPushBtn"); if(ph) ph.onclick=statPush;
+  loadStatGroups();
+}
+function updateStatLabel(){
+  var c=pickedVals("#statCusts"), cl=$("#statCustLab");
+  if(cl) cl.textContent = !c.length ? "全部客戶" : "已選 "+c.length+" 個客戶";
+}
+async function loadStatGroups(){
+  var sel=$("#statGroup"); if(!sel) return;
+  try{
+    var r=await api({action:"groups",uid:ME.uid});
+    if(r&&r.ok&&r.groups&&r.groups.length){
+      sel.innerHTML=r.groups.map(function(g){ return '<option value="'+esc(g.id)+'">'+esc(g.name||g.id)+'</option>'; }).join("");
+    }else{
+      sel.innerHTML='<option value="">（尚無群組，請先把官方帳號加進群組）</option>';
+    }
+  }catch(e){ sel.innerHTML='<option value="">（讀取群組失敗）</option>'; }
+}
+async function statPdf(){
+  var m=$("#statMsg"); m.className="msg";
+  var custs=pickedVals("#statCusts");
+  var btn=$("#statPdfBtn"); btn.disabled=true; var ot=btn.textContent; btn.textContent="產生中…";
+  try{
+    var r=await post({action:"palletStatusPdf",uid:ME.uid,custs:custs});
+    if(r&&r.ok){ m.className="msg ok"; m.innerHTML="統計 PDF 已產生<br>"+fileLink(r.url, r.檔名); toast("統計 PDF 已產生"); }
+    else { m.className="msg err"; m.textContent=""+((r&&r.error)||"產生失敗"); toast(""+((r&&r.error)||"產生失敗"),"err"); }
+  }catch(e){ m.className="msg err"; m.textContent="產生失敗："+e; toast("產生失敗，請檢查網路","err"); }
+  btn.disabled=false; btn.textContent=ot;
+}
+async function statPush(){
+  var m=$("#statMsg"); m.className="msg";
+  var sel=$("#statGroup"), gid=sel?sel.value:"";
+  if(!gid){ m.className="msg err"; m.textContent="請先選擇要推播的群組"; toast("請先選擇群組","err"); return; }
+  var custs=pickedVals("#statCusts");
+  var gname=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].textContent:gid;
+  if(!confirm("確定把目前棧板未還統計推播到「"+gname+"」？")) return;
+  var btn=$("#statPushBtn"); btn.disabled=true; var ot=btn.textContent; btn.textContent="推播中…";
+  try{
+    var r=await post({action:"pushPalletStatus",uid:ME.uid,custs:custs,groupId:gid});
+    if(r&&r.ok){ m.className="msg ok"; m.textContent="已推播到「"+gname+"」（"+r.業務數+" 位業務，未還 大"+r.總計.大+" 小"+r.總計.小+"）"; toast("已推播 LINE 卡片"); }
+    else { m.className="msg err"; m.textContent=""+((r&&r.error)||"推播失敗"); toast(""+((r&&r.error)||"推播失敗"),"err"); }
+  }catch(e){ m.className="msg err"; m.textContent="推播失敗："+e; toast("推播失敗，請檢查網路","err"); }
+  btn.disabled=false; btn.textContent=ot;
 }
 
 /* ---- 月結算 ---- */
