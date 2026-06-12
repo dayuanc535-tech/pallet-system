@@ -230,6 +230,11 @@
   #setTable th{font-size:16px;line-height:1.3}
   #setTable td:not(:first-child){font-variant-numeric:tabular-nums;font-weight:600}
   #setTable .plt{font-size:13px;font-weight:700;color:var(--mut);margin-right:1px}
+  #setTable.noout .col-out{display:none}
+  .inclrow{display:flex;align-items:center;gap:10px;cursor:pointer;
+    padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--brand-soft)}
+  .inclrow input{width:20px;height:20px;accent-color:var(--brand);flex:0 0 auto;margin:0}
+  .inclrow span{font-size:14px;font-weight:600;color:var(--brand-d);line-height:1.35}
   .scrollhint{font-size:12.5px;color:var(--mut);font-weight:700;margin:8px 2px 0;display:none}
   @media (max-width:640px){
     #setTable{font-size:16px;min-width:660px}
@@ -1069,6 +1074,11 @@
 
         <button type="button" class="btnP" id="setQuery" style="margin-top:16px;width:100%">查詢明細</button>
 
+        <label class="inclrow" style="margin-top:14px">
+          <input type="checkbox" id="setInclOut">
+          <span>含「累計未還棧板」統計（表格、PDF／Excel、推播卡片）</span>
+        </label>
+
         <div id="setSummary" class="tot" style="margin-top:16px"></div>
 
         <div class="scrollhint">← 表格可左右滑動查看完整欄位 →</div>
@@ -1076,7 +1086,7 @@
           <table id="setTable" class="hide">
             <thead><tr>
               <th>月份</th><th>客戶</th><th>當月送出<br>大/小</th><th>當月歸還<br>大/小</th>
-              <th>當月金額</th><th>類別</th><th>累計未還<br>大/小</th><th>月報表</th>
+              <th>當月金額</th><th>類別</th><th class="col-out">累計未還<br>大/小</th><th>月報表</th>
             </tr></thead>
             <tbody id="setBody"></tbody>
           </table>
@@ -1113,6 +1123,7 @@
         </details>
 
         <button class="btnP" id="genExcel" style="margin-top:16px">產生 Excel</button>
+        <button class="btnG" id="batchZip" style="margin-top:10px;width:100%">下載所選客戶 PDF（ZIP，一客戶一檔）</button>
         <div class="msg" id="setMsg"></div>
       </section>
 
@@ -1680,6 +1691,8 @@ function boot(){
     $("[data-tab=set]").classList.remove("hide");
     buildSetPickers();
     buildStatPickers();
+    // 累計未還統計：管理員預設含、做帳預設不含（只看當月進出）
+    if($("#setInclOut")){ $("#setInclOut").checked = (ME.role==="管理員"); applyInclOut(); }
   }
   // 管理員：客戶及操作人員設定 + 月結算 ＋ 回報 ＋ 明細查詢
   if(ME.role==="管理員"){
@@ -2238,6 +2251,8 @@ function bindUI(){
   bindMultiDD("#ddCusts","#ddCustsTrig");
   document.addEventListener("click", closeAllDD);
   $("#genExcel").onclick=genReport;
+  if($("#batchZip")) $("#batchZip").onclick=batchZipDownload;
+  if($("#setInclOut")) $("#setInclOut").onchange=applyInclOut;
   $("#addCust").onclick=addCustomer;
   $("#custRefresh").onclick=loadCustomers;
   if($("#mgrPick")) $("#mgrPick").onchange=function(){ switchMgr(this.value); };
@@ -2692,7 +2707,11 @@ async function loadSettlement(){
     box("應開發票","$"+sumOpen,cScope+" · "+mScope)+
     box("折讓","$"+sumReb,cScope+" · "+mScope);
   if(!all.length){
+    lastSettleCusts=[];
     $("#setBody").innerHTML='<tr><td colspan="8" style="padding:0">'+emptyState("所選範圍沒有結算資料","換個月份或客戶再查詢看看。")+'</td></tr>'; $("#setDetail").innerHTML=""; return; }
+  // 記住目前表格上實際出現的客戶（去重），供「下載所選客戶 PDF（ZIP）」在未指定篩選時使用
+  var seen={}; lastSettleCusts=[];
+  all.forEach(function(c){ var id=String(c.編號); if(id && !seen[id]){ seen[id]=1; lastSettleCusts.push(id); } });
   all.sort(function(a,b){ return a.__month<b.__month?-1:(a.__month>b.__month?1:String(a.編號).localeCompare(String(b.編號))); });
   $("#setBody").innerHTML=all.map(function(c){
     var cls=c.類別==="應開發票"?"pos":"";
@@ -2704,9 +2723,14 @@ async function loadSettlement(){
       '<td><span class="plt">大</span>'+Math.max(0,c.期末.大)+'　<span class="plt">小</span>'+Math.max(0,c.期末.小)+'</td>'+
       '<td><button class="btnMini" onclick="setCustPdf(this,\''+c.編號+'\',\''+esc(c.名稱).replace(/'/g,"\\'")+'\',\''+c.__month+'\')">PDF</button></td></tr>';
   }).join("");
+  applyInclOut();   // 依勾選顯示／隱藏「累計未還」欄
   // 所選範圍：逐筆列出每個客戶每月的進出明細（管理員可改／刪／補登）
   loadAllDetails(months, custFilter);
 }
+// 是否含「累計未還棧板」統計（控制表格欄、PDF／Excel、推播卡片）
+var lastSettleCusts=[];
+function inclOutFlag(){ var el=$("#setInclOut"); return el ? !!el.checked : true; }
+function applyInclOut(){ var t=$("#setTable"); if(t) t.classList.toggle("noout", !inclOutFlag()); }
 // 逐月抓取所選範圍進出明細，依「客戶 · 月份」分段列出（沿用進出明細卡片，含管理員逐列管理）
 async function loadAllDetails(months, custFilter){
   var box=$("#setDetail"); if(!box) return;
@@ -2764,7 +2788,7 @@ async function setCustPdf(btn, cust, name, m){
   var msg=$("#setMsg"); msg.className="msg";
   btn.disabled=true; var orig=btn.textContent; btn.textContent="產生中…";
   try{
-    var r=await post({action:"statementPdf", cust:cust, month:m});
+    var r=await post({action:"statementPdf", cust:cust, month:m, inclOut:inclOutFlag()});
     if(r.ok){
       msg.className="msg ok";
       msg.innerHTML=esc(name)+" "+rocMonth(m)+" 月報表已產生<br>"+fileLink(r.url, r.檔名);
@@ -2781,7 +2805,7 @@ async function genReport(){
   try{
     for(var i=0;i<months.length;i++){
       btn.textContent="產生中… "+(i+1)+"/"+months.length+"（約 10 秒/份）";
-      var r=await post({action:"genReport", uid:ME.uid, month:months[i]});
+      var r=await post({action:"genReport", uid:ME.uid, month:months[i], inclOut:inclOutFlag()});
       if(r&&r.ok){ done.push(fileLink(r.url, r.檔名)); }
       else fails.push(rocMonth(months[i])+"："+((r&&r.error)||"失敗"));
     }
@@ -2792,6 +2816,37 @@ async function genReport(){
     }else{ msg.className="msg err"; msg.textContent=""+(fails.join("；")||"產生失敗"); }
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
   btn.disabled=false; btn.textContent="產生 Excel";
+}
+// base64 → 觸發瀏覽器下載（存到自己的電腦）
+function downloadB64(b64, name, mime){
+  var bin=atob(b64), len=bin.length, arr=new Uint8Array(len);
+  for(var i=0;i<len;i++) arr[i]=bin.charCodeAt(i);
+  var url=URL.createObjectURL(new Blob([arr],{type:mime||"application/octet-stream"}));
+  var a=document.createElement("a"); a.href=url; a.download=name||"download";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+}
+// 月結算：一鍵把所選客戶（每月每客戶一份對帳單 PDF）打包成 ZIP 存到自己電腦
+async function batchZipDownload(){
+  var months=pickedVals("#setMonths").sort(), btn=$("#batchZip"), msg=$("#setMsg");
+  if(!months.length){ msg.className="msg err"; msg.textContent="請先勾選至少一個月份"; return; }
+  // 優先用篩選器選的客戶；沒選就用目前表格上出現的客戶；都沒有就請先查詢
+  var custs=pickedVals("#setCusts");
+  if(!custs.length) custs=lastSettleCusts.slice();
+  if(!custs.length){ msg.className="msg err"; msg.textContent="請先「查詢明細」或勾選客戶，再下載 ZIP"; return; }
+  msg.className="msg"; btn.disabled=true; var orig=btn.textContent;
+  btn.textContent="打包中…（"+custs.length+" 家 × "+months.length+" 月，請稍候）";
+  try{
+    var r=await post({action:"batchStatementZip", uid:ME.uid,
+      custs:custs.join(","), months:months.join(","), inclOut:inclOutFlag()});
+    if(r&&r.ok){
+      downloadB64(r.b64, r.檔名, "application/zip");
+      msg.className="msg ok";
+      msg.innerHTML="已打包 "+r.count+" 份對帳單，開始下載："+esc(r.檔名)+
+        ((r.fails&&r.fails.length)?'<br><span style="color:var(--red)">略過：'+esc(r.fails.join("；"))+'</span>':"");
+    }else{ msg.className="msg err"; msg.textContent=""+((r&&r.error)||"打包失敗"); }
+  }catch(err){ msg.className="msg err"; msg.textContent="打包失敗："+err; }
+  btn.disabled=false; btn.textContent=orig;
 }
 
 /* ---- 經銷客戶自助 / 客戶代號查詢 共用 ---- */
