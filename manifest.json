@@ -1,0 +1,18 @@
+{
+  "name": "棧板管理系統",
+  "short_name": "棧板管理",
+  "description": "有機肥料部棧板送出／歸還、即時結餘與月結算管理系統",
+  "lang": "zh-Hant",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f1ea",
+  "theme_color": "#2e7d4f",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
