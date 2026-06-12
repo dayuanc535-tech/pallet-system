@@ -2560,7 +2560,7 @@ async function genReport(){
       btn.textContent="產生中… "+(i+1)+"/"+months.length+"（約 10 秒/份）";
       var r=await post({action:"genReport", uid:ME.uid, month:months[i]});
       if(r&&r.ok){ await deliverFile(r.b64, r.檔名, r.mime); done.push(r.檔名); }
-      else fails.push(months[i]+"："+((r&&r.error)||"失敗"));
+      else fails.push(rocMonth(months[i])+"："+((r&&r.error)||"失敗"));
     }
     if(done.length){
       msg.className="msg ok";
