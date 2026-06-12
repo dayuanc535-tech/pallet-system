@@ -263,6 +263,36 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;cursor:zoom-out}
   .imgbox img{max-width:94vw;max-height:84vh;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
   .imgbox-x{color:#fff;font-weight:700;font-size:14px;opacity:.85}
+  /* 送出前確認懸浮視窗 */
+  .confirm{position:fixed;inset:0;z-index:120;background:rgba(20,18,14,.5);
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;padding:20px}
+  .confirm-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+    box-shadow:var(--sh-lg),var(--sh-in);max-width:392px;width:100%;padding:22px 22px 18px;
+    animation:rcpop .22s var(--ease)}
+  @keyframes rcpop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+  .confirm-h{display:flex;align-items:center;gap:9px;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:6px}
+  .confirm-h svg{width:23px;height:23px;color:var(--brand);flex:none}
+  .confirm-sub{color:var(--mut);font-size:13px;font-weight:600;margin:0 0 14px}
+  .rcline{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid var(--line3)}
+  .rclab{color:var(--mut);font-size:13.5px;font-weight:700;flex:none}
+  .rcval{color:var(--ink);font-size:16px;font-weight:800;text-align:right}
+  .rcitems{margin:13px 0 2px;display:flex;flex-direction:column;gap:8px}
+  .rcrow{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:var(--r-in);
+    background:var(--sunken);border:1px solid var(--line)}
+  .rcact{font-weight:800;font-size:14.5px;min-width:38px}
+  .rcact.out{color:var(--red)}
+  .rcact.in{color:var(--brand)}
+  .rcpt{font-weight:700;color:var(--ink2)}
+  .rcqty{margin-left:auto;font-weight:800;font-size:18px;color:var(--ink)}
+  .rcphoto{margin-top:13px;display:flex;align-items:center;justify-content:center;gap:7px;
+    font-size:13.5px;font-weight:700;color:var(--brand-d)}
+  .rcphoto svg{width:16px;height:16px}
+  .confirm-btns{display:flex;gap:11px;margin-top:18px}
+  .confirm-btns .btnP{margin-top:0;flex:1}
+  .confirm-btns .btnBack{flex:1;background:var(--surface);border:1px solid var(--line2);color:var(--ink2);
+    padding:15px;border-radius:13px;font-size:15px;font-weight:800;cursor:pointer;transition:.15s}
+  .confirm-btns .btnBack:hover{background:var(--sunken)}
   /* 月結算頁：每客戶每月明細區段標題 */
   .setdhead{margin:24px 0 11px;font-weight:800;font-size:16px;color:var(--ink);
     display:flex;align-items:baseline;gap:10px;padding-left:11px;border-left:4px solid var(--brand);line-height:1.3}
@@ -1221,6 +1251,21 @@
 <div id="imgBox" class="imgbox hide" onclick="closeImg()">
   <img id="imgBoxImg" alt="簽收單">
   <div class="imgbox-x">✕ 點任意處關閉</div>
+</div>
+
+<div id="repConfirm" class="confirm hide">
+  <div class="confirm-card">
+    <div class="confirm-h">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span>送出前確認</span>
+    </div>
+    <p class="confirm-sub">請確認以下資料無誤，送出後即記錄為一筆。</p>
+    <div id="repConfirmBody"></div>
+    <div class="confirm-btns">
+      <button type="button" class="btnBack" onclick="closeRepConfirm()">返回修改</button>
+      <button type="button" class="btnP" onclick="repDoSubmit()">確認送出</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -3051,15 +3096,53 @@ function repReset(){
   if($("#repWhen")) $("#repWhen").value=fmtNowLocal();
   $("#repPhoto").value=""; $("#repPhotoPv").classList.add("hide"); $("#repPhotoPv").innerHTML="";
 }
-async function repSubmit(){
-  var m=$("#repMsg"); m.className="msg";
-  if(!REP.cust){ m.className="msg err"; m.textContent="請先選客戶"; return; }
+function repPickedItems(){
   var items=[];
   if(REP.q.out大>0) items.push({動作:"送出",棧板別:"大",數量:REP.q.out大});
   if(REP.q.out小>0) items.push({動作:"送出",棧板別:"小",數量:REP.q.out小});
   if(REP.q.in大>0)  items.push({動作:"歸還",棧板別:"大",數量:REP.q.in大});
   if(REP.q.in小>0)  items.push({動作:"歸還",棧板別:"小",數量:REP.q.in小});
-  if(!items.length){ m.className="msg err"; m.textContent="請至少填一個數量"; return; }
+  return items;
+}
+function repSiteDisp(){
+  return (ME.role==="管理員" && $("#repSite"))?$("#repSite").value:(ME.site||"");
+}
+/* 第一關：驗證 → 沒拍簽收單擋下；都齊全才跳確認視窗 */
+function repSubmit(){
+  var m=$("#repMsg"); m.className="msg";
+  if(!REP.cust){ m.className="msg err"; m.textContent="請先選客戶"; toast("請先選客戶","err"); return; }
+  var items=repPickedItems();
+  if(!items.length){ m.className="msg err"; m.textContent="請至少填一個數量"; toast("請至少填一個送出／歸還數量","err"); return; }
+  if(!REP.photo){
+    m.className="msg err"; m.textContent="必須拍照／上傳簽收單才能送出";
+    toast("缺少簽收單照片，無法送出","err"); return;
+  }
+  openRepConfirm(items);
+}
+function openRepConfirm(items){
+  var when=$("#repWhen")?$("#repWhen").value:"";
+  var site=repSiteDisp();
+  var rows=items.map(function(it){
+    var cl=it.動作==="送出"?"out":"in";
+    return '<div class="rcrow"><span class="rcact '+cl+'">'+esc(it.動作)+'</span>'+
+           '<span class="rcpt">'+esc(it.棧板別)+'棧板</span>'+
+           '<span class="rcqty">×'+it.數量+'</span></div>';
+  }).join("");
+  $("#repConfirmBody").innerHTML=
+    '<div class="rcline"><span class="rclab">時間</span><span class="rcval">'+esc(rocDT(when))+'</span></div>'+
+    (site?'<div class="rcline"><span class="rclab">場別</span><span class="rcval">'+esc(site)+'</span></div>':'')+
+    '<div class="rcline"><span class="rclab">客戶</span><span class="rcval">'+esc(REP.name)+'</span></div>'+
+    '<div class="rcitems">'+rows+'</div>'+
+    '<div class="rcphoto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>已附簽收單照片</div>';
+  $("#repConfirm").classList.remove("hide");
+}
+function closeRepConfirm(){ $("#repConfirm").classList.add("hide"); }
+/* 第二關：使用者在確認視窗按「確認送出」才真正寫入 */
+async function repDoSubmit(){
+  closeRepConfirm();
+  var m=$("#repMsg"); m.className="msg";
+  var items=repPickedItems();
+  if(!items.length || !REP.photo){ return repSubmit(); }
   var site=(ME.role==="管理員" && $("#repSite"))?$("#repSite").value:undefined;
   var btn=$("#repSubmit"); btn.disabled=true; btn.textContent="送出中…";
   try{
