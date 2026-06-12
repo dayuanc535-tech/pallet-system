@@ -257,6 +257,38 @@
   .msg.ok{background:var(--ok-soft);color:var(--brand-d);border:1px solid rgba(46,125,79,.22);display:block}
   .msg.err{background:var(--red-soft);color:var(--red);border:1px solid rgba(192,57,43,.22);display:block}
 
+  /* ---- 浮動通知 Toast ---- */
+  .toastwrap{position:fixed;z-index:200;left:0;right:0;top:14px;display:flex;flex-direction:column;
+    align-items:center;gap:9px;pointer-events:none;padding:0 14px}
+  .toast{pointer-events:auto;display:flex;align-items:center;gap:11px;max-width:460px;
+    background:var(--raised);color:var(--ink);border:1px solid var(--line);
+    border-radius:var(--r-ctl);padding:13px 17px 13px 14px;box-shadow:var(--sh-lg);
+    font-size:14.5px;font-weight:700;line-height:1.4;
+    transform:translateY(-16px) scale(.97);opacity:0;
+    transition:transform .34s var(--ease),opacity .26s var(--ease)}
+  .toast.show{transform:translateY(0) scale(1);opacity:1}
+  .toast .ti{display:grid;place-items:center;width:25px;height:25px;border-radius:999px;flex:none}
+  .toast.ok .ti{background:var(--brand)} .toast.err .ti{background:var(--red)} .toast.info .ti{background:var(--wood)}
+  .toast .ti svg{width:15px;height:15px}
+  .toast .tx{flex:1;min-width:0}
+
+  /* ---- 骨架載入 Skeleton ---- */
+  @keyframes shim{0%{background-position:-180% 0}100%{background-position:180% 0}}
+  .skel{border-radius:7px;background:linear-gradient(100deg,var(--sunken) 28%,#efe8dc 50%,var(--sunken) 72%);
+    background-size:200% 100%;animation:shim 1.3s var(--ease) infinite}
+  .skrow{display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line3)}
+  .skrow:last-child{border-bottom:none}
+  .skline{height:13px} .skb{height:19px}
+
+  /* ---- 空狀態 ---- */
+  .emptyb{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;
+    padding:34px 18px;color:var(--mut)}
+  .emptyb .ei{display:grid;place-items:center;width:54px;height:54px;border-radius:16px;margin-bottom:6px;
+    background:var(--sunken);border:1px solid var(--line);color:var(--mut)}
+  .emptyb .ei svg{width:26px;height:26px}
+  .emptyb .et{font-size:15px;font-weight:800;color:var(--ink2)}
+  .emptyb .eh{font-size:13px;font-weight:600;line-height:1.5;max-width:280px}
+
   /* ---- 入口 / 經銷自助 ---- */
   .gate{text-align:center;padding:60px 20px;color:var(--mut);max-width:540px;margin:0 auto}
   code{background:var(--sunken);border:1px solid var(--line);border-radius:6px;padding:2px 6px;
@@ -1096,6 +1128,55 @@ function post(body){
     body:JSON.stringify(body)}).then(function(r){return r.json();});
 }
 
+/* ---- 浮動通知 Toast ---- */
+function toast(text, kind){
+  kind = kind || "ok";
+  var wrap = document.getElementById("toastWrap");
+  if(!wrap){ wrap=document.createElement("div"); wrap.id="toastWrap"; wrap.className="toastwrap"; document.body.appendChild(wrap); }
+  var icons = {
+    ok:'<path d="M20 6 9 17l-5-5"/>',
+    err:'<path d="M18 6 6 18M6 6l12 12"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 11h1v5h1"/>'
+  };
+  var el = document.createElement("div");
+  el.className = "toast " + kind;
+  el.innerHTML = '<span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">'+(icons[kind]||icons.ok)+'</svg></span><span class="tx">'+esc(text)+'</span>';
+  wrap.appendChild(el);
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add("show"); }); });
+  setTimeout(function(){
+    el.classList.remove("show");
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 380);
+  }, kind==="err" ? 3800 : 2600);
+}
+
+/* ---- 骨架載入 Skeleton ---- */
+function skelList(n){
+  var s=""; n=n||4;
+  for(var i=0;i<n;i++){
+    s += '<div class="skrow"><div class="skel skb" style="width:44px"></div>'+
+         '<div style="flex:1"><div class="skel skline" style="width:'+(56+(i*7)%28)+'%;margin-bottom:7px"></div>'+
+         '<div class="skel skline" style="width:'+(30+(i*11)%24)+'%"></div></div>'+
+         '<div class="skel skb" style="width:56px"></div></div>';
+  }
+  return s;
+}
+function skelTableRows(rows, cols){
+  var s=""; rows=rows||4; cols=cols||6;
+  for(var i=0;i<rows;i++){
+    s+='<tr>';
+    for(var j=0;j<cols;j++) s+='<td><div class="skel skline" style="width:'+(j===1?78:58)+'%"></div></td>';
+    s+='</tr>';
+  }
+  return s;
+}
+
+/* ---- 空狀態 ---- */
+function emptyState(title, hint, icon){
+  var ic = icon || '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/>';
+  return '<div class="emptyb"><span class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></span>'+
+    '<div class="et">'+esc(title)+'</div>'+(hint?'<div class="eh">'+esc(hint)+'</div>':'')+'</div>';
+}
+
 /* ---- 啟動：?k=代碼 或 記住的代碼 辨識身分；?mode=look 為客戶查詢 ---- */
 function getCode(){
   var m = location.search.match(/[?&]k=([^&]+)/);
@@ -1546,11 +1627,13 @@ async function addTxqRow(){
     txqnPhotoData=""; if($("#txqnPhoto")) $("#txqnPhoto").value=""; if($("#txqnPhotoPv")){ $("#txqnPhotoPv").classList.add("hide"); $("#txqnPhotoPv").innerHTML=""; }
     txqnWhenConfirm();
     txRefreshActive();
-  }else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
+    toast("已補登一筆紀錄");
+  }else{ if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); } toast(""+(r.error||"補登失敗"),"err"); }
 }
 async function loadTxq(){
   var m=$("#txqMsg");
   if(m){ m.className="msg"; m.style.display="block"; m.textContent="查詢中…"; }
+  if($("#txqList")) $("#txqList").innerHTML=skelList(4);
   var r=await api({action:"txView", uid:ME.uid, from:$("#txqFrom").value, to:$("#txqTo").value, cust:""});
   if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"查詢失敗"); } txqAll=[]; if($("#txqList")) $("#txqList").innerHTML=""; return; }
   txqAll=groupTx(r.list||[]);   // 同一時間＋同一客戶合併成一筆
@@ -1564,7 +1647,7 @@ function txqRender(){
   var cust=$("#txqCust")?$("#txqCust").value:"";
   var rows=cust?txqAll.filter(function(x){return String(x.客戶編號||x.客戶)===cust;}):txqAll;
   if(m){ m.className="msg ok"; m.textContent="共 "+rows.length+" 筆"; }
-  if(!rows.length){ box.innerHTML='<p class="csub">此區間無紀錄。</p>'; return; }
+  if(!rows.length){ box.innerHTML=emptyState("此區間沒有進出紀錄","換個日期或客戶試試。"); return; }
   box.innerHTML=rows.map(txqCard).join("");
 }
 // 同一時間＋同一客戶 → 合併為一筆（上送出大小、下歸還大小）
@@ -1706,10 +1789,11 @@ function txnWhenConfirm(){
 async function loadTxList(){
   var box=$("#txList"), m=$("#txMsg");
   if(m){ m.className="msg"; m.textContent="查詢中…"; }
+  if(box) box.innerHTML=skelList(4);
   var r=await api({action:"txAll", uid:ME.uid, from:$("#txFrom").value, to:$("#txTo").value, cust:$("#txCust").value});
-  if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); } return; }
+  if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); } if(box) box.innerHTML=""; return; }
   if(m){ m.className="msg ok"; m.textContent="共 "+r.list.length+" 筆"; }
-  if(!r.list.length){ box.innerHTML='<p class="csub">此區間無紀錄。</p>'; return; }
+  if(!r.list.length){ box.innerHTML=emptyState("此區間沒有進出紀錄","換個日期或客戶試試。"); return; }
   txRowCache={};
   r.list.forEach(function(x){ txRowCache[x.row]=x; });
   box.innerHTML=r.list.map(txCard).join("");
@@ -1780,14 +1864,14 @@ async function saveTxRow(row){
     時間:when, 場:gid("txe-site-"+row).value, 動作:gid("txe-act-"+row).value,
     客戶編號:gid("txe-cust-"+row).value, 棧板別:gid("txe-type-"+row).value,
     數量:gid("txe-qty-"+row).value, 備註:gid("txe-note-"+row).value, 照片:txEditPhotoData});
-  if(r.ok){ txEditPhotoData=""; txRefreshActive(); if(m){ m.className="msg ok"; m.textContent="已更新"; } }
-  else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
+  if(r.ok){ txEditPhotoData=""; txRefreshActive(); if(m){ m.className="msg ok"; m.textContent="已更新"; } toast("已更新該筆紀錄"); }
+  else { if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); } toast(""+(r.error||"更新失敗"),"err"); }
 }
 async function delTxRow(row){
   if(!confirm("確定刪除這筆紀錄？刪除後無法復原。")) return;
   var m=txMsgBox();
   var r=await post({action:"txAnyDelete", uid:ME.uid, row:row});
-  if(r.ok){ txRefreshActive(); if(m){ m.className="msg ok"; m.textContent="已刪除"; } }
+  if(r.ok){ txRefreshActive(); if(m){ m.className="msg ok"; m.textContent="已刪除"; } toast("已刪除該筆紀錄"); }
   else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
 }
 var txnPhotoData="";
@@ -1817,7 +1901,8 @@ async function addTxRow(){
     txnPhotoData=""; $("#txnPhoto").value=""; $("#txnPhotoPv").classList.add("hide"); $("#txnPhotoPv").innerHTML="";
     txnWhenConfirm();
     loadTxList();
-  }else if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); }
+    toast("已補登一筆紀錄");
+  }else{ if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); } toast(""+(r.error||"補登失敗"),"err"); }
 }
 
 /* ---- UI 綁定 ---- */
@@ -2075,16 +2160,17 @@ async function submit(){
       items=[]; renderItems();
       $("#qty").value=1; clearSign(); photoData=""; $("#photoName").textContent="";
       $("#note").value=""; toggleCust();
-    }else{ msg.className="msg err"; msg.textContent=""+r.error; }
-  }catch(err){ msg.className="msg err"; msg.textContent="送出失敗："+err; }
+      toast("已記錄 "+(r.筆數||1)+" 筆（單號 "+r.單號+"）");
+    }else{ msg.className="msg err"; msg.textContent=""+r.error; toast(""+(r.error||"送出失敗"),"err"); }
+  }catch(err){ msg.className="msg err"; msg.textContent="送出失敗："+err; toast("送出失敗，請檢查網路","err"); }
   btn.disabled=false; btn.textContent="送出記錄";
 }
 
 /* ---- 查詢 ---- */
 async function loadBalances(){
-  $("#balBody").innerHTML='<tr><td colspan="4" style="color:#6b766f">載入中…</td></tr>';
+  $("#balBody").innerHTML=skelTableRows(5,4);
   var r=await api({action:"balances"});
-  if(!r.ok){$("#balBody").innerHTML='<tr><td colspan="4">'+r.error+'</td></tr>';return;}
+  if(!r.ok){$("#balBody").innerHTML='<tr><td colspan="4" style="padding:0">'+emptyState("查詢失敗",""+r.error,'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>')+'</td></tr>';return;}
   // 上方卡片＝下方明細加總，確保上下一致
   var sum大=0,sum小=0;
   r.customers.forEach(function(c){ sum大+=Number(c.大)||0; sum小+=Number(c.小)||0; });
@@ -2092,7 +2178,7 @@ async function loadBalances(){
     box("大棧板在客戶手上",sum大,"全部客戶未還總計")+
     box("小棧板在客戶手上",sum小,"全部客戶未還總計");
   if(!r.customers.length){
-    $("#balBody").innerHTML='<tr><td colspan="4" style="color:#6b766f">目前沒有未歸還</td></tr>';return;}
+    $("#balBody").innerHTML='<tr><td colspan="4" style="padding:0">'+emptyState("目前沒有未歸還棧板","所有棧板都已結清，無待回收項目。",'<path d="M20 6 9 17l-5-5"/>')+'</td></tr>';return;}
   $("#balBody").innerHTML=r.customers.map(function(c){
     return '<tr><td style="color:#6b766f;font-variant-numeric:tabular-nums">'+esc(c.編號)+'</td>'+
       '<td>'+esc(c.名稱)+'</td>'+
@@ -2155,7 +2241,7 @@ async function loadSettlement(){
   }
   msg.className="msg"; msg.textContent="";
   var custFilter=pickedVals("#setCusts");   // 空＝全部
-  $("#setBody").innerHTML='<tr><td colspan="8" style="color:#6b766f">載入中…</td></tr>';
+  $("#setBody").innerHTML=skelTableRows(4,8);
   $("#setTable").classList.remove("hide");
   var all=[];
   for(var i=0;i<months.length;i++){
@@ -2177,7 +2263,7 @@ async function loadSettlement(){
     box("應開發票","$"+sumOpen,cScope+" · "+mScope)+
     box("折讓","$"+sumReb,cScope+" · "+mScope);
   if(!all.length){
-    $("#setBody").innerHTML='<tr><td colspan="8" style="color:#6b766f">所選範圍無紀錄</td></tr>'; $("#setDetail").innerHTML=""; return; }
+    $("#setBody").innerHTML='<tr><td colspan="8" style="padding:0">'+emptyState("所選範圍沒有結算資料","換個月份或客戶再查詢看看。")+'</td></tr>'; $("#setDetail").innerHTML=""; return; }
   all.sort(function(a,b){ return a.__month<b.__month?-1:(a.__month>b.__month?1:String(a.編號).localeCompare(String(b.編號))); });
   $("#setBody").innerHTML=all.map(function(c){
     var cls=c.類別==="應開發票"?"pos":"";
@@ -2220,7 +2306,7 @@ async function loadAllDetails(months, custFilter){
         b.list.map(txqCard).join("");
     });
   }
-  box.innerHTML = html || '<div class="setdempty">所選範圍無進出紀錄。</div>';
+  box.innerHTML = html || emptyState("所選範圍沒有進出明細","這些客戶在選定月份內沒有任何送出／歸還紀錄。");
 }
 function driveImg(url, w){
   var m=String(url).match(/\/d\/([-\w]{20,})/)||String(url).match(/[?&]id=([-\w]{20,})/);
@@ -2778,9 +2864,9 @@ async function repSubmit(){
   try{
     var when=$("#repWhen")?$("#repWhen").value:"";
     var r=await post({action:"record",uid:ME.uid,客戶編號:REP.cust,items:items,照片:REP.photo,場:site,時間:when});
-    if(r.ok){ m.className="msg ok"; m.textContent="已回報 "+REP.name+"（這趟視為 1 筆）"; repReset(); loadRepToday(); }
-    else { m.className="msg err"; m.textContent=""+r.error; }
-  }catch(err){ m.className="msg err"; m.textContent="送出失敗："+err; }
+    if(r.ok){ m.className="msg ok"; m.textContent="已回報 "+REP.name+"（這趟視為 1 筆）"; repReset(); loadRepToday(); toast("已回報 "+REP.name); }
+    else { m.className="msg err"; m.textContent=""+r.error; toast(""+(r.error||"回報失敗"),"err"); }
+  }catch(err){ m.className="msg err"; m.textContent="送出失敗："+err; toast("回報失敗，請檢查網路","err"); }
   btn.disabled=false; btn.textContent="送出回報";
 }
 async function loadRepToday(){
