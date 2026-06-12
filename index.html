@@ -140,6 +140,32 @@
     background:#fff;box-shadow:var(--ring)}
   select:disabled{opacity:.7}
 
+  /* ---- 日期時間列（大器、加高）---- */
+  .whenrow{display:flex;gap:10px;align-items:stretch}
+  input.whenfield{flex:1;min-width:0;width:100%;height:62px;padding:0 14px;
+    border:1px solid var(--line2);border-radius:var(--r-ctl);background:var(--sunken);color:var(--ink);
+    font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:0;
+    box-shadow:var(--sh-in);transition:.15s}
+  input.whenfield::-webkit-datetime-edit{padding:0;line-height:62px}
+  input.whenfield::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer;
+    width:22px;height:22px;transition:opacity .15s}
+  input.whenfield::-webkit-calendar-picker-indicator:hover{opacity:.9}
+  input.whenfield:focus{outline:none;border-color:var(--brand);background:var(--surface);box-shadow:var(--ring)}
+  .whennow{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    height:62px;padding:0 18px;white-space:nowrap;cursor:pointer;
+    border:1px solid var(--line2);border-radius:var(--r-ctl);background:var(--surface);
+    color:var(--brand-d);font-size:15px;font-weight:800;box-shadow:var(--sh);transition:.15s}
+  .whennow svg{width:17px;height:17px}
+  .whennow:hover{background:var(--brand-soft);border-color:color-mix(in srgb,var(--brand) 38%,transparent);
+    color:var(--brand-d);transform:translateY(-1px);box-shadow:var(--sh-md)}
+  .whennow:active{transform:translateY(1px);box-shadow:none}
+  [data-theme=dark] input.whenfield::-webkit-calendar-picker-indicator{filter:invert(.85)}
+  @media(max-width:560px){
+    .whenrow{flex-direction:column;gap:9px}
+    input.whenfield{width:100%;font-size:17px;padding:0 13px}
+    .whennow{width:100%;height:52px;font-size:15.5px}
+  }
+
   /* ---- 分段切換 ---- */
   .seg{display:flex;gap:6px;background:var(--sunken);border:1px solid var(--line);
     border-radius:var(--r-ctl);padding:5px}
@@ -832,11 +858,13 @@
         </div>
 
         <label class="fld">日期時間</label>
-        <div style="display:flex;gap:8px;align-items:stretch">
-          <input type="datetime-local" id="repWhen" style="flex:1;min-width:0">
-          <button type="button" class="btnG" id="repNow" style="white-space:nowrap;padding:0 16px">現在</button>
+        <div class="whenrow">
+          <input type="datetime-local" id="repWhen" class="whenfield">
+          <button type="button" class="whennow" id="repNow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>現在
+          </button>
         </div>
-        <p class="csub" style="margin:6px 0 0">預設為現在時間，可改成實際發生的時間（例如補登昨天）。</p>
+        <p class="csub" style="margin:8px 0 0">預設為現在時間，可改成實際發生的時間（例如補登昨天）。</p>
 
         <label class="fld">選擇客戶</label>
         <div id="repCusts" class="custgrid"></div>
@@ -962,7 +990,7 @@
           <summary style="cursor:pointer;font-weight:700;padding:8px 0">＋ 補登一筆紀錄</summary>
           <div style="margin-top:10px">
             <label class="fld">日期時間</label>
-            <input type="datetime-local" id="txqnWhen" style="width:100%">
+            <input type="datetime-local" id="txqnWhen" class="whenfield">
             <div class="row2" style="margin-top:8px">
               <div><label class="fld">場</label><select id="txqnSite" style="width:100%"></select></div>
               <div><label class="fld">動作</label><select id="txqnAct" style="width:100%"></select></div>
@@ -1077,7 +1105,7 @@
             <summary style="cursor:pointer;font-weight:700;padding:8px 0">補登一筆紀錄</summary>
             <div style="margin-top:10px">
               <label class="fld">日期時間</label>
-              <input type="datetime-local" id="txnWhen" style="width:100%">
+              <input type="datetime-local" id="txnWhen" class="whenfield">
               <div class="row2" style="margin-top:8px">
                 <div><label class="fld">場</label><select id="txnSite" style="width:100%"></select></div>
                 <div><label class="fld">動作</label><select id="txnAct" style="width:100%"></select></div>
