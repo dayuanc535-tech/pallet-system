@@ -2845,14 +2845,14 @@ function renderCustPick(keep){
   sel.innerHTML='<option value="">— 請選擇客戶（共 '+custCache.length+' ）—</option>'+
     custCache.map(function(c){
       var stopped=c.狀態==="停用";
-      return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）'+(stopped?' 停用':'')+'</option>';
+      return '<option value="'+esc(c.行)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）'+(stopped?' 停用':'')+'</option>';
     }).join("");
   sel.value=cur||"";
   showCustEdit(sel.value);
 }
-function showCustEdit(id){
+function showCustEdit(rowv){
   var box=$("#custEdit"); if(!box) return;
-  var c=id?custCache.filter(function(x){return String(x.編號)===String(id);})[0]:null;
+  var c=rowv?custCache.filter(function(x){return String(x.行)===String(rowv);})[0]:null;
   if(!c){ box.className="editbox hide"; box.innerHTML=""; return; }
   box.className="editbox";
   box.innerHTML=
@@ -2865,7 +2865,10 @@ function showCustEdit(id){
       '<option value="停用"'+(c.狀態==="停用"?" selected":"")+'>停用</option></select>'+
     '<label class="fld">負責業務</label>'+
     '<select id="ebiz">'+bizOptions(c.業務||"")+'</select>'+
-    '<button type="button" class="btnG" style="margin-top:12px;width:100%" onclick="saveCustomer(\''+esc(c.編號)+'\')">儲存客戶</button>';
+    '<div class="row2" style="margin-top:12px">'+
+      '<button type="button" class="btnP" style="margin-top:0" onclick="saveCustomer(\''+esc(c.行)+'\')">儲存修改</button>'+
+      '<button type="button" class="btnDel" onclick="deleteCustomer(\''+esc(c.行)+'\')">刪除客戶</button>'+
+    '</div>';
 }
 // 業務下拉選項（來源＝角色清單裡 role==業務 的人員，value＝登入代碼）
 function bizOptions(cur){
@@ -2880,13 +2883,25 @@ function bizOptions(cur){
   if(cur && !found) html+='<option value="'+esc(cur)+'" selected>'+esc(cur)+'（已不在業務名單）</option>';
   return html;
 }
-async function saveCustomer(id){
+async function saveCustomer(rowv){
+  var c=custCache.filter(function(x){return String(x.行)===String(rowv);})[0];
+  if(!c){ box2("找不到客戶，請重新整理", true); return; }
   var name=($("#ename")&&$("#ename").value||"").trim();
   var stat=$("#estat")?$("#estat").value:"";
   var biz=$("#ebiz")?$("#ebiz").value:"";
   if(!name){ box2("名稱不可空白", true); return; }
-  var r=await post({action:"custSave", uid:ME.uid, 客戶編號:id, 客戶名稱:name, 狀態:stat, 業務:biz});
-  if(r.ok){ box2("已更新 "+id, false); loadCustomers(); }
+  var r=await post({action:"custSave", uid:ME.uid, 行:c.行, 客戶編號:c.編號, 客戶名稱:name, 狀態:stat, 業務:biz});
+  if(r.ok){ box2("已更新 "+c.編號, false); loadCustomers(); }
+  else box2(""+(r.error||"失敗"), true);
+}
+async function deleteCustomer(rowv){
+  var c=custCache.filter(function(x){return String(x.行)===String(rowv);})[0];
+  if(!c){ box2("找不到客戶，請重新整理", true); return; }
+  var warn="確定要刪除客戶「"+c.名稱+"（"+c.編號+"）」？\n\n此動作無法復原。\n（已發生的進出明細仍會保留作為歷史紀錄，但此客戶將從清單移除）";
+  if((c.大>0||c.小>0)) warn="⚠ 此客戶目前未還 "+c.大+" 大／"+c.小+" 小。\n\n"+warn;
+  if(!confirm(warn)) return;
+  var r=await post({action:"custDelete", uid:ME.uid, 行:c.行});
+  if(r.ok){ box2("已刪除 "+(r.名稱||"")+"（"+(r.編號||"")+"）", false); loadCustomers(); }
   else box2(""+(r.error||"失敗"), true);
 }
 async function addCustomer(){
@@ -2897,8 +2912,7 @@ async function addCustomer(){
   if(r.ok){
     box2(r.mode==="insert"?"已新增 "+code:"已存在，已更新名稱 "+code, false);
     $("#ncode").value=""; $("#nname").value="";
-    var r2=await api({action:"custList", uid:ME.uid});
-    if(r2.ok){ custCache=r2.customers||[]; renderCustPick(code); }
+    loadCustomers();
   }else box2(""+(r.error||"失敗"), true);
 }
 function box2(t, err){
