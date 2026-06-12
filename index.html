@@ -298,6 +298,26 @@
   .emptyb .et{font-size:15px;font-weight:800;color:var(--ink2)}
   .emptyb .eh{font-size:13px;font-weight:600;line-height:1.5;max-width:280px}
 
+  /* ---- 趨勢迷你圖 Sparkline ---- */
+  .trendwrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 20px}
+  @media(max-width:560px){.trendwrap{grid-template-columns:1fr}}
+  .trendc{background:var(--sunken);border:1px solid var(--line);border-radius:var(--r-card);
+    padding:15px 16px 12px;box-shadow:var(--sh-in)}
+  .trendc .th{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:3px}
+  .trendc .tl{font-size:13px;font-weight:800;color:var(--ink2);display:flex;align-items:center;gap:7px}
+  .trendc .tl .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  .trendc.out .tl .dot{background:var(--red)} .trendc.ret .tl .dot{background:var(--brand)}
+  .trendc .tv{font-size:26px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-.015em;line-height:1.1}
+  .trendc .tu{font-size:12px;font-weight:700;color:var(--mut);margin-left:3px}
+  .trendc .spark{display:block;width:100%;height:42px;margin-top:8px}
+  .trendc .out path.ln{stroke:var(--red)}
+  .trendc .delta{display:inline-flex;align-items:center;gap:3px;font-size:12.5px;font-weight:800;
+    padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .trendc .delta.up{color:var(--brand-d);background:var(--ok-soft)}
+  .trendc .delta.down{color:var(--red);background:var(--red-soft)}
+  .trendc .delta.flat{color:var(--mut);background:var(--brand-soft)}
+  .trendc .tfoot{font-size:11.5px;color:var(--mut);font-weight:600;margin-top:7px}
+
   /* ---- 入口 / 經銷自助 ---- */
   .gate{text-align:center;padding:60px 20px;color:var(--mut);max-width:540px;margin:0 auto}
   code{background:var(--sunken);border:1px solid var(--line);border-radius:6px;padding:2px 6px;
@@ -856,6 +876,7 @@
         <h2 class="ctitle">庫存與客戶結餘</h2>
         <p class="csub">目前全部客戶手上未歸還的棧板總計（＝下方明細各欄加總）。</p>
         <div class="tot" id="deptTot"></div>
+        <div id="balTrend" class="trendwrap hide"></div>
         <div class="big" style="margin:4px 0 8px;font-weight:700">各客戶手上未歸還</div>
         <table>
           <thead><tr><th>編號</th><th>客戶</th><th>大棧板</th><th>小棧板</th></tr></thead>
@@ -2263,6 +2284,7 @@ async function loadBalances(){
   $("#deptTot").innerHTML=
     box("大棧板在客戶手上",sum大,"全部客戶未還總計")+
     box("小棧板在客戶手上",sum小,"全部客戶未還總計");
+  renderTrend(r.trend);
   if(!r.customers.length){
     $("#balBody").innerHTML='<tr><td colspan="4" style="padding:0">'+emptyState("目前沒有未歸還棧板","所有棧板都已結清，無待回收項目。",'<path d="M20 6 9 17l-5-5"/>')+'</td></tr>';return;}
   $("#balBody").innerHTML=r.customers.map(function(c){
@@ -2273,6 +2295,64 @@ async function loadBalances(){
 }
 function box(l,n,sub){
   return '<div class="b"><div class="n">'+n+'</div><div class="l">'+l+'<br>'+sub+'</div></div>';
+}
+
+/* ---- 近 14 天趨勢迷你圖 ---- */
+function sparkPath(vals,W,H,pad){
+  var n=vals.length; if(n<2) return {line:"",area:""};
+  var mx=Math.max.apply(null,vals), mn=Math.min.apply(null,vals);
+  if(mx===mn){ mx=mn+1; }
+  var iw=W-pad*2, ih=H-pad*2;
+  var pts=vals.map(function(v,i){
+    var x=pad+(iw*i/(n-1));
+    var y=pad+ih-(ih*(v-mn)/(mx-mn));
+    return [x,y];
+  });
+  var line=pts.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join(" ");
+  var area="M"+pts[0][0].toFixed(1)+" "+(H-pad).toFixed(1)+" "+
+    pts.map(function(p){return "L"+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join(" ")+
+    " L"+pts[n-1][0].toFixed(1)+" "+(H-pad).toFixed(1)+" Z";
+  return {line:line,area:area};
+}
+function deltaBadge(cur,prev){
+  if(prev===0){
+    if(cur>0) return '<span class="delta up">新增活動</span>';
+    return '<span class="delta flat">—</span>';
+  }
+  var pct=Math.round((cur-prev)/prev*100);
+  if(pct===0) return '<span class="delta flat">持平</span>';
+  var up=pct>0;
+  var arrow=up?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>'
+              :'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+  return '<span class="delta '+(up?'up':'down')+'">'+arrow+Math.abs(pct)+'%</span>';
+}
+function trendCard(kind,label,vals,cur,prev){
+  var W=240,H=42,pad=4;
+  var sp=sparkPath(vals,W,H,pad);
+  var stroke=kind==="out"?"var(--red)":"var(--brand)";
+  var gid="g_"+kind;
+  var svg='<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+    '<defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0" stop-color="'+stroke+'" stop-opacity="0.20"/>'+
+      '<stop offset="1" stop-color="'+stroke+'" stop-opacity="0"/></linearGradient></defs>'+
+    (sp.area?'<path d="'+sp.area+'" fill="url(#'+gid+')"/>':'')+
+    (sp.line?'<path d="'+sp.line+'" fill="none" stroke="'+stroke+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>':'')+
+    '</svg>';
+  return '<div class="trendc '+kind+'">'+
+    '<div class="th"><span class="tl"><span class="dot"></span>'+label+'</span>'+deltaBadge(cur,prev)+'</div>'+
+    '<div><span class="tv">'+cur+'</span><span class="tu">片 / 14天</span></div>'+
+    svg+
+    '<div class="tfoot">較前 14 天（'+prev+' 片）</div></div>';
+}
+function renderTrend(tr){
+  var box=$("#balTrend"); if(!box) return;
+  if(!tr||!tr.days||!tr.days.length){ box.classList.add("hide"); box.innerHTML=""; return; }
+  var outVals=tr.days.map(function(d){return Number(d.out)||0;});
+  var retVals=tr.days.map(function(d){return Number(d.ret)||0;});
+  box.innerHTML=
+    trendCard("out","送出",outVals,tr.out.cur,tr.out.prev)+
+    trendCard("ret","歸還",retVals,tr.ret.cur,tr.ret.prev);
+  box.classList.remove("hide");
 }
 
 /* ---- 月結算 ---- */
