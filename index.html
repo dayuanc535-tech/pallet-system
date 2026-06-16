@@ -210,6 +210,19 @@
   .btnP:hover{filter:brightness(1.05);box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 4px 8px rgba(28,32,40,.20),0 12px 26px rgba(46,125,79,.38);transform:translateY(-1px)}
   .btnP:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(255,255,255,.2) inset,0 1px 3px rgba(28,32,40,.22)}
   .btnP:disabled{opacity:.55;cursor:default;box-shadow:none;transform:none}
+  .btnNoflow{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;
+    margin-top:16px;padding:19px 16px;border:none;border-radius:18px;cursor:pointer;font-family:inherit;color:#fff;
+    background:linear-gradient(180deg,#d29a4a 0%,#b8762e 58%,#9c5f22 100%);
+    box-shadow:0 1px 0 rgba(255,255,255,.32) inset,0 2px 4px rgba(28,32,40,.18),0 10px 22px rgba(184,118,46,.36);
+    transition:transform .12s,box-shadow .15s,filter .15s}
+  .btnNoflow:hover{filter:brightness(1.05);transform:translateY(-2px);
+    box-shadow:0 1px 0 rgba(255,255,255,.32) inset,0 6px 12px rgba(28,32,40,.20),0 16px 34px rgba(184,118,46,.46)}
+  .btnNoflow:active{transform:translateY(1px);
+    box-shadow:0 1px 0 rgba(255,255,255,.26) inset,0 2px 5px rgba(28,32,40,.24)}
+  .btnNoflow:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
+  .btnNoflow svg{width:27px;height:27px;margin-bottom:3px;filter:drop-shadow(0 1px 1px rgba(28,32,40,.25))}
+  .btnNoflow .bnf-t{font-size:19px;font-weight:800;letter-spacing:.5px;text-shadow:0 1px 1px rgba(28,32,40,.22)}
+  .btnNoflow .bnf-s{font-size:12.5px;font-weight:600;opacity:.94}
   .btnG{display:inline-block;background:var(--surface);border:1px solid var(--line2);color:var(--ink2);
     padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:.15s}
   .btnG:hover{background:var(--sunken)}
@@ -943,7 +956,11 @@
         </div>
         <p class="csub" style="margin:8px 0 0">預設為現在時間，可改成實際發生的時間（例如補登昨天）。</p>
 
-        <button type="button" class="btnG" id="repNoFlow" style="margin-top:14px;width:100%">今日無棧板流通紀錄</button>
+        <button type="button" class="btnNoflow" id="repNoFlow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.6 2.6L16 9"/></svg>
+          <span class="bnf-t">今日無棧板流通</span>
+          <span class="bnf-s">點一下登記，今天就不再提醒</span>
+        </button>
 
         <label class="fld">選擇客戶</label>
         <div id="repCusts" class="custgrid"></div>
@@ -3399,14 +3416,15 @@ async function repNoFlow(){
   var when=$("#repWhen")?$("#repWhen").value:"";
   var dlabel=when?rocDT(when):"今日";
   if(!confirm("確認登記「無棧板流通」？\n時間："+dlabel+"\n（會寫一筆 0／0 紀錄，當日就不會再被提醒未回報）")) return;
-  var btn=$("#repNoFlow"); var old=btn.textContent; btn.disabled=true; btn.textContent="登記中…";
+  var btn=$("#repNoFlow"); var old=btn.innerHTML; btn.disabled=true;
+  var tlab=btn.querySelector(".bnf-t"); if(tlab) tlab.textContent="登記中…";
   try{
     var site=(ME.role==="管理員" && $("#repSite"))?$("#repSite").value:undefined;
     var r=await post({action:"noFlow",uid:ME.uid,場:site,時間:when});
     if(r.ok){ toast("已登記無棧板流通，當日不再提醒","ok"); loadRepToday(); }
     else { toast(""+(r.error||"登記失敗"),"err"); }
   }catch(err){ toast("登記失敗，請檢查網路","err"); }
-  btn.disabled=false; btn.textContent=old;
+  btn.disabled=false; btn.innerHTML=old;
 }
 async function loadRepToday(){
   var box=$("#repToday"); if(!box)return;
