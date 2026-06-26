@@ -755,6 +755,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         <span>回報棧板進出</span>
       </button>
+      <button data-tab="sitelog" class="hide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <span>明細查詢</span>
+      </button>
       <button data-tab="qry" class="hide">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M9 19v-7M14 19V9M19 19v-4"/></svg>
         <span>查詢</span>
@@ -993,6 +997,19 @@
 
         <div class="big" style="margin:24px 0 8px;font-weight:700">今日已回報</div>
         <div id="repToday" class="big">—</div>
+      </section>
+
+      <!-- 現場明細查詢（依登入場別＋月份） -->
+      <section id="sitelog" class="card hide">
+        <h2 class="ctitle">棧板明細查詢</h2>
+        <p class="csub">查詢你負責場別的每一筆棧板進出，可切換月份查看。</p>
+        <div class="row2">
+          <div><label class="fld">場別</label><input type="text" id="slSite" readonly style="width:100%;background:var(--brand-soft);color:var(--brand-d);font-weight:800"></div>
+          <div><label class="fld">月份</label><input type="month" id="slMonth" style="width:100%"></div>
+        </div>
+        <button type="button" class="btnP" id="slGo" style="margin-top:14px;width:100%">查詢明細</button>
+        <div class="msg" id="slMsg" style="margin-top:12px"></div>
+        <div id="slList" style="margin-top:12px"></div>
       </section>
 
       <!-- 查詢 -->
@@ -1398,7 +1415,7 @@ function toggleTheme(){
   function soundOn(){ return document.documentElement.getAttribute("data-sound")!=="off"; }
   function hash(str){ var h=2166136261; str=String(str||""); for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return (h>>>0); }
   var PENTA=[0,2,4,7,9];                       // 五聲音階：任意組合都和諧不刺耳
-  var PAGE_ROOT={login:-5,dash:0,rec:2,report:4,qry:7,look:9,tx:5,set:-3,people:12};
+  var PAGE_ROOT={login:-5,dash:0,rec:2,report:4,sitelog:6,qry:7,look:9,tx:5,set:-3,people:12};
   function currentPage(){
     var t=document.querySelector("#tabs button.on");
     if(t&&t.dataset.tab) return t.dataset.tab;
@@ -1728,11 +1745,13 @@ function boot(){
   }
   bindUI();
   initSign();
-  // 現場：大字回報介面為主畫面（隱藏查詢分頁）
+  // 現場：大字回報介面為主畫面（隱藏查詢分頁），另開「明細查詢」依登入場別查
   if(ME.role==="現場"){
     buildReport();
     $("[data-tab=report]").classList.remove("hide");
+    $("[data-tab=sitelog]").classList.remove("hide");
     $("[data-tab=qry]").classList.add("hide");
+    if($("#slSite")) $("#slSite").value=ME.site||"";
     switchTab("report");
   }
   // 管理員預設停在月結算及明細查詢
@@ -1758,6 +1777,7 @@ function switchTab(t){
   $("#dash").classList.toggle("hide", t!=="dash");
   $("#rec").classList.toggle("hide", t!=="rec");
   $("#report").classList.toggle("hide", t!=="report");
+  $("#sitelog").classList.toggle("hide", t!=="sitelog");
   $("#qry").classList.toggle("hide", t!=="qry");
   $("#lookpick").classList.toggle("hide", t!=="look");
   $("#txq").classList.toggle("hide", t!=="tx");
@@ -1765,6 +1785,7 @@ function switchTab(t){
   $("#peoplemgr").classList.toggle("hide", t!=="people");
   if(t==="dash") loadDashboard();
   if(t==="report"){ if($("#repWhen")) $("#repWhen").value=fmtNowLocal(); loadRepToday(); }
+  if(t==="sitelog") openSiteLog();
   if(t==="qry") loadBalances();
   if(t==="tx") txqOpen();
   if(t==="set"){ setupSetAdd(); loadSettlement(); }
@@ -3483,6 +3504,30 @@ async function loadRepToday(){
         '<span style="margin-left:auto;color:var(--mut);font-size:12px">'+rocDT(g.時間)+att+'</span></div>'+
       '<div style="margin-top:4px">'+items+'</div></div>';
   }).join("");
+}
+
+/* ---- 現場明細查詢（依登入場別＋月份） ---- */
+var slInited=false;
+function openSiteLog(){
+  if($("#slSite")) $("#slSite").value=ME.site||"";
+  if($("#slMonth")&&!$("#slMonth").value){ var d=new Date(); $("#slMonth").value=d.getFullYear()+"-"+pad2(d.getMonth()+1); }
+  if(!slInited){
+    slInited=true;
+    if($("#slGo")) $("#slGo").onclick=loadSiteLog;
+    if($("#slMonth")) $("#slMonth").onchange=loadSiteLog;
+  }
+  loadSiteLog();
+}
+async function loadSiteLog(){
+  var m=$("#slMsg"), box=$("#slList");
+  if(m){ m.className="msg"; m.style.display="block"; m.textContent="查詢中…"; }
+  if(box) box.innerHTML=skelList(4);
+  var r=await api({action:"siteLog", uid:ME.uid, month:$("#slMonth")?$("#slMonth").value:""});
+  if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"查詢失敗"); } if(box) box.innerHTML=""; return; }
+  var groups=groupTx(r.list||[]);
+  if(m){ m.className="msg ok"; m.textContent=(r.site||"")+"場・"+rocMonth(r.month)+"　共 "+groups.length+" 筆"; }
+  if(!groups.length){ box.innerHTML=emptyState("本月無進出紀錄","換個月份再查查看。"); return; }
+  box.innerHTML=groups.map(txqCard).join("");
 }
 
 /* ---- 客戶代號查詢（月份＋對帳 PDF） ---- */
