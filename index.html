@@ -1066,6 +1066,9 @@
           </div>
         </div>
 
+        <label class="fld" style="margin-top:14px">場別篩選</label>
+        <select id="setSite" style="width:100%"><option value="">全部場</option></select>
+
         <button type="button" class="btnP" id="setQuery" style="margin-top:16px;width:100%">查詢明細</button>
 
         <label class="inclrow" style="margin-top:14px">
@@ -1217,6 +1220,8 @@
           </div>
           <label class="fld">客戶（可不選＝全部）</label>
           <select id="txCust" style="width:100%"><option value="">— 全部客戶 —</option></select>
+          <label class="fld">場別（可不選＝全部）</label>
+          <select id="txSite" style="width:100%"><option value="">— 全部場 —</option></select>
           <button type="button" class="btnG" id="txQuery" style="margin-top:12px;width:100%">查詢明細</button>
           <div class="msg" id="txMsg"></div>
           <div id="txList" style="margin-top:12px"></div>
@@ -2099,6 +2104,7 @@ function txMgrInit(){
   if(!txInited){
     txInited=true;
     if($("#txQuery")) $("#txQuery").onclick=loadTxList;
+    if($("#txSite")) $("#txSite").onchange=loadTxList;
     if($("#txAddBtn")) $("#txAddBtn").onclick=addTxRow;
     if($("#txnPhoto")) $("#txnPhoto").onchange=txnOnPhoto;
   }
@@ -2113,6 +2119,7 @@ function txFillSelectors(){
   if($("#txCust")) $("#txCust").innerHTML='<option value="">— 全部客戶 —</option>'+(custCache||[]).map(function(c){
     return '<option value="'+esc(c.編號)+'">'+esc(c.名稱)+'（'+esc(c.編號)+'）</option>';
   }).join("");
+  if($("#txSite")){ var scur=$("#txSite").value; var ss=(ME.sites&&ME.sites.length)?ME.sites:peopleSites; $("#txSite").innerHTML='<option value="">— 全部場 —</option>'+ss.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join(""); $("#txSite").value=scur; }
   // 補登表單
   if($("#txnSite")) $("#txnSite").innerHTML=selOpts(peopleSites,"","（不分場）");
   if($("#txnAct"))  $("#txnAct").innerHTML=selOpts(TXACTS,"歸還");
@@ -2137,11 +2144,13 @@ async function loadTxList(){
   if(box) box.innerHTML=skelList(4);
   var r=await api({action:"txAll", uid:ME.uid, from:$("#txFrom").value, to:$("#txTo").value, cust:$("#txCust").value});
   if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"失敗"); } if(box) box.innerHTML=""; return; }
-  if(m){ m.className="msg ok"; m.textContent="共 "+r.list.length+" 筆"; }
-  if(!r.list.length){ box.innerHTML=emptyState("此區間沒有進出紀錄","換個日期或客戶試試。"); return; }
+  var site=$("#txSite")?$("#txSite").value:"";
+  var list=site?r.list.filter(function(x){return String(x.場||"")===site;}):r.list;
+  if(m){ m.className="msg ok"; m.textContent="共 "+list.length+" 筆"; }
+  if(!list.length){ box.innerHTML=emptyState("此區間沒有進出紀錄","換個日期、客戶或場別試試。"); return; }
   txRowCache={};
-  r.list.forEach(function(x){ txRowCache[x.row]=x; });
-  box.innerHTML=r.list.map(txCard).join("");
+  list.forEach(function(x){ txRowCache[x.row]=x; });
+  box.innerHTML=list.map(txCard).join("");
 }
 function txCard(x){
   var color=x.動作==="送出"?"var(--red)":(x.動作==="歸還"?"var(--brand-d)":"var(--mut)");
@@ -2658,11 +2667,20 @@ function buildSetPickers(){
     opts.push('<label class="chk" data-v="'+m+'"><input type="checkbox"'+(i===0?" checked":"")+'><span>'+rocMonth(m)+'</span></label>');
   }
   mg.innerHTML=opts.join("");
+  fillSiteSelect("#setSite");
   document.querySelectorAll("#setCusts .chk,#setMonths .chk").forEach(function(l){
     syncChk(l);
     l.querySelector("input").onchange=function(){ syncChk(l); updateSetLabels(); };
   });
   updateSetLabels();
+}
+// 共用：把「全部場＋各場」填進一個 <select>，保留目前選取
+function fillSiteSelect(sel){
+  var el=$(sel); if(!el) return;
+  var sites=(ME.sites&&ME.sites.length)?ME.sites:(typeof peopleSites!=="undefined"?peopleSites:[]);
+  var cur=el.value;
+  el.innerHTML='<option value="">全部場</option>'+sites.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join("");
+  el.value=cur;
 }
 function updateSetLabels(){
   var m=pickedVals("#setMonths").sort(), ml=$("#setMonLab");
@@ -2697,12 +2715,13 @@ async function loadSettlement(){
   }
   msg.className="msg"; msg.textContent="";
   var custFilter=pickedVals("#setCusts");   // 空＝全部
+  var siteFilter=$("#setSite")?$("#setSite").value:"";   // 空＝全部場
   $("#setBody").innerHTML=skelTableRows(4,8);
   $("#setTable").classList.remove("hide");
   var all=[];
   for(var i=0;i<months.length;i++){
     var m=months[i];
-    var r=await api({action:"settlement", month:m});
+    var r=await api({action:"settlement", month:m, site:siteFilter});
     if(!r||!r.ok) continue;
     var rows=custFilter.length ? r.rows.filter(function(c){return custFilter.indexOf(String(c.編號))>=0;}) : r.rows;
     rows.forEach(function(c){ c.__month=m; all.push(c); });
@@ -2713,7 +2732,7 @@ async function loadSettlement(){
     if(c.類別==="應開發票") sumOpen+=Number(c.金額)||0;
     else if(c.類別==="折讓") sumReb+=Number(c.金額)||0;
   });
-  var cScope=custFilter.length?("已選 "+custFilter.length+" 家"):"全部客戶";
+  var cScope=(custFilter.length?("已選 "+custFilter.length+" 家"):"全部客戶")+(siteFilter?("・"+siteFilter+"場"):"");
   var mScope=months.length>1?(months.length+" 個月合計"):rocMonth(months[0]);
   $("#setSummary").innerHTML=
     box("應開發票","$"+sumOpen,cScope+" · "+mScope)+
@@ -2737,14 +2756,14 @@ async function loadSettlement(){
   }).join("");
   applyInclOut();   // 依勾選顯示／隱藏「累計未還」欄
   // 所選範圍：逐筆列出每個客戶每月的進出明細（管理員可改／刪／補登）
-  loadAllDetails(months, custFilter);
+  loadAllDetails(months, custFilter, siteFilter);
 }
 // 是否含「累計未還棧板」統計（控制表格欄、PDF／Excel、推播卡片）
 var lastSettleCusts=[];
 function inclOutFlag(){ var el=$("#setInclOut"); return el ? !!el.checked : true; }
 function applyInclOut(){ var t=$("#setTable"); if(t) t.classList.toggle("noout", !inclOutFlag()); }
 // 逐月抓取所選範圍進出明細，依「客戶 · 月份」分段列出（沿用進出明細卡片，含管理員逐列管理）
-async function loadAllDetails(months, custFilter){
+async function loadAllDetails(months, custFilter, siteFilter){
   var box=$("#setDetail"); if(!box) return;
   txRowCache={};   // 重新建立，供逐列修改／刪除查表
   box.innerHTML='<div class="setdhead">明細<span class="sub">載入中… 0/'+months.length+'</span></div>';
@@ -2757,6 +2776,7 @@ async function loadAllDetails(months, custFilter){
     var r=await api({action:"txView", uid:ME.uid, from:from, to:to, cust:""});
     var list=(r&&r.ok&&r.list)?r.list:[];
     if(custFilter.length) list=list.filter(function(x){return custFilter.indexOf(String(x.客戶編號))>=0;});
+    if(siteFilter) list=list.filter(function(x){return String(x.場||"")===siteFilter;});
     var groups=groupTx(list);   // 同時間同客戶合併＋過濾無流通＋寫入 txRowCache
     // 依客戶分桶（維持出現順序：txView 由新到舊）
     var buckets={}, order=[];
