@@ -1007,7 +1007,10 @@
           <div><label class="fld">場別</label><input type="text" id="slSite" readonly style="width:100%;background:var(--brand-soft);color:var(--brand-d);font-weight:800"></div>
           <div><label class="fld">月份</label><input type="month" id="slMonth" style="width:100%"></div>
         </div>
-        <button type="button" class="btnP" id="slGo" style="margin-top:14px;width:100%">查詢明細</button>
+        <div class="row2" style="margin-top:14px">
+          <button type="button" class="btnP" id="slGo">查詢明細</button>
+          <button type="button" class="btnP" id="slPdf" style="background:var(--wood)">輸出 PDF</button>
+        </div>
         <div class="msg" id="slMsg" style="margin-top:12px"></div>
         <div id="slList" style="margin-top:12px"></div>
       </section>
@@ -3515,8 +3518,20 @@ function openSiteLog(){
     slInited=true;
     if($("#slGo")) $("#slGo").onclick=loadSiteLog;
     if($("#slMonth")) $("#slMonth").onchange=loadSiteLog;
+    if($("#slPdf")) $("#slPdf").onclick=exportSiteLogPdf;
   }
   loadSiteLog();
+}
+async function exportSiteLogPdf(){
+  var btn=$("#slPdf"), m=$("#slMsg");
+  btn.disabled=true; var old=btn.textContent; btn.textContent="產生中…（約 10 秒）";
+  if(m){ m.className="msg"; m.style.display="block"; m.textContent="產生 PDF 中…"; }
+  try{
+    var r=await post({action:"siteLogPdf", uid:ME.uid, month:$("#slMonth")?$("#slMonth").value:""});
+    if(r.ok){ if(m){ m.className="msg ok"; m.innerHTML=(r.site||"")+"場・"+rocMonth(r.month)+" 明細 PDF 已產生<br>"+fileLink(r.url, r.檔名); } }
+    else { if(m){ m.className="msg err"; m.textContent=""+(r.error||"產生失敗"); } }
+  }catch(err){ if(m){ m.className="msg err"; m.textContent="產生失敗："+err; } }
+  btn.disabled=false; btn.textContent=old;
 }
 async function loadSiteLog(){
   var m=$("#slMsg"), box=$("#slList");
