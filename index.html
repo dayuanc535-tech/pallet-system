@@ -999,16 +999,22 @@
         <div id="repToday" class="big">—</div>
       </section>
 
-      <!-- 現場明細查詢（依登入場別＋月份） -->
+      <!-- 現場明細查詢（依登入場別＋日期區間） -->
       <section id="sitelog" class="card hide">
         <h2 class="ctitle">棧板明細查詢</h2>
-        <p class="csub">查詢你負責場別的每一筆棧板進出，可切換月份查看。</p>
-        <div class="row2">
-          <div><label class="fld">場別</label><input type="text" id="slSite" readonly style="width:100%;background:var(--brand-soft);color:var(--brand-d);font-weight:800"></div>
-          <div><label class="fld">月份</label><input type="month" id="slMonth" style="width:100%"></div>
+        <p class="csub">查詢你負責場別的棧板進出。可選「逐日明細」逐筆查看，或「期間彙總」直接看每個客戶的進出加總。</p>
+        <div><label class="fld">場別</label><input type="text" id="slSite" readonly style="width:100%;background:var(--brand-soft);color:var(--brand-d);font-weight:800"></div>
+        <label class="fld" style="margin-top:12px">輸出格式</label>
+        <div class="seg" id="slMode">
+          <button type="button" data-v="detail" class="on">逐日明細</button>
+          <button type="button" data-v="summary">期間彙總</button>
+        </div>
+        <div class="row2" style="margin-top:12px">
+          <div><label class="fld">起日</label><input type="date" id="slFrom" style="width:100%"></div>
+          <div><label class="fld">迄日</label><input type="date" id="slTo" style="width:100%"></div>
         </div>
         <div class="row2" style="margin-top:14px">
-          <button type="button" class="btnP" id="slGo">查詢明細</button>
+          <button type="button" class="btnP" id="slGo">查詢</button>
           <button type="button" class="btnP" id="slPdf" style="background:var(--wood)">輸出 PDF</button>
         </div>
         <div class="msg" id="slMsg" style="margin-top:12px"></div>
@@ -3509,40 +3515,79 @@ async function loadRepToday(){
   }).join("");
 }
 
-/* ---- 現場明細查詢（依登入場別＋月份） ---- */
-var slInited=false;
+/* ---- 現場明細查詢（依登入場別＋日期區間，可逐筆／彙總） ---- */
+var slInited=false, slMode="detail";
+function slDefaultRange(){
+  var d=new Date();
+  if($("#slFrom")&&!$("#slFrom").value) $("#slFrom").value=d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-01";
+  if($("#slTo")&&!$("#slTo").value) $("#slTo").value=d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate());
+}
 function openSiteLog(){
   if($("#slSite")) $("#slSite").value=ME.site||"";
-  if($("#slMonth")&&!$("#slMonth").value){ var d=new Date(); $("#slMonth").value=d.getFullYear()+"-"+pad2(d.getMonth()+1); }
+  slDefaultRange();
   if(!slInited){
     slInited=true;
     if($("#slGo")) $("#slGo").onclick=loadSiteLog;
-    if($("#slMonth")) $("#slMonth").onchange=loadSiteLog;
+    if($("#slFrom")) $("#slFrom").onchange=loadSiteLog;
+    if($("#slTo")) $("#slTo").onchange=loadSiteLog;
     if($("#slPdf")) $("#slPdf").onclick=exportSiteLogPdf;
+    document.querySelectorAll("#slMode button").forEach(function(b){
+      b.onclick=function(){
+        document.querySelectorAll("#slMode button").forEach(function(x){x.classList.remove("on");});
+        b.classList.add("on"); slMode=b.dataset.v; loadSiteLog();
+      };
+    });
   }
   loadSiteLog();
+}
+async function loadSiteLog(){
+  var m=$("#slMsg"), box=$("#slList");
+  if(m){ m.className="msg"; m.style.display="block"; m.textContent="查詢中…"; }
+  if(box) box.innerHTML=skelList(4);
+  var r=await api({action:"siteRange", uid:ME.uid, from:$("#slFrom")?$("#slFrom").value:"", to:$("#slTo")?$("#slTo").value:""});
+  if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"查詢失敗"); } if(box) box.innerHTML=""; return; }
+  var period=(r.site||"")+"場・"+rocDate(r.from)+"～"+rocDate(r.to);
+  if(slMode==="summary"){
+    var sum=siteSummarize(r.list||[]);
+    if(m){ m.className="msg ok"; m.textContent=period+"　"+sum.length+" 位客戶"; }
+    box.innerHTML=sum.length?siteSummaryTable(sum):emptyState("此區間無進出紀錄","換個日期區間再查查看。");
+  }else{
+    var groups=groupTx(r.list||[]);
+    if(m){ m.className="msg ok"; m.textContent=period+"　共 "+groups.length+" 筆"; }
+    box.innerHTML=groups.length?groups.map(txqCard).join(""):emptyState("此區間無進出紀錄","換個日期區間再查查看。");
+  }
 }
 async function exportSiteLogPdf(){
   var btn=$("#slPdf"), m=$("#slMsg");
   btn.disabled=true; var old=btn.textContent; btn.textContent="產生中…（約 10 秒）";
   if(m){ m.className="msg"; m.style.display="block"; m.textContent="產生 PDF 中…"; }
   try{
-    var r=await post({action:"siteLogPdf", uid:ME.uid, month:$("#slMonth")?$("#slMonth").value:""});
-    if(r.ok){ if(m){ m.className="msg ok"; m.innerHTML=(r.site||"")+"場・"+rocMonth(r.month)+" 明細 PDF 已產生<br>"+fileLink(r.url, r.檔名); } }
+    var r=await post({action:"siteLogPdf", uid:ME.uid, from:$("#slFrom")?$("#slFrom").value:"", to:$("#slTo")?$("#slTo").value:"", mode:slMode});
+    if(r.ok){ if(m){ m.className="msg ok"; m.innerHTML=(r.site||"")+"場・"+rocDate(r.from)+"～"+rocDate(r.to)+(r.mode==="summary"?" 彙總":" 明細")+" PDF 已產生<br>"+fileLink(r.url, r.檔名); } }
     else { if(m){ m.className="msg err"; m.textContent=""+(r.error||"產生失敗"); } }
   }catch(err){ if(m){ m.className="msg err"; m.textContent="產生失敗："+err; } }
   btn.disabled=false; btn.textContent=old;
 }
-async function loadSiteLog(){
-  var m=$("#slMsg"), box=$("#slList");
-  if(m){ m.className="msg"; m.style.display="block"; m.textContent="查詢中…"; }
-  if(box) box.innerHTML=skelList(4);
-  var r=await api({action:"siteLog", uid:ME.uid, month:$("#slMonth")?$("#slMonth").value:""});
-  if(!r.ok){ if(m){ m.className="msg err"; m.textContent=""+(r.error||"查詢失敗"); } if(box) box.innerHTML=""; return; }
-  var groups=groupTx(r.list||[]);
-  if(m){ m.className="msg ok"; m.textContent=(r.site||"")+"場・"+rocMonth(r.month)+"　共 "+groups.length+" 筆"; }
-  if(!groups.length){ box.innerHTML=emptyState("本月無進出紀錄","換個月份再查查看。"); return; }
-  box.innerHTML=groups.map(txqCard).join("");
+function siteSummarize(list){
+  var map={}, order=[];
+  (list||[]).forEach(function(x){
+    var key=(x.客戶編號||"")+"｜"+(x.客戶||"");
+    if(!map[key]){ map[key]={客戶:x.客戶||x.客戶編號||"",送大:0,送小:0,還大:0,還小:0}; order.push(key); }
+    var n=Number(x.數量)||0, big=x.棧板別==="大";
+    if(x.動作==="送出"){ if(big) map[key].送大+=n; else map[key].送小+=n; }
+    else if(x.動作==="歸還"){ if(big) map[key].還大+=n; else map[key].還小+=n; }
+  });
+  return order.map(function(k){ var r=map[k]; r.淨大=r.送大-r.還大; r.淨小=r.送小-r.還小; return r; })
+    .sort(function(a,b){ return a.客戶<b.客戶?-1:(a.客戶>b.客戶?1:0); });
+}
+function siteSummaryTable(sum){
+  var t={送大:0,送小:0,還大:0,還小:0};
+  var rows=sum.map(function(s){
+    t.送大+=s.送大; t.送小+=s.送小; t.還大+=s.還大; t.還小+=s.還小;
+    return "<tr><td>"+esc(s.客戶)+"</td><td>"+s.送大+"</td><td>"+s.送小+"</td><td>"+s.還大+"</td><td>"+s.還小+"</td><td>"+s.淨大+"</td><td>"+s.淨小+"</td></tr>";
+  }).join("");
+  var tot="<tr style='font-weight:800;background:var(--brand-soft)'><td>合計</td><td>"+t.送大+"</td><td>"+t.送小+"</td><td>"+t.還大+"</td><td>"+t.還小+"</td><td>"+(t.送大-t.還大)+"</td><td>"+(t.送小-t.還小)+"</td></tr>";
+  return "<div style='overflow-x:auto'><table><thead><tr><th>客戶</th><th>送大</th><th>送小</th><th>還大</th><th>還小</th><th>淨大</th><th>淨小</th></tr></thead><tbody>"+rows+tot+"</tbody></table></div>";
 }
 
 /* ---- 客戶代號查詢（月份＋對帳 PDF） ---- */
