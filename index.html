@@ -1029,8 +1029,10 @@
           <input type="date" id="txqTo">
           <button type="button" class="btnG" id="txqGo" style="white-space:nowrap;padding:11px 18px">查詢</button>
         </div>
-        <label class="fld" style="margin-top:4px">客戶篩選</label>
-        <select id="txqCust"><option value="">全部客戶</option></select>
+        <div class="row2" style="margin-top:4px">
+          <div><label class="fld">場別篩選</label><select id="txqSite" style="width:100%"><option value="">全部場</option></select></div>
+          <div><label class="fld">客戶篩選</label><select id="txqCust" style="width:100%"><option value="">全部客戶</option></select></div>
+        </div>
         <div class="msg" id="txqMsg" style="margin-top:12px"></div>
         <div id="txqList" style="margin-top:12px"></div>
       </section>
@@ -1893,6 +1895,7 @@ function txqOpen(){
     txqInited=true;
     if($("#txqGo")) $("#txqGo").onclick=loadTxq;
     if($("#txqCust")) $("#txqCust").onchange=txqRender;
+    if($("#txqSite")) $("#txqSite").onchange=txqRender;
     if($("#txqBack")) $("#txqBack").onclick=function(ev){ ev.preventDefault(); txqBackToSales(); };
   }
   if($("#txqBack")) $("#txqBack").classList.toggle("hide", ME.role!=="業務");
@@ -1972,12 +1975,22 @@ async function loadTxq(){
   var seen={}, opts='<option value="">全部客戶（'+txqAll.length+' 筆）</option>';
   txqAll.forEach(function(x){ var k=x.客戶編號||x.客戶; if(k&&!seen[k]){ seen[k]=1; opts+='<option value="'+esc(k)+'">'+esc(x.客戶||x.客戶編號)+'</option>'; } });
   if($("#txqCust")){ var cur=$("#txqCust").value; $("#txqCust").innerHTML=opts; $("#txqCust").value=cur; }
+  // 場別下拉：以此區間出現過的場為主，補上設定中的所有場
+  var sseen={}, sites=[];
+  txqAll.forEach(function(x){ var s=x.場||""; if(s&&!sseen[s]){ sseen[s]=1; sites.push(s); } });
+  (peopleSites||[]).forEach(function(s){ if(s&&!sseen[s]){ sseen[s]=1; sites.push(s); } });
+  if($("#txqSite")){ var sopts='<option value="">全部場</option>'+sites.map(function(s){return '<option value="'+esc(s)+'">'+esc(s)+'</option>';}).join(""); var scur=$("#txqSite").value; $("#txqSite").innerHTML=sopts; $("#txqSite").value=scur; }
   txqRender();
 }
 function txqRender(){
   var m=$("#txqMsg"), box=$("#txqList"); if(!box) return;
   var cust=$("#txqCust")?$("#txqCust").value:"";
-  var rows=cust?txqAll.filter(function(x){return String(x.客戶編號||x.客戶)===cust;}):txqAll;
+  var site=$("#txqSite")?$("#txqSite").value:"";
+  var rows=txqAll.filter(function(x){
+    if(cust && String(x.客戶編號||x.客戶)!==cust) return false;
+    if(site && String(x.場||"")!==site) return false;
+    return true;
+  });
   if(m){ m.className="msg ok"; m.textContent="共 "+rows.length+" 筆"; }
   if(!rows.length){ box.innerHTML=emptyState("此區間沒有進出紀錄","換個日期或客戶試試。"); return; }
   box.innerHTML=rows.map(txqCard).join("");
