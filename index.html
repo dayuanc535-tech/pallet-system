@@ -1145,7 +1145,8 @@
           </div>
         </details>
 
-        <button class="btnP" id="genExcel" style="margin-top:16px">產生 Excel</button>
+        <button class="btnP" id="setReportPdf" style="margin-top:16px;width:100%;background:var(--wood)">輸出月結算明細報表 PDF（含警語）</button>
+        <button class="btnP" id="genExcel" style="margin-top:10px;width:100%">產生 Excel</button>
         <button class="btnG" id="batchZip" style="margin-top:10px;width:100%">下載所選客戶 PDF（ZIP，一客戶一檔）</button>
         <div class="msg" id="setMsg"></div>
 
@@ -1747,9 +1748,11 @@ function boot(){
     $("#lkGo").onclick=function(){ var v=$("#lkCustSel").value; if(v){ salesMode=false; lookReturn="app"; openLook(v); } };
     setDateRange("month");
   }
-  // 做帳只看月結算
+  // 做帳：月結算 ＋ 客戶／操作人員管理（不含場名、明細管理、調整累計未還）
   if(ME.role==="做帳"){
     $("#rec").classList.add("hide");
+    $("[data-tab=people]").classList.remove("hide");
+    acctLimitMgr();
     switchTab("set");
   }
   bindUI();
@@ -2311,6 +2314,7 @@ function bindUI(){
   bindMultiDD("#ddCusts","#ddCustsTrig");
   document.addEventListener("click", closeAllDD);
   $("#genExcel").onclick=genReport;
+  if($("#setReportPdf")) $("#setReportPdf").onclick=genSettlementReport;
   if($("#batchZip")) $("#batchZip").onclick=batchZipDownload;
   if($("#setInclOut")) $("#setInclOut").onchange=applyInclOut;
   $("#addCust").onclick=addCustomer;
@@ -2879,6 +2883,30 @@ async function genReport(){
   }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; }
   btn.disabled=false; btn.textContent="產生 Excel";
 }
+// 月結算「明細統整」帳單報告 PDF（版面同 Excel ＋ 公司抬頭 ＋ 右上角紅色警語）
+async function genSettlementReport(){
+  var months=pickedVals("#setMonths").sort(), btn=$("#setReportPdf"), msg=$("#setMsg");
+  if(!months.length){ msg.className="msg err"; msg.textContent="請先勾選至少一個月份"; toast("請先勾選月份","err"); return; }
+  var custs=pickedVals("#setCusts").join(",");
+  var site=$("#setSite")?$("#setSite").value:"";
+  msg.className="msg"; btn.disabled=true;
+  var done=[], fails=[];
+  try{
+    for(var i=0;i<months.length;i++){
+      btn.textContent="產生中… "+(i+1)+"/"+months.length+"（約 10 秒/份）";
+      var r=await post({action:"settlementReportPdf", uid:ME.uid, month:months[i], custs:custs, site:site});
+      if(r&&r.ok){ done.push(fileLink(r.url, r.檔名)); }
+      else fails.push(rocMonth(months[i])+"："+((r&&r.error)||"失敗"));
+    }
+    if(done.length){
+      msg.className="msg ok";
+      msg.innerHTML="已產生 "+done.length+" 份月結算報表：<br>"+done.join("<br>")+
+        (fails.length?'<br><span style="color:var(--red)">未產生：'+esc(fails.join("；"))+'</span>':"");
+      toast("月結算報表已產生");
+    }else{ msg.className="msg err"; msg.textContent=""+(fails.join("；")||"產生失敗"); toast(""+(fails.join("；")||"產生失敗"),"err"); }
+  }catch(err){ msg.className="msg err"; msg.textContent="產生失敗："+err; toast("產生失敗，請檢查網路","err"); }
+  btn.disabled=false; btn.textContent="輸出月結算明細報表 PDF（含警語）";
+}
 // base64 → 觸發瀏覽器下載（存到自己的電腦）
 function downloadB64(b64, name, mime){
   var bin=atob(b64), len=bin.length, arr=new Uint8Array(len);
@@ -3044,6 +3072,7 @@ async function loadPeople(){
   if(!r.ok){ pbox(""+esc(r.error), true); if(sel) sel.innerHTML='<option value="">— 載入失敗 —</option>'; return; }
   peopleCache=r.people||[];
   if(r.roles&&r.roles.length) peopleRoles=r.roles;
+  if(ME.role==="做帳") peopleRoles=peopleRoles.filter(function(x){return x!=="管理員";});
   if(r.sites&&r.sites.length){ peopleSites=r.sites; ME.sites=r.sites; }
   renderSites();
   renderPeoplePick();
@@ -3112,6 +3141,13 @@ function showPeopleEdit(code){
   var p=code?peopleCache.filter(function(x){return String(x.登入代碼)===String(code);})[0]:null;
   if(!p){ box.className="editbox hide"; box.innerHTML=""; return; }
   box.className="editbox";
+  if(ME.role==="做帳" && p.角色==="管理員"){
+    box.innerHTML=
+      '<div class="erow"><span class="elab">登入代碼</span><b style="font-variant-numeric:tabular-nums">'+esc(p.登入代碼)+'</b></div>'+
+      '<div class="erow"><span class="elab">姓名</span><b>'+esc(p.姓名)+'</b></div>'+
+      '<div style="margin-top:10px;font-size:12.5px;line-height:1.7;color:var(--wood)">此為管理員帳號，做帳人員無法編輯或變更其登入代碼。</div>';
+    return;
+  }
   var bind=p.已綁定
     ? '<span style="color:var(--brand-d);font-weight:700">已綁定 LINE</span>'
     : '<span style="color:var(--wood);font-weight:700">尚未綁定 LINE</span>';
@@ -3129,7 +3165,39 @@ function showPeopleEdit(code){
     '<div style="display:flex;gap:10px;margin-top:12px">'+
       '<button type="button" class="btnG" style="flex:1" onclick="savePerson(\''+esc(p.登入代碼)+'\')">儲存人員</button>'+
       '<button type="button" class="btnDel" onclick="delPerson(\''+esc(p.登入代碼)+'\',\''+esc(p.姓名)+'\')">刪除</button>'+
+    '</div>'+
+    '<div style="margin-top:16px;border-top:1px dashed var(--line2);padding-top:12px">'+
+      '<label class="fld">變更登入代碼（即登入密碼）</label>'+
+      '<div style="display:flex;gap:10px">'+
+        '<input type="text" id="eNewCode" placeholder="新登入代碼（至少 4 碼英數）" style="flex:1" autocomplete="off">'+
+        '<button type="button" class="btnP" style="white-space:nowrap" onclick="changeCode(\''+esc(p.登入代碼)+'\',\''+esc(p.姓名)+'\')">變更</button>'+
+      '</div>'+
+      '<div style="margin-top:6px;font-size:12.5px;line-height:1.7;color:var(--ink2)">變更後，該人員需以新代碼登入；歷史紀錄會一併更新。</div>'+
     '</div>';
+}
+async function changeCode(oldCode,name){
+  var nv=($("#eNewCode")&&$("#eNewCode").value||"").trim();
+  if(!nv){ pbox("請輸入新登入代碼", true); return; }
+  if(!/^[A-Za-z0-9]{4,}$/.test(nv)){ pbox("登入代碼需至少 4 碼英數字", true); return; }
+  if(String(nv)===String(oldCode)){ pbox("新代碼與原代碼相同", true); return; }
+  if(!confirm("確定將「"+name+"」的登入代碼由 "+oldCode+" 變更為 "+nv+" 嗎？\n變更後請以新代碼登入。")) return;
+  var r=await post({action:"codeRename", uid:ME.uid, 舊代碼:oldCode, 新代碼:nv});
+  if(r.ok){
+    pbox("已將「"+name+"」登入代碼變更為 "+nv, false);
+    var r2=await api({action:"roleList", uid:ME.uid});
+    if(r2.ok){ peopleCache=r2.people||[]; renderPeoplePick(nv); }
+  }else pbox(""+(r.error||"變更失敗"), true);
+}
+function acctLimitMgr(){
+  // 做帳：可管理客戶與非管理員人員、變更登入代碼；隱藏場名／明細／調整管理；角色選單去除「管理員」
+  peopleRoles=peopleRoles.filter(function(x){return x!=="管理員";});
+  var pick=$("#mgrPick");
+  if(pick){
+    Array.prototype.slice.call(pick.options).forEach(function(o){
+      if(o.value==="site"||o.value==="tx"||o.value==="adj") o.remove();
+    });
+    if(pick.value==="site"||pick.value==="tx"||pick.value==="adj"){ pick.value="cust"; }
+  }
 }
 async function delPerson(code,name){
   if(!confirm("確定要刪除人員「"+name+"」（登入代碼 "+code+"）嗎？\n此操作無法復原，該人員將無法再登入系統。")) return;
