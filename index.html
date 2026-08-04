@@ -1491,6 +1491,19 @@ function post(body){
     headers:{"Content-Type":"text/plain;charset=utf-8"},
     body:JSON.stringify(body)}).then(function(r){return r.json();});
 }
+// 產生 PDF／報表較慢（約 10～15 秒），Google 偶爾會在慢速回應時回傳中繼 HTML 頁而非 JSON，
+// 造成「Unexpected token '<'」。因報表存檔以「檔名」去重、同月重跑只會覆蓋同一檔，重試為冪等，
+// 故對這類慢速產生自動重試；若回傳的是正常 JSON（含業務錯誤 ok:false）則直接採用、不重試。
+function sleep(ms){ return new Promise(function(res){ setTimeout(res, ms); }); }
+async function postPdf(body, tries){
+  tries = tries || 3; var lastErr;
+  for(var i=0;i<tries;i++){
+    try{ var r=await post(body); if(r && typeof r==="object") return r; }
+    catch(e){ lastErr=e; }
+    if(i<tries-1) await sleep(1200);
+  }
+  throw (lastErr || new Error("產生失敗（請稍後再試）"));
+}
 
 /* ---- 浮動通知 Toast ---- */
 function toast(text, kind){
@@ -2894,8 +2907,8 @@ async function genSettlementReport(){
   var done=[], fails=[];
   try{
     for(var i=0;i<months.length;i++){
-      btn.textContent="產生中… "+(i+1)+"/"+months.length+"（約 10 秒/份）";
-      var r=await post({action:"settlementReportPdf", uid:ME.uid, month:months[i], custs:custs, site:site});
+      btn.textContent="產生中… "+(i+1)+"/"+months.length+"（約 10～15 秒/份）";
+      var r=await postPdf({action:"settlementReportPdf", uid:ME.uid, month:months[i], custs:custs, site:site});
       if(r&&r.ok){ done.push(fileLink(r.url, r.檔名)); }
       else fails.push(rocMonth(months[i])+"："+((r&&r.error)||"失敗"));
     }
@@ -3628,10 +3641,10 @@ async function loadSiteLog(){
 }
 async function exportSiteLogPdf(){
   var btn=$("#slPdf"), m=$("#slMsg");
-  btn.disabled=true; var old=btn.textContent; btn.textContent="產生中…（約 10 秒）";
+  btn.disabled=true; var old=btn.textContent; btn.textContent="產生中…（約 10～15 秒）";
   if(m){ m.className="msg"; m.style.display="block"; m.textContent="產生 PDF 中…"; }
   try{
-    var r=await post({action:"siteLogPdf", uid:ME.uid, from:$("#slFrom")?$("#slFrom").value:"", to:$("#slTo")?$("#slTo").value:"", mode:slMode});
+    var r=await postPdf({action:"siteLogPdf", uid:ME.uid, from:$("#slFrom")?$("#slFrom").value:"", to:$("#slTo")?$("#slTo").value:"", mode:slMode});
     if(r.ok){ if(m){ m.className="msg ok"; m.innerHTML=(r.site||"")+"場・"+rocDate(r.from)+"～"+rocDate(r.to)+(r.mode==="summary"?" 彙總":" 明細")+" PDF 已產生<br>"+fileLink(r.url, r.檔名); } }
     else { if(m){ m.className="msg err"; m.textContent=""+(r.error||"產生失敗"); } }
   }catch(err){ if(m){ m.className="msg err"; m.textContent="產生失敗："+err; } }
