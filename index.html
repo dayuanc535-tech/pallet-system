@@ -432,6 +432,41 @@
   .logout{color:var(--brand-d);font-weight:700;text-decoration:none}
   .logout:hover{text-decoration:underline}
 
+  /* ---- 登入畫面：工廠實景背景（質感） ---- */
+  /* 只在登入／載入畫面（#gate 顯示中）套用；登入後 #gate 加 .hide 即自動移除 */
+  body:has(#gate:not(.hide))::before{
+    content:"";position:fixed;inset:0;z-index:0;
+    background-image:
+      radial-gradient(125% 100% at 50% 4%, transparent 44%, rgba(0,0,0,.40) 100%),
+      linear-gradient(140deg, rgba(18,58,40,.72) 0%, rgba(12,26,19,.66) 45%, rgba(7,14,10,.85) 100%),
+      url("bg-factory.jpg");
+    background-size:cover;background-position:center 40%;background-repeat:no-repeat;
+    background-color:#10241a;
+  }
+  body:has(#gate:not(.hide))::after{
+    content:"碩成肥料　·　有機肥料部";
+    position:fixed;left:0;right:0;bottom:14px;z-index:1;text-align:center;pointer-events:none;
+    color:rgba(255,255,255,.58);font-size:12px;letter-spacing:.16em;font-weight:600;
+    text-shadow:0 1px 8px rgba(0,0,0,.55);
+  }
+  body:has(#gate:not(.hide)) .page{position:relative;z-index:1}
+  /* 玻璃登入卡：兩種主題都用亮玻璃＋深字，確保在實景上清楚可讀 */
+  body:has(#gate:not(.hide)) .gatecard{
+    --ink:#12241b;--ink2:#33473d;--mut:#5b6b62;--surface:#ffffff;
+    --line:rgba(18,40,30,.12);--line2:rgba(18,40,30,.18);--sunken:rgba(255,255,255,.62);
+    background:rgba(255,255,255,.70);
+    backdrop-filter:blur(24px) saturate(155%);-webkit-backdrop-filter:blur(24px) saturate(155%);
+    border:1px solid rgba(255,255,255,.6);
+    box-shadow:0 28px 80px rgba(6,16,11,.5),inset 0 1px 0 rgba(255,255,255,.65);
+  }
+  body:has(#gate:not(.hide)) .gatecard .gentry{
+    background:rgba(255,255,255,.80);border-color:rgba(18,40,30,.10);box-shadow:0 2px 8px rgba(6,16,11,.10)}
+  body:has(#gate:not(.hide)) .gatecard .gentry:hover{background:#fff;border-color:var(--brand);
+    box-shadow:0 8px 20px rgba(6,16,11,.16)}
+  body:has(#gate:not(.hide)) .gatecard .gei{background:rgba(46,125,79,.12);
+    border-color:rgba(18,40,30,.10);color:#2e7d4f}
+  body:has(#gate:not(.hide)) .gatecard .gentry:hover .gei{background:#fff}
+
   /* ---- 桌機版入口卡放大 ---- */
   @media(min-width:760px){
     .gate{max-width:640px;padding:72px 20px}
