@@ -3238,14 +3238,14 @@ async function changeCode(oldCode,name){
   }else pbox(""+(r.error||"變更失敗"), true);
 }
 function acctLimitMgr(){
-  // 做帳：可管理客戶與非管理員人員、變更登入代碼；隱藏場名／明細／調整管理；角色選單去除「管理員」
+  // 做帳：可管理客戶與非管理員人員、變更登入代碼、修正棧板明細（改／刪／補登）；隱藏場名管理與調整累計未還；角色選單去除「管理員」
   peopleRoles=peopleRoles.filter(function(x){return x!=="管理員";});
   var pick=$("#mgrPick");
   if(pick){
     Array.prototype.slice.call(pick.options).forEach(function(o){
-      if(o.value==="site"||o.value==="tx"||o.value==="adj") o.remove();
+      if(o.value==="site"||o.value==="adj") o.remove();
     });
-    if(pick.value==="site"||pick.value==="tx"||pick.value==="adj"){ pick.value="cust"; }
+    if(pick.value==="site"||pick.value==="adj"){ pick.value="cust"; }
   }
 }
 async function delPerson(code,name){
