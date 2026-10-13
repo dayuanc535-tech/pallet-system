@@ -1214,6 +1214,7 @@
           <option value="cust">客戶編輯</option>
           <option value="people">操作人員編輯</option>
           <option value="tx">棧板明細管理</option>
+          <option value="log">異動紀錄查詢</option>
           <option value="adj">調整累計未還</option>
         </select>
 
@@ -1345,6 +1346,19 @@
             </div>
             <div id="adjHistList" class="adjhistlist"><span class="csub">載入中…</span></div>
           </div>
+        </div>
+
+        <div id="mgrLog" class="mgrsec hide" style="margin-top:18px">
+          <p class="csub" style="margin-top:0">查詢棧板明細的「異動紀錄」：誰、什麼時候、改了什麼（含修改前→後、刪除整筆、後台補登、調整累計未還）。只記錄透過後台所做的更動，現場回報不列入。</p>
+          <div class="row2">
+            <div><label class="fld">起始日期</label><input type="date" id="logFrom" style="width:100%"></div>
+            <div><label class="fld">結束日期</label><input type="date" id="logTo" style="width:100%"></div>
+          </div>
+          <label class="fld">關鍵字（可空白；操作人／客戶／內容皆可）</label>
+          <input type="text" id="logKw" placeholder="例：建蓉、數量、某客戶名" style="width:100%">
+          <button type="button" class="btnG" id="logQuery" style="margin-top:12px;width:100%">查詢異動紀錄</button>
+          <div class="msg" id="logMsg"></div>
+          <div id="logList" style="margin-top:12px"></div>
         </div>
       </section>
     </div>
@@ -1858,8 +1872,10 @@ function switchMgr(v){
   if($("#mgrPeople")) $("#mgrPeople").classList.toggle("hide", v!=="people");
   if($("#mgrTx"))     $("#mgrTx").classList.toggle("hide", v!=="tx");
   if($("#mgrAdj"))    $("#mgrAdj").classList.toggle("hide", v!=="adj");
+  if($("#mgrLog"))    $("#mgrLog").classList.toggle("hide", v!=="log");
   if(v==="tx") txMgrInit();
   if(v==="adj") adjInit();
+  if(v==="log") logInit();
 }
 
 /* ---- 調整累計未還（管理員）---- */
@@ -2254,6 +2270,37 @@ function txqActive(){ var s=$("#txq"); return !!(s && !s.classList.contains("hid
 function setActive(){ var s=$("#set"); return !!(s && !s.classList.contains("hide")); }
 function txRefreshActive(){ if(setActive()) loadSettlement(); else if(txqActive()) loadTxq(); else loadTxList(); }
 function txMsgBox(){ return setActive()? $("#setMsg") : (txqActive()? $("#txqMsg") : $("#txMsg")); }
+/* ===== 異動紀錄查詢（管理員／做帳）===== */
+function logInit(){
+  if($("#logFrom")&&!$("#logFrom").value){ var d=new Date(); $("#logFrom").value=d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-01"; }
+  if($("#logTo")&&!$("#logTo").value){ var t=new Date(); $("#logTo").value=t.getFullYear()+"-"+pad2(t.getMonth()+1)+"-"+pad2(t.getDate()); }
+  if($("#logQuery")) $("#logQuery").onclick=loadEditLog;
+  if($("#logKw")) $("#logKw").onkeydown=function(e){ if(e.key==="Enter") loadEditLog(); };
+  loadEditLog();
+}
+async function loadEditLog(){
+  var box=$("#logList"), m=$("#logMsg");
+  if(m){ m.className="msg"; m.textContent=""; }
+  if(box) box.innerHTML='<span class="csub">查詢中…</span>';
+  var r=await api({action:"editLog", uid:ME.uid, from:$("#logFrom").value, to:$("#logTo").value, kw:$("#logKw")?$("#logKw").value:""});
+  if(!r.ok){ if(box) box.innerHTML=""; if(m){ m.className="msg err"; m.textContent=""+(r.error||"查詢失敗"); } return; }
+  var list=r.list||[];
+  if(!list.length){ if(box) box.innerHTML='<div class="csub" style="padding:10px 0">此區間沒有異動紀錄。</div>'; return; }
+  box.innerHTML='<div class="csub" style="margin-bottom:8px">共 '+list.length+' 筆（新到舊）</div>'+list.map(logCard).join("");
+}
+function logTypeColor(t){ return t==="刪除"?"var(--red)":(t==="補登"?"var(--wood)":(t==="調整累計未還"?"var(--wood)":"var(--brand-d)")); }
+function logCard(x){
+  return '<div class="editbox" style="margin:0 0 10px">'+
+    '<div class="erow"><span class="elab" style="font-variant-numeric:tabular-nums">'+esc(x.時間)+'</span>'+
+      '<b style="color:'+logTypeColor(x.類型)+'">'+esc(x.類型)+'</b></div>'+
+    '<div style="font-size:13.5px;margin-top:7px;line-height:1.65">'+
+      '<b>'+esc(x.操作人||"—")+'</b>'+(x.角色?' <span class="csub">（'+esc(x.角色)+'）</span>':'')+
+      (x.客戶?' ・ 客戶：'+esc(x.客戶):'')+
+      (x.單號?' ・ 單號 '+esc(x.單號):'')+
+      '<div style="margin-top:5px;color:var(--ink2)">'+esc(x.明細||"")+'</div>'+
+    '</div>'+
+  '</div>';
+}
 function editTxRow(row){
   var box=$("#txrow-"+row); if(!box) return;
   var x=txRowCache[row]; if(!x){ txRefreshActive(); return; }
