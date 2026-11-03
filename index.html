@@ -2144,7 +2144,7 @@ function txqCard(g){
   if(!lines.length && g.無流通) lines.push('<div class="txqmeta" style="color:var(--mut)">當日無流通</div>');
   var note=(g.場?esc(g.場):"")+(g.備註.length?'　'+esc(g.備註.join('／')):'');
   var sign=g.附件
-    ? '<a class="lnk" href="'+esc(g.附件)+'" target="_blank" rel="noopener">查看簽收單</a>'
+    ? '<a class="lnk" href="'+esc(dimg(g.附件))+'" target="_blank" rel="noopener">查看簽收單</a>'
     : '<span class="csub">無簽收單</span>';
   return '<div class="txqrow">'+
     '<div style="min-width:0;flex:1">'+
@@ -2258,7 +2258,7 @@ function txCard(x){
     '<div class="erow"><span class="elab">場 / 動作</span>'+
       '<b style="color:'+color+'">'+esc(x.場||"—")+'　'+esc(x.動作)+' '+esc(x.棧板別)+'×'+x.數量+'</b></div>'+
     (x.備註?'<div class="erow"><span class="elab">備註</span><b>'+esc(x.備註)+'</b></div>':'')+
-    (x.附件?'<div class="erow"><span class="elab">簽收單</span><a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">檢視</a></div>':'')+
+    (x.附件?'<div class="erow"><span class="elab">簽收單</span><a class="lnk" href="'+esc(dimg(x.附件))+'" target="_blank" rel="noopener">檢視</a></div>':'')+
     '<div style="display:flex;gap:8px;margin-top:8px">'+
       '<button type="button" class="btnG" style="flex:1" onclick="editTxRow('+x.row+')">修改</button>'+
       '<button type="button" class="btnG" style="flex:1" onclick="delTxRow('+x.row+')">刪除</button>'+
@@ -2318,7 +2318,7 @@ function editTxRow(row){
     '</div>'+
     '<label class="fld">備註</label><input type="text" id="txe-note-'+row+'" value="'+esc(x.備註||"")+'" style="width:100%">'+
     '<label class="fld">簽收單</label>'+
-    (x.附件?'<div style="margin-bottom:8px"><a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">檢視目前簽收單</a></div>':'<div class="csub" style="margin-bottom:8px">目前無簽收單</div>')+
+    (x.附件?'<div style="margin-bottom:8px"><a class="lnk" href="'+esc(dimg(x.附件))+'" target="_blank" rel="noopener">檢視目前簽收單</a></div>':'<div class="csub" style="margin-bottom:8px">目前無簽收單</div>')+
     '<label class="btnG" style="display:block;text-align:center;padding:14px">'+
       '拍照 / 選擇'+(x.附件?'新':'')+'簽收單<input type="file" id="txe-photo-'+row+'" accept="image/*" capture="environment" class="hide" onchange="txEditOnPhoto('+row+')">'+
     '</label>'+
@@ -3054,7 +3054,7 @@ function fillMine(r){
   h.innerHTML=r.歷史.map(function(x){
     var color=x.動作==="送出"?"var(--red)":"var(--brand-d)";
     var att=x.附件URL
-      ? ' <a href="'+x.附件URL+'" target="_blank" rel="noopener" style="color:var(--brand-d)">簽收</a>' : '';
+      ? ' <a href="'+dimg(x.附件URL)+'" target="_blank" rel="noopener" style="color:var(--brand-d)">簽收</a>' : '';
     return '<div style="padding:9px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline">'+
       '<span style="color:'+color+';font-weight:700;min-width:42px">'+x.動作+'</span>'+
       '<span style="font-weight:700">'+x.棧板別+'棧板 ×'+x.數量+'</span>'+
@@ -3067,6 +3067,12 @@ function fillMine(r){
 function esc(s){
   return String(s==null?"":s).replace(/[&<>"']/g,function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});
+}
+// 簽收連結正規化成 Google 圖片 CDN 直連（免登入、LINE webview 也能開）；非 Drive 連結原樣返回
+function dimg(u){
+  u=String(u==null?"":u).trim(); if(!u) return "";
+  var m=u.match(/\/file\/d\/([A-Za-z0-9_-]+)/)||u.match(/googleusercontent\.com\/d\/([A-Za-z0-9_-]+)/)||u.match(/[?&]id=([A-Za-z0-9_-]+)/)||u.match(/\/d\/([A-Za-z0-9_-]+)/);
+  return m?("https://lh3.googleusercontent.com/d/"+m[1]):u;
 }
 var custCache=[];
 async function loadCustomers(){
@@ -3438,7 +3444,7 @@ function renderLedger(list){
   if(!list.length){ $("#dLedBody").innerHTML='<tr><td colspan="7" style="color:var(--mut)">此範圍無紀錄</td></tr>'; return; }
   $("#dLedBody").innerHTML=list.map(function(x){
     var cls=x.動作==="送出"?"out":(x.動作==="歸還"?"in":"dep");
-    var sign=x.附件?'<a class="lnk" href="'+esc(x.附件.split(" ")[0])+'" target="_blank" rel="noopener">看</a>':'—';
+    var sign=x.附件?'<a class="lnk" href="'+esc(dimg(x.附件.split(" ")[0]))+'" target="_blank" rel="noopener">看</a>':'—';
     return '<tr><td style="white-space:nowrap;font-size:12px;color:var(--mut)">'+esc(rocDT(x.時間))+'</td>'+
       '<td>'+esc(x.場)+'</td><td>'+esc(x.客戶||'—')+'</td>'+
       '<td><span class="badge '+cls+'">'+esc(x.動作)+'</span></td>'+
@@ -3669,7 +3675,7 @@ async function loadRepToday(){
       var label=it.動作==="送出"?"出":(it.動作==="歸還"?"進":it.動作);
       return '<span style="color:'+color+';font-weight:800;margin-right:10px">'+label+' '+it.棧板別+'×'+it.數量+'</span>';
     }).join("");
-    var att=g.附件?' <a class="lnk" href="'+esc(g.附件)+'" target="_blank" rel="noopener">簽收</a>':'';
+    var att=g.附件?' <a class="lnk" href="'+esc(dimg(g.附件))+'" target="_blank" rel="noopener">簽收</a>':'';
     return '<div style="padding:10px 0;border-bottom:1px solid var(--line)">'+
       '<div style="display:flex;gap:8px;align-items:baseline">'+
         '<span style="font-weight:800">'+esc(g.客戶)+'</span>'+
@@ -3793,7 +3799,7 @@ async function loadStatement(){
   if(!r.detail.length){ $("#lookDetail").innerHTML='<span style="color:var(--mut)">本月無進出</span>'; return; }
   $("#lookDetail").innerHTML=r.detail.map(function(x){
     var color=x.動作==="送出"?"var(--red)":"var(--brand-d)";
-    var att=x.附件?' <a class="lnk" href="'+esc(x.附件)+'" target="_blank" rel="noopener">簽收</a>':'';
+    var att=x.附件?' <a class="lnk" href="'+esc(dimg(x.附件))+'" target="_blank" rel="noopener">簽收</a>':'';
     return '<div style="padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:baseline">'+
       '<span style="color:'+color+';font-weight:800;min-width:44px">'+esc(x.動作)+'</span>'+
       '<span style="font-weight:700">'+esc(x.場)+'　'+x.棧板別+'×'+x.數量+'</span>'+
